@@ -2,28 +2,14 @@ const SuratTugas = require('../models/suratTugas.model');
 const Daerah = require('../models/daerah.model');
 const Notifikasi = require('../models/notifikasi.model');
 const User = require('../models/user.model');
-const { Op } = require('sequelize');
-
-function hasValidZone(daerah) {
-  if (!daerah) return false;
-
-  if (daerah.geojson) return true;
-
-  const latitude = Number(daerah.latitude);
-  const longitude = Number(daerah.longitude);
-  const radius = Number(daerah.radius);
-
-  return (
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude) &&
-    Number.isFinite(radius) &&
-    radius > 0
-  );
-}
-
-function getZoneUnavailableMessage() {
-  return 'Area daerah belum tersedia. Gunakan GeoJSON atau atur titik koordinat dan radius terlebih dahulu.';
-}
+const Presensi = require('../models/presensi.model');
+const sequelize = require('../config/database');
+const { isDateWithin } = require('../utils/businessDate');
+const {
+  parseTujuanField,
+  prepareTujuan,
+  replaceTujuan,
+} = require('../services/suratTugasTujuan.service');
 
 /* ================= CREATE ================= */
 const createSuratTugas = async (req, res) => {
@@ -58,49 +44,66 @@ const createSuratTugas = async (req, res) => {
       });
     }
 
-    const daerah = await Daerah.findByPk(daerah_id);
-    if (!daerah) {
-      return res.status(404).json({ message: 'Daerah tidak ditemukan' });
-    }
-    if (!hasValidZone(daerah)) {
-      return res.status(400).json({ message: getZoneUnavailableMessage() });
-    }
+    const rawTujuan = Object.prototype.hasOwnProperty.call(req.body, 'tujuan')
+      ? parseTujuanField(req.body.tujuan)
+      : [{ daerah_id, tanggal_mulai, tanggal_selesai }];
 
-    const surat = await SuratTugas.create({
-      nomor_surat,
-      user_id,
-      daerah_id,
-      daerah_tujuan: daerah.nama_daerah,
-      latitude: daerah.latitude,
-      longitude: daerah.longitude,
-      radius: Number(daerah.radius) > 0 ? Number(daerah.radius) : 0,
-      tanggal_mulai,
-      tanggal_selesai,
-      nama_kegiatan,
-      pembebanan_biaya,
-      tujuan_kegiatan,
-      status: 'AKTIF',
-      file_surat: req.file
-        ? (req.file.drive?.webContentLink || req.file.drive?.webViewLink || null)
-        : null,
-    });
+    const result = await sequelize.transaction(async (transaction) => {
+      const preparedTujuan = await prepareTujuan(rawTujuan, transaction);
+      const firstTujuan = preparedTujuan[0];
+      const lastTujuan = preparedTujuan[preparedTujuan.length - 1];
 
-    // Buat notifikasi
-    await Notifikasi.create({
-      user_id,
-      judul: 'Surat Tugas Baru',
-      pesan: `Anda mendapat surat tugas untuk kegiatan: ${nama_kegiatan} di ${daerah.nama_daerah}`,
-      is_read: false,
+      const surat = await SuratTugas.create({
+        nomor_surat,
+        user_id,
+        daerah_id: firstTujuan.daerah_id,
+        daerah_tujuan: firstTujuan.daerah_tujuan,
+        latitude: firstTujuan.latitude,
+        longitude: firstTujuan.longitude,
+        radius: firstTujuan.radius,
+        tanggal_mulai: firstTujuan.tanggal_mulai,
+        tanggal_selesai: lastTujuan.tanggal_selesai,
+        nama_kegiatan,
+        pembebanan_biaya,
+        tujuan_kegiatan,
+        status: 'AKTIF',
+        file_surat: req.file
+          ? (req.file.drive?.webContentLink || req.file.drive?.webViewLink || null)
+          : null,
+      }, { transaction });
+
+      const tujuan = await replaceTujuan({
+        surat,
+        tujuan: preparedTujuan,
+        transaction,
+      });
+
+      await Notifikasi.create({
+        user_id,
+        judul: 'Surat Tugas Baru',
+        pesan: `Anda mendapat surat tugas untuk kegiatan: ${nama_kegiatan} di ${firstTujuan.daerah_tujuan}`,
+        is_read: false,
+      }, { transaction });
+
+      return { surat, tujuan };
     });
 
     res.status(201).json({
       message: 'Surat tugas berhasil dibuat',
-      data: surat,
+      data: {
+        ...result.surat.toJSON(),
+        tujuan: result.tujuan.map((item) => item.toJSON()),
+      },
       drive_file: req.file?.drive || null,
     });
   } catch (err) {
-    console.error('Error createSuratTugas:', err);
-    res.status(500).json({ message: err.message });
+    if (!err.status || err.status >= 500) {
+      console.error('Error createSuratTugas:', err);
+    }
+    res.status(err.status || 500).json({
+      message: err.message,
+      ...(err.code ? { code: err.code } : {}),
+    });
   }
 };
 
@@ -280,60 +283,95 @@ const update = async (req, res) => {
       tujuan_kegiatan,
     } = req.body;
 
-    const surat = await SuratTugas.findByPk(id);
-    if (!surat) {
-      return res.status(404).json({ message: 'Surat tugas tidak ditemukan' });
-    }
-
-    let updateData = {
-      nomor_surat,
-      user_id,
-      daerah_id,
-      tanggal_mulai,
-      tanggal_selesai,
-      nama_kegiatan,
-      pembebanan_biaya,
-      tujuan_kegiatan,
-    };
-
-    let daerahBaru = null;
-
-    // Jika daerah diganti → ambil ulang koordinat
-    if (daerah_id && daerah_id != surat.daerah_id) {
-      daerahBaru = await Daerah.findByPk(daerah_id);
-      if (!daerahBaru) {
-        return res.status(404).json({ message: 'Daerah tidak ditemukan' });
-      }
-      if (!hasValidZone(daerahBaru)) {
-        return res.status(400).json({ message: getZoneUnavailableMessage() });
+    const result = await sequelize.transaction(async (transaction) => {
+      const surat = await SuratTugas.findByPk(id, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!surat) {
+        const error = new Error('Surat tugas tidak ditemukan');
+        error.status = 404;
+        throw error;
       }
 
-      updateData = {
-        ...updateData,
-        daerah_tujuan: daerahBaru.nama_daerah,
-        latitude: daerahBaru.latitude,
-        longitude: daerahBaru.longitude,
-        radius: Number(daerahBaru.radius) > 0 ? Number(daerahBaru.radius) : 0,
-      };
-    }
+      const rawTujuan = Object.prototype.hasOwnProperty.call(req.body, 'tujuan')
+        ? parseTujuanField(req.body.tujuan)
+        : [{
+            daerah_id: daerah_id ?? surat.daerah_id,
+            tanggal_mulai: tanggal_mulai ?? surat.tanggal_mulai,
+            tanggal_selesai: tanggal_selesai ?? surat.tanggal_selesai,
+          }];
+      const preparedTujuan = await prepareTujuan(rawTujuan, transaction);
+      const firstTujuan = preparedTujuan[0];
+      const lastTujuan = preparedTujuan[preparedTujuan.length - 1];
 
-    await surat.update(updateData);
+      const presensiRows = await Presensi.findAll({
+        where: { surat_tugas_id: surat.id },
+        attributes: ['id', 'tanggal_presensi'],
+        transaction,
+      });
+      const unmappedPresence = presensiRows.find((presensi) =>
+        !preparedTujuan.some((item) => isDateWithin(
+          presensi.tanggal_presensi,
+          item.tanggal_mulai,
+          item.tanggal_selesai
+        ))
+      );
+      if (unmappedPresence) {
+        const error = new Error(
+          `Jadwal baru tidak mencakup presensi tanggal ${unmappedPresence.tanggal_presensi}.`
+        );
+        error.status = 409;
+        error.code = 'SCHEDULE_HAS_PRESENCE';
+        throw error;
+      }
 
-    // Notifikasi
-    await Notifikasi.create({
-      user_id: surat.user_id,
-      judul: 'Perubahan Surat Tugas',
-      pesan: `Surat tugas "${surat.nama_kegiatan || 'tidak bernama'}" telah diperbarui`,
-      is_read: false,
+      await surat.update({
+        nomor_surat,
+        user_id,
+        daerah_id: firstTujuan.daerah_id,
+        daerah_tujuan: firstTujuan.daerah_tujuan,
+        latitude: firstTujuan.latitude,
+        longitude: firstTujuan.longitude,
+        radius: firstTujuan.radius,
+        tanggal_mulai: firstTujuan.tanggal_mulai,
+        tanggal_selesai: lastTujuan.tanggal_selesai,
+        nama_kegiatan,
+        pembebanan_biaya,
+        tujuan_kegiatan,
+      }, { transaction });
+
+      const tujuan = await replaceTujuan({
+        surat,
+        tujuan: preparedTujuan,
+        transaction,
+      });
+
+      await Notifikasi.create({
+        user_id: surat.user_id,
+        judul: 'Perubahan Surat Tugas',
+        pesan: `Surat tugas "${surat.nama_kegiatan || 'tidak bernama'}" telah diperbarui`,
+        is_read: false,
+      }, { transaction });
+
+      return { surat, tujuan };
     });
 
     res.json({ 
       message: 'Surat tugas berhasil diperbarui',
-      data: surat 
+      data: {
+        ...result.surat.toJSON(),
+        tujuan: result.tujuan.map((item) => item.toJSON()),
+      },
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+    if (!err.status || err.status >= 500) {
+      console.error('Error updateSuratTugas:', err);
+    }
+    res.status(err.status || 500).json({
+      message: err.message,
+      ...(err.code ? { code: err.code } : {}),
+    });
   }
 };
 

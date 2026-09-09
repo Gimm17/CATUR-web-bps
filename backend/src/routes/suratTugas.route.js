@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/suratTugas.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
+const adminMiddleware = require('../middlewares/admin.middleware');
 const uploadSurat = require('../middlewares/uploadSurat.middleware');
 const uploadToDrive = require('../middlewares/uploadToDrive.middleware');
 
@@ -9,6 +10,7 @@ const uploadToDrive = require('../middlewares/uploadToDrive.middleware');
 router.post(
   '/',
   authMiddleware,
+  adminMiddleware,
   uploadSurat.single('file_surat'),
   uploadToDrive,
   controller.createSuratTugas
@@ -22,10 +24,10 @@ router.get('/stats', authMiddleware, controller.getDashboardStats);
 router.get('/:id', authMiddleware, controller.getById);
 
 // UPDATE
-router.put('/:id', authMiddleware, controller.update);
+router.put('/:id', authMiddleware, adminMiddleware, controller.update);
 
 // DELETE
-router.delete('/:id', authMiddleware, controller.remove);
+router.delete('/:id', authMiddleware, adminMiddleware, controller.remove);
 
 console.log('✅ Routes surat-tugas registered:');
 console.log('   - GET /');
