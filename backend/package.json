@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "test:unit": "node --test \"tests/unit/*.test.js\"",
     "lint": "node scripts/lint-backend.js",
     "google:token": "node src/scripts/generateGoogleToken.js",
     "geojson:sync": "node src/scripts/syncGeojson.js"
