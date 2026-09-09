@@ -42,3 +42,6 @@ backend/Front-end Presensi Flutter/
 backend/*.rar
 backend/*.apk
 backend/*.aab
+
+# Isolated feature worktrees.
+.worktrees/
