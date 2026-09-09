@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const User = require('./user.model');
 const SuratTugas = require('./suratTugas.model');
+const SuratTugasTujuan = require('./suratTugasTujuan.model');
 
 const Presensi = sequelize.define(
   'presensi',
@@ -13,6 +14,10 @@ const Presensi = sequelize.define(
     surat_tugas_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    surat_tugas_tujuan_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
     },
     latitude: {
       type: DataTypes.DECIMAL(10, 6),
@@ -48,5 +53,9 @@ const Presensi = sequelize.define(
 // Relasi
 Presensi.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Presensi.belongsTo(SuratTugas, { foreignKey: 'surat_tugas_id', as: 'surat_tugas' });
+Presensi.belongsTo(SuratTugasTujuan, {
+  foreignKey: 'surat_tugas_tujuan_id',
+  as: 'surat_tugas_tujuan',
+});
 
 module.exports = Presensi;
