@@ -1,0 +1,938 @@
+/* ===== VARIABLES ===== */
+:root {
+  --bps-blue: #0053a0;
+  --bps-blue-dark: #1e3a8a;
+  --bps-blue-light: #3b82f6;
+  --bps-orange: #ff6b35;
+  --bps-green: #10b981;
+  --bps-yellow: #f59e0b;
+  --bps-red: #ef4444;
+  --white: #ffffff;
+  --gray-light: #f8fafc;
+  --gray: #64748b;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 70px;
+  --bottom-nav-height: 70px;
+}
+
+/* ===== SIDEBAR DESKTOP - TETAP ===== */
+.sensus-sidebar {
+  background: linear-gradient(180deg, var(--bps-blue-dark) 0%, var(--bps-blue) 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1040;
+  transition: all 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Collapsed Sidebar */
+.sensus-sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+/* ===== BOTTOM NAVIGATION UNTUK MOBILE ===== */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bottom-nav-height);
+  background: white;
+  box-shadow: 0 -4px 10px rgba(0, 83, 160, 0.1);
+  z-index: 1050;
+  border-top: 1px solid rgba(0, 83, 160, 0.1);
+  padding: 0 10px;
+}
+
+.mobile-nav-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--gray);
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+  flex: 1;
+  max-width: 80px;
+}
+
+.mobile-nav-item.active {
+  color: var(--bps-blue);
+}
+
+.mobile-nav-item.active .mobile-nav-icon {
+  background: rgba(0, 83, 160, 0.1);
+  color: var(--bps-blue);
+}
+
+.mobile-nav-icon {
+  font-size: 22px;
+  margin-bottom: 4px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mobile-nav-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--bps-orange);
+  color: white;
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+/* Tombol Logout Floating untuk Mobile */
+.mobile-logout-btn {
+  display: none;
+  position: fixed;
+  bottom: 85px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  background: var(--bps-red);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1060;
+  transition: all 0.3s ease;
+}
+
+.mobile-logout-btn:hover {
+  transform: scale(1.1);
+  background: #dc2626;
+}
+
+.mobile-logout-btn svg {
+  font-size: 22px;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+@media (max-width: 768px) {
+  /* Sembunyikan sidebar desktop */
+  .sensus-sidebar {
+    display: none !important;
+  }
+  
+  /* Tampilkan bottom navigation */
+  .mobile-bottom-nav {
+    display: block !important;
+  }
+  
+  .mobile-logout-btn {
+    display: flex !important;
+  }
+  
+  /* Content wrapper adjustment */
+  .content-wrapper {
+    margin-left: 0 !important;
+    padding-bottom: calc(var(--bottom-nav-height) + 20px) !important;
+  }
+  
+  /* Navbar adjustment */
+  .sensus-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1040;
+  }
+  
+  /* Hilangkan menu toggle di mobile karena pake bottom nav */
+  .sensus-menu-toggle {
+    display: none !important;
+  }
+  
+  /* Hilangkan fullscreen button */
+  .sensus-fullscreen {
+    display: none !important;
+  }
+  
+  /* Profile dropdown adjustment */
+  .sensus-profile .user-info-nav {
+    display: none !important;
+  }
+  
+  .sensus-profile {
+    padding: 5px 10px !important;
+  }
+  
+  .user-avatar-nav {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 576px) {
+  :root {
+    --bottom-nav-height: 65px;
+  }
+  
+  .mobile-nav-icon {
+    font-size: 20px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .mobile-nav-label {
+    font-size: 10px;
+  }
+  
+  .mobile-logout-btn {
+    width: 45px;
+    height: 45px;
+    bottom: 80px;
+    right: 15px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 375px) {
+  :root {
+    --bottom-nav-height: 60px;
+  }
+  
+  .mobile-nav-container {
+    padding: 0 5px;
+  }
+  
+  .mobile-nav-item {
+    padding: 6px 8px;
+  }
+  
+  .mobile-nav-icon {
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .mobile-nav-label {
+    font-size: 9px;
+  }
+  
+  .mobile-nav-badge {
+    font-size: 7px;
+    padding: 1px 4px;
+  }
+}
+
+/* ===== DARK MODE UNTUK BOTTOM NAV ===== */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+  .mobile-bottom-nav {
+    background: #202020;
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .mobile-nav-item {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .mobile-nav-item.active {
+    color: white;
+  }
+  
+  .mobile-nav-item.active .mobile-nav-icon {
+    background: rgba(59, 130, 246, 0.2);
+    color: white;
+  }
+  
+  .mobile-logout-btn {
+    background: #ef4444;
+  }
+}
+
+/* ===== SISANYA TETAP SAMA (SIDEBAR DESKTOP CSS) ===== */
+/* ... (semua CSS sidebar desktop yang sudah ada tetap dipertahankan) ... */
+
+/* ===== SIDEBAR UTAMA ===== */
+.sensus-sidebar {
+  background: linear-gradient(180deg, var(--bps-blue-dark) 0%, var(--bps-blue) 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1040;
+  transition: all 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Collapsed Sidebar */
+.sensus-sidebar.collapsed {
+  width: 70px;
+}
+
+.sensus-sidebar.collapsed .logo-text,
+.sensus-sidebar.collapsed .brand-text-container,
+.sensus-sidebar.collapsed .sensus-nav-link p,
+.sensus-sidebar.collapsed .sensus-badge,
+.sensus-sidebar.collapsed .new-badge,
+.sensus-sidebar.collapsed .sensus-tagline,
+.sensus-sidebar.collapsed .sensus-watermark,
+.sensus-sidebar.collapsed .brand-subtitle,
+.sensus-sidebar.collapsed .sensus-year-badge {
+  display: none !important;
+}
+
+.sensus-sidebar.collapsed .sensus-nav-link {
+  justify-content: center;
+  padding: 14px 15px !important;
+}
+
+.sensus-sidebar.collapsed .sensus-nav-link .nav-icon {
+  margin-right: 0 !important;
+}
+
+.sensus-sidebar.collapsed .bps-logo {
+  width: 40px;
+  height: 40px;
+}
+
+.sensus-sidebar.collapsed .sensus-logo {
+  justify-content: center;
+}
+
+/* ===== BRAND/HEADER ===== */
+.sensus-brand {
+  padding: 20px 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.sensus-logo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+/* Logo BPS */
+.bps-logo {
+  width: 50px;
+  height: 50px;
+  position: relative;
+}
+
+.bps-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.bps-logo-fallback {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 8px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--bps-blue);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.logo-text {
+  color: white;
+  flex: 1;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  line-height: 1.2;
+  color: white;
+}
+
+.brand-subtitle {
+  font-size: 11px;
+  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Year Badge */
+.sensus-year-badge {
+  background: var(--bps-orange);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* Brand Link */
+.brand-link {
+  display: block;
+  margin-top: 10px;
+}
+
+.brand-text-container {
+  text-align: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sensus-brand-text {
+  color: white !important;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.brand-slogan {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-style: italic;
+}
+
+/* ===== NAVIGATION ===== */
+.sensus-nav {
+  padding: 10px 0;
+}
+
+.sensus-nav-item {
+  margin: 5px 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.sensus-nav-item:hover {
+  transform: translateX(5px);
+}
+
+.sensus-nav-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-left: 4px solid transparent !important;
+  padding: 14px 15px !important;
+  display: flex !important;
+  align-items: center;
+  transition: all 0.3s ease;
+  position: relative;
+  text-decoration: none !important;
+}
+
+.sensus-nav-link:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  border-left: 4px solid var(--bps-blue-light) !important;
+}
+
+.sensus-nav-link.active {
+  background: rgba(59, 130, 246, 0.25) !important;
+  color: white !important;
+  border-left: 4px solid white !important;
+  font-weight: 500;
+}
+
+.sensus-nav-link.active::before {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background: var(--bps-blue-light);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.sensus-nav-link .nav-icon {
+  margin-right: 15px;
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+  color: inherit;
+}
+
+.sensus-nav-link p {
+  margin: 0;
+  flex-grow: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ===== BADGES ===== */
+.sensus-badge {
+  background: var(--bps-green);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  margin-left: 8px;
+  letter-spacing: 0.5px;
+}
+
+.new-badge {
+  background: var(--bps-yellow);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  margin-left: 8px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* ===== DIVIDER ===== */
+.nav-divider {
+  padding: 15px 20px;
+}
+
+.sensus-divider {
+  border-color: rgba(255, 255, 255, 0.15);
+  margin: 0;
+  border-width: 1px;
+}
+
+/* ===== LOGOUT LINK ===== */
+.logout-link {
+  color: #fca5a5 !important;
+}
+
+.logout-link:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-left: 4px solid var(--bps-red) !important;
+}
+
+/* ===== FOOTER ===== */
+.sensus-footer {
+  padding: 20px 15px;
+  background: rgba(0, 0, 0, 0.25);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+  margin-bottom: 0;
+}
+
+.sensus-tagline {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.sensus-tagline p {
+  margin-bottom: 8px;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.sensus-tagline small {
+  font-size: 10px;
+  opacity: 0.7;
+  display: block;
+}
+
+.sensus-watermark {
+  text-align: center;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ===== RESPONSIVE - HANYA TAMBAH MEDIA QUERIES ===== */
+/* TIDAK MENGUBAH WARNA ATAU TAMPILAN ASLI */
+
+/* Large Desktop */
+@media (max-width: 1400px) {
+  .sensus-sidebar {
+    width: 260px;
+  }
+}
+
+/* Desktop */
+@media (max-width: 1200px) {
+  .sensus-sidebar {
+    width: 250px;
+  }
+  
+  .brand-title {
+    font-size: 16px;
+  }
+  
+  .sensus-brand-text {
+    font-size: 13px;
+  }
+  
+  .sensus-nav-link p {
+    font-size: 13px;
+  }
+}
+
+/* Tablet Landscape */
+@media (max-width: 992px) {
+  .sensus-sidebar {
+    width: 240px;
+  }
+  
+  .sensus-logo {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .bps-logo {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .brand-logo-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .sensus-year-badge {
+    align-self: center;
+  }
+  
+  .sensus-nav-link {
+    padding: 12px 15px !important;
+  }
+  
+  .sensus-nav-link .nav-icon {
+    font-size: 16px;
+    width: 20px;
+  }
+  
+  .sensus-nav-link p {
+    font-size: 12px;
+  }
+}
+
+/* Tablet Portrait & Mobile */
+@media (max-width: 768px) {
+  .sensus-sidebar {
+    transform: translateX(-100%);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    width: 280px;
+  }
+  
+  .sensus-sidebar.mobile-show {
+    transform: translateX(0);
+  }
+  
+  .sensus-sidebar.collapsed {
+    width: 280px;
+  }
+  
+  .sensus-sidebar.collapsed .logo-text,
+  .sensus-sidebar.collapsed .brand-text-container,
+  .sensus-sidebar.collapsed .sensus-nav-link p,
+  .sensus-sidebar.collapsed .sensus-badge,
+  .sensus-sidebar.collapsed .new-badge,
+  .sensus-sidebar.collapsed .sensus-tagline,
+  .sensus-sidebar.collapsed .sensus-watermark,
+  .sensus-sidebar.collapsed .brand-subtitle,
+  .sensus-sidebar.collapsed .sensus-year-badge {
+    display: block !important;
+  }
+  
+  .sensus-sidebar.collapsed .sensus-nav-link {
+    justify-content: flex-start;
+  }
+  
+  .sensus-sidebar.collapsed .sensus-nav-link .nav-icon {
+    margin-right: 15px !important;
+  }
+  
+  .sensus-sidebar.collapsed .bps-logo {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .sensus-sidebar.collapsed .sensus-logo {
+    justify-content: flex-start;
+  }
+  
+  .content-wrapper {
+    margin-left: 0 !important;
+  }
+  
+  .content-wrapper.expanded {
+    margin-left: 0 !important;
+  }
+  
+  .sensus-nav-item:hover {
+    transform: none;
+  }
+}
+
+/* Mobile Landscape */
+@media (max-width: 576px) {
+  .sensus-sidebar {
+    width: 260px;
+  }
+  
+  .sensus-brand {
+    padding: 15px;
+  }
+  
+  .bps-logo {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .brand-title {
+    font-size: 16px;
+  }
+  
+  .brand-subtitle {
+    font-size: 10px;
+  }
+  
+  .sensus-year-badge {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  .sensus-brand-text {
+    font-size: 12px;
+  }
+  
+  .brand-slogan {
+    font-size: 10px;
+  }
+  
+  .sensus-nav-item {
+    margin: 4px 12px;
+  }
+  
+  .sensus-nav-link {
+    padding: 12px 15px !important;
+  }
+  
+  .sensus-nav-link .nav-icon {
+    font-size: 16px;
+    width: 20px;
+    margin-right: 12px;
+  }
+  
+  .sensus-nav-link p {
+    font-size: 12px;
+  }
+  
+  .sensus-badge,
+  .new-badge {
+    padding: 3px 8px;
+    font-size: 9px;
+  }
+  
+  .sensus-footer {
+    padding: 15px;
+  }
+  
+  .sensus-tagline {
+    font-size: 11px;
+  }
+  
+  .sensus-watermark {
+    font-size: 10px;
+    padding: 8px;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 375px) {
+  .sensus-sidebar {
+    width: 240px;
+  }
+  
+  .sensus-brand {
+    padding: 12px;
+  }
+  
+  .bps-logo {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .brand-title {
+    font-size: 15px;
+  }
+  
+  .brand-subtitle {
+    font-size: 9px;
+  }
+  
+  .sensus-year-badge {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  
+  .sensus-brand-text {
+    font-size: 11px;
+  }
+  
+  .brand-slogan {
+    font-size: 9px;
+  }
+  
+  .sensus-nav-item {
+    margin: 3px 10px;
+  }
+  
+  .sensus-nav-link {
+    padding: 10px 12px !important;
+  }
+  
+  .sensus-nav-link .nav-icon {
+    font-size: 15px;
+    width: 18px;
+    margin-right: 10px;
+  }
+  
+  .sensus-nav-link p {
+    font-size: 11px;
+  }
+  
+  .sensus-footer {
+    padding: 12px;
+  }
+  
+  .sensus-tagline {
+    font-size: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .sensus-watermark {
+    font-size: 9px;
+    padding: 6px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 320px) {
+  .sensus-sidebar {
+    width: 220px;
+  }
+  
+  .sensus-brand {
+    padding: 10px;
+  }
+  
+  .bps-logo {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .brand-title {
+    font-size: 14px;
+  }
+  
+  .sensus-nav-link {
+    padding: 8px 10px !important;
+  }
+  
+  .sensus-nav-link .nav-icon {
+    font-size: 14px;
+    width: 16px;
+  }
+  
+  .sensus-nav-link p {
+    font-size: 10px;
+  }
+}
+
+/* ===== OVERLAY UNTUK MOBILE ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1039;
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+
+/* ===== DARK MODE SUPPORT - TETAP PERTAHANKAN ===== */
+@media (prefers-color-scheme: dark) {
+  .sensus-sidebar {
+    background: linear-gradient(180deg, #0f1a3d 0%, #003366 100%) !important;
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .sensus-sidebar {
+    display: none;
+  }
+}

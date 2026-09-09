@@ -1,0 +1,53 @@
+/* SENSUS 2026 THEME - OVERRIDE ADMINLTE */
+:root {
+  /* Official Sensus Color Palette */
+  --sensus-blue-dark: #1e3a8a;
+  --sensus-blue-primary: #0053a0;
+  --sensus-blue-light: #dbeafe;
+  --sensus-accent: #3b82f6;
+  --sensus-success: #10b981;
+  --sensus-warning: #f59e0b;
+  --sensus-danger: #ef4444;
+  --sensus-gray: #64748b;
+}
+
+/* Override Bootstrap */
+.btn-primary {
+  background: linear-gradient(135deg, var(--sensus-blue-primary), var(--sensus-blue-dark));
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-top: 4px solid transparent;
+}
+
+.card.border-sensus {
+  border-top-color: var(--sensus-blue-primary);
+}
+
+/* Sensus Badge */
+.badge-sensus {
+  background: linear-gradient(135deg, var(--sensus-blue-primary), var(--sensus-accent));
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Form Styles */
+.form-control-sensus {
+  border: 2px solid var(--sensus-blue-light);
+  border-radius: 8px;
+  padding: 10px 15px;
+}
+
+.form-control-sensus:focus {
+  border-color: var(--sensus-blue-primary);
+  box-shadow: 0 0 0 3px rgba(0, 83, 160, 0.15);
+}

@@ -1,0 +1,381 @@
+.sulteng-map-page {
+  padding: 24px;
+  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 55%),
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.08), transparent 45%),
+    #f6f7fb;
+  min-height: calc(100vh - 60px);
+}
+
+.sulteng-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #0f172a, #1e3a8a 55%, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+  margin-bottom: 20px;
+}
+
+.sulteng-title h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.sulteng-title p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+}
+
+.sulteng-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  padding: 10px 16px;
+  min-width: 110px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.sulteng-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.level-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toggle-btn {
+  border: 1px solid #cbd5f5;
+  background: #f8fafc;
+  color: #1e3a8a;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(120deg, #1e3a8a, #2563eb);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+}
+
+.search-box input {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 14px;
+  min-width: 240px;
+  font-size: 13px;
+  background: #f8fafc;
+}
+
+.label-toggle {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #334155;
+}
+
+.label-toggle input {
+  margin-right: 6px;
+}
+
+.sulteng-map-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+  position: relative;
+}
+
+.sulteng-map {
+  height: 70vh;
+  width: 100%;
+}
+
+.sulteng-map-card.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  border-radius: 0;
+}
+
+.sulteng-map-card.fullscreen .sulteng-map {
+  height: 100vh;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.map-overlay-btn {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.map-overlay-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.25);
+}
+
+.map-legend {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #0f172a;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+.legend-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.kab {
+  background: #0b5fa5;
+  border: 2px solid #0f172a;
+}
+
+.legend-dot.kec {
+  background: #7b2cbf;
+  border: 1px solid #1f2937;
+}
+
+.sulteng-state {
+  padding: 40px;
+  text-align: center;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.sulteng-state.error {
+  color: #dc2626;
+}
+
+.sulteng-label .label-pill {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sulteng-label .label-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px rgba(15, 23, 42, 0.3);
+}
+
+.sulteng-label .label-pill.kab {
+  background: #0b5fa5;
+}
+
+.sulteng-label .label-pill.kec {
+  background: #7b2cbf;
+}
+
+.sulteng-footer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.legend-card,
+.detail-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.legend-card h4,
+.detail-card h4 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.legend-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+}
+
+.legend-swatch.kab {
+  background: #0b5fa5;
+  border: 2px solid #0f172a;
+}
+
+.legend-swatch.kec {
+  background: #7b2cbf;
+  border: 1px solid #1f2937;
+}
+
+.legend-row p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.detail-meta .badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.detail-meta .badge.kab {
+  background: #0b5fa5;
+}
+
+.detail-meta .badge.kec {
+  background: #7b2cbf;
+}
+
+.detail-item {
+  color: #334155;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .sulteng-map-page {
+    padding: 16px;
+  }
+
+  .sulteng-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .sulteng-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  .sulteng-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sulteng-map {
+    height: 60vh;
+  }
+
+  .map-overlay {
+    top: 8px;
+    right: 8px;
+  }
+
+  .map-legend {
+    font-size: 11px;
+  }
+}

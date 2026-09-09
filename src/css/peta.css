@@ -1,0 +1,14 @@
+.peta {
+    display: grid;
+    grid-template-columns: 7fr 1fr; /* Dua kolom dengan lebar yang sama */
+     /* Jarak antara kolom */
+}
+.teks {
+    background-color: #f9f9f9;
+    padding: 20px;
+}
+/* Menyesuaikan lebar peta dengan lebar keterangan */
+.map {
+    width: 100%;
+    gap: 20px;
+}

@@ -1,0 +1,49 @@
+.swal-popup {
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+  font-family: "Saira", "Segoe UI", Arial, sans-serif;
+}
+
+.swal-title {
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.swal-input {
+  border-radius: 10px !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 0.6rem 0.75rem !important;
+}
+
+.swal-confirm {
+  background: #0ea5e9 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 0.55rem 1rem !important;
+  font-weight: 600 !important;
+}
+
+.swal-cancel {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 0.55rem 1rem !important;
+  font-weight: 600 !important;
+}
+
+.swal-confirm:hover {
+  background: #0284c7 !important;
+}
+
+.swal-cancel:hover {
+  background: #e2e8f0 !important;
+}
+
+.swal2-toast {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.16) !important;
+}
