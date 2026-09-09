@@ -4,7 +4,13 @@ const Notifikasi = require('../models/notifikasi.model');
 const User = require('../models/user.model');
 const Presensi = require('../models/presensi.model');
 const sequelize = require('../config/database');
-const { isDateWithin } = require('../utils/businessDate');
+const {
+  BUSINESS_TIMEZONE,
+  isDateWithin,
+} = require('../utils/businessDate');
+const {
+  resolveActiveAssignment,
+} = require('../services/activeAssignment.service');
 const {
   parseTujuanField,
   prepareTujuan,
@@ -188,32 +194,31 @@ const getById = async (req, res) => {
 /* ================= GET AKTIF ================= */
 const getAktifByPegawai = async (req, res) => {
   try {
-    const data = await SuratTugas.findOne({
-      where: {
-        user_id: req.user.id,
-        status: 'AKTIF',
-      },
-      include: [
-        { 
-          model: User, 
-          as: 'user', 
-          attributes: ['id', 'nama', 'nip', 'role', 'unit_kerja'] 
-        },
-        { 
-          model: Daerah, 
-          as: 'daerah', 
-          attributes: ['id', 'nama_daerah', 'latitude', 'longitude', 'radius'] 
-        },
-      ],
-      order: [['id', 'DESC']],
-    });
-
-    if (!data) {
-      return res.status(404).json({ message: 'Tidak ada surat tugas aktif' });
+    const result = await resolveActiveAssignment(req.user.id);
+    if (!result) {
+      return res.status(404).json({
+        message: 'Tidak ada surat tugas aktif hari ini',
+      });
     }
 
-    res.json(data);
+    const data = result.surat.toJSON();
+    res.json({
+      ...data,
+      tujuan: data.tujuan || [],
+      tujuan_aktif: typeof result.tujuanAktif.toJSON === 'function'
+        ? result.tujuanAktif.toJSON()
+        : result.tujuanAktif,
+      tanggal_server: result.tanggalServer,
+      timezone: BUSINESS_TIMEZONE,
+    });
   } catch (err) {
+    if (err.code === 'ACTIVE_ASSIGNMENT_CONFLICT') {
+      return res.status(409).json({
+        message: err.message,
+        code: err.code,
+        assignment_ids: err.assignmentIds,
+      });
+    }
     console.error('Error getAktifByPegawai:', err);
     res.status(500).json({ message: err.message });
   }
