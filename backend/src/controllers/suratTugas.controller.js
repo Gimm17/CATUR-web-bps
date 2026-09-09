@@ -3,6 +3,7 @@ const Daerah = require('../models/daerah.model');
 const Notifikasi = require('../models/notifikasi.model');
 const User = require('../models/user.model');
 const Presensi = require('../models/presensi.model');
+const SuratTugasTujuan = require('../models/suratTugasTujuan.model');
 const sequelize = require('../config/database');
 const {
   BUSINESS_TIMEZONE,
@@ -16,6 +17,16 @@ const {
   prepareTujuan,
   replaceTujuan,
 } = require('../services/suratTugasTujuan.service');
+
+const tujuanInclude = {
+  model: SuratTugasTujuan,
+  as: 'tujuan',
+  include: [{
+    model: Daerah,
+    as: 'daerah',
+    attributes: ['id', 'nama_daerah', 'latitude', 'longitude', 'radius', 'titik_lokasi'],
+  }],
+};
 
 /* ================= CREATE ================= */
 const createSuratTugas = async (req, res) => {
@@ -149,8 +160,12 @@ const getAll = async (req, res) => {
           as: 'daerah', 
           attributes: ['id', 'nama_daerah', 'latitude', 'longitude', 'radius'] 
         },
+        tujuanInclude,
       ],
-      order: [['tanggal_mulai', 'DESC']],
+      order: [
+        ['tanggal_mulai', 'DESC'],
+        [{ model: SuratTugasTujuan, as: 'tujuan' }, 'urutan', 'ASC'],
+      ],
     });
 
     console.log(`✅ Ditemukan ${data.length} surat tugas`);
@@ -177,7 +192,9 @@ const getById = async (req, res) => {
           as: 'daerah', 
           attributes: ['id', 'nama_daerah', 'latitude', 'longitude', 'radius'] 
         },
-      ]
+        tujuanInclude,
+      ],
+      order: [[{ model: SuratTugasTujuan, as: 'tujuan' }, 'urutan', 'ASC']],
     });
     
     if (!data) {
@@ -252,8 +269,12 @@ const getByUserId = async (req, res) => {
           as: 'daerah', 
           attributes: ['id', 'nama_daerah', 'latitude', 'longitude', 'radius'] 
         },
+        tujuanInclude,
       ],
-      order: [['tanggal_mulai', 'DESC']],
+      order: [
+        ['tanggal_mulai', 'DESC'],
+        [{ model: SuratTugasTujuan, as: 'tujuan' }, 'urutan', 'ASC'],
+      ],
     });
 
     console.log(`✅ Ditemukan ${data.length} surat tugas untuk user ${user_id}`);

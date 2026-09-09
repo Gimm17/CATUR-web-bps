@@ -9,7 +9,43 @@ import {
   updateSuratTugas,
 } from '../../services/suratTugas.service';
 import AdminLayout from '../../layouts/AdminLayout';
+import TujuanScheduleEditor from '../../features/surat-tugas/TujuanScheduleEditor';
+import {
+  createEmptyTujuan,
+  getTujuanScheduleErrors,
+  hasTujuanScheduleErrors,
+  serializeTujuan,
+} from '../../features/surat-tugas/tujuanSchedule';
 import '../../css/surat.tugas.css';
+
+const toEditorTujuan = (surat) => {
+  const rows = Array.isArray(surat.tujuan) && surat.tujuan.length > 0
+    ? [...surat.tujuan].sort((a, b) => a.urutan - b.urutan)
+    : [{
+        daerah_id: surat.daerah_id,
+        tanggal_mulai: surat.tanggal_mulai,
+        tanggal_selesai: surat.tanggal_selesai,
+      }];
+
+  return rows.map((row, index) => ({
+    key: `edit-${surat.id}-${row.id || index}`,
+    daerah_id: String(row.daerah_id || ''),
+    tanggal_mulai: String(row.tanggal_mulai || '').slice(0, 10),
+    tanggal_selesai: String(row.tanggal_selesai || '').slice(0, 10),
+  }));
+};
+
+const getDisplayTujuan = (surat) => {
+  if (Array.isArray(surat.tujuan) && surat.tujuan.length > 0) {
+    return [...surat.tujuan].sort((a, b) => a.urutan - b.urutan);
+  }
+  return [{
+    daerah: surat.daerah,
+    daerah_tujuan: surat.daerah?.nama_daerah,
+    tanggal_mulai: surat.tanggal_mulai,
+    tanggal_selesai: surat.tanggal_selesai,
+  }];
+};
 
 const SuratTugasCreate = () => {
   const [pegawai, setPegawai] = useState([]);
@@ -21,15 +57,13 @@ const SuratTugasCreate = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [daerahFilter, setDaerahFilter] = useState('all');
+  const [tujuanRows, setTujuanRows] = useState([createEmptyTujuan()]);
+  const [showTujuanErrors, setShowTujuanErrors] = useState(false);
 
   // Tambah kolom baru dengan input biasa
   const [form, setForm] = useState({
     nomor_surat: '',
     user_id: '',
-    daerah_id: '',
-    tanggal_mulai: '',
-    tanggal_selesai: '',
     nama_kegiatan: '', // Kolom baru
     pembebanan_biaya: '', // Kolom baru - INPUT BIASA
     tujuan_kegiatan: '', // Kolom baru - INPUT BIASA
@@ -77,13 +111,12 @@ const SuratTugasCreate = () => {
     setForm({
       nomor_surat: s.nomor_surat,
       user_id: s.user_id,
-      daerah_id: s.daerah_id,
-      tanggal_mulai: s.tanggal_mulai.slice(0, 10),
-      tanggal_selesai: s.tanggal_selesai.slice(0, 10),
       nama_kegiatan: s.nama_kegiatan || '',
       pembebanan_biaya: s.pembebanan_biaya || '',
       tujuan_kegiatan: s.tujuan_kegiatan || '',
     });
+    setTujuanRows(toEditorTujuan(s));
+    setShowTujuanErrors(false);
     setFile(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -93,13 +126,12 @@ const SuratTugasCreate = () => {
     setForm({
       nomor_surat: '',
       user_id: '',
-      daerah_id: '',
-      tanggal_mulai: '',
-      tanggal_selesai: '',
       nama_kegiatan: '',
       pembebanan_biaya: '',
       tujuan_kegiatan: '',
     });
+    setTujuanRows([createEmptyTujuan()]);
+    setShowTujuanErrors(false);
     setFile(null);
     setError('');
   };
@@ -110,9 +142,11 @@ const SuratTugasCreate = () => {
     setError('');
     setSuccessMessage('');
 
-    // Validasi tanggal
-    if (new Date(form.tanggal_mulai) > new Date(form.tanggal_selesai)) {
-      setError('Tanggal mulai tidak boleh lebih besar dari tanggal selesai');
+    const tujuanErrors = getTujuanScheduleErrors(tujuanRows);
+    setShowTujuanErrors(true);
+    if (hasTujuanScheduleErrors(tujuanErrors)) {
+      const firstMessage = Object.values(tujuanErrors)[0];
+      setError(Object.values(firstMessage)[0]);
       return;
     }
 
@@ -138,17 +172,21 @@ const SuratTugasCreate = () => {
       setIsSubmitting(true);
 
       if (editId) {
-        await updateSuratTugas(editId, form);
+        await updateSuratTugas(editId, {
+          ...form,
+          tujuan: JSON.parse(serializeTujuan(tujuanRows)),
+        });
         setSuccessMessage('Surat tugas berhasil diperbarui');
       } else {
-        if (!file) {
+        if (!file && !import.meta.env.DEV) {
           setError('File surat wajib diupload');
           return;
         }
 
         const formData = new FormData();
         Object.keys(form).forEach((k) => formData.append(k, form[k]));
-        formData.append('file_surat', file);
+        formData.append('tujuan', serializeTujuan(tujuanRows));
+        if (file) formData.append('file_surat', file);
 
         await createSuratTugas(formData);
         setSuccessMessage('Surat tugas berhasil dibuat');
@@ -184,20 +222,19 @@ const SuratTugasCreate = () => {
     setShowDeleteConfirm(null);
   };
 
-  const filteredDaerah = daerah.filter((d) => {
-    if (daerahFilter === 'all') return true;
-    return String(d.titik_lokasi || '').toLowerCase() === daerahFilter;
-  });
-
   // Filter surat tugas
-  const filteredSuratTugas = suratTugas.filter(s =>
-    s.nomor_surat.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.user?.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.daerah?.nama_daerah.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredSuratTugas = suratTugas.filter(s => {
+    const destinationNames = getDisplayTujuan(s)
+      .map((item) => item.daerah?.nama_daerah || item.daerah_tujuan || '')
+      .join(' ')
+      .toLowerCase();
+    return s.nomor_surat.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.user?.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    destinationNames.includes(searchTerm.toLowerCase()) ||
     (s.nama_kegiatan && s.nama_kegiatan.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (s.pembebanan_biaya && s.pembebanan_biaya.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (s.tujuan_kegiatan && s.tujuan_kegiatan.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+    (s.tujuan_kegiatan && s.tujuan_kegiatan.toLowerCase().includes(searchTerm.toLowerCase()));
+  });
 
   // Format tanggal Indonesia
   const formatDate = (dateString) => {
@@ -213,6 +250,11 @@ const SuratTugasCreate = () => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return `${diffDays} hari`;
   };
+
+  const formatShortDate = (dateString) => new Date(`${String(dateString).slice(0, 10)}T00:00:00Z`)
+    .toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+  const tujuanErrors = getTujuanScheduleErrors(tujuanRows);
 
   // Generate nomor surat otomatis
   const generateNomorSurat = () => {
@@ -621,75 +663,16 @@ Ground Check Pra-prelist SBR SE2026"
                   </div>
                 </div>
                 
-                {/* Daerah Tujuan */}
-                <div className="se-col-md-6">
-                  <div className="se-form-group">
-                    <label className="se-form-label">
-                      <i className="bi bi-geo-alt"></i>
-                      WILAYAH TUGAS
-                    </label>
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                      <select
-                        className="se-form-control"
-                        value={daerahFilter}
-                        onChange={(e) => setDaerahFilter(e.target.value)}
-                      >
-                        <option value="all">Semua Wilayah</option>
-                        <option value="kabupaten">Kabupaten/Kota</option>
-                        <option value="kecamatan">Kecamatan</option>
-                      </select>
-                    </div>
-                    <select
-                      name="daerah_id"
-                      className="se-form-control"
-                      value={form.daerah_id}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="">-- Pilih Wilayah --</option>
-                      {filteredDaerah.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.nama_daerah}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                
-                {/* Tanggal Mulai */}
-                <div className="se-col-md-6">
-                  <div className="se-form-group">
-                    <label className="se-form-label">
-                      <i className="bi bi-calendar-event"></i>
-                      TANGGAL MULAI
-                    </label>
-                    <input
-                      type="date"
-                      name="tanggal_mulai"
-                      className="se-form-control"
-                      value={form.tanggal_mulai}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                {/* Tanggal Selesai */}
-                <div className="se-col-md-6">
-                  <div className="se-form-group">
-                    <label className="se-form-label">
-                      <i className="bi bi-calendar-check"></i>
-                      TANGGAL SELESAI
-                    </label>
-                    <input
-                      type="date"
-                      name="tanggal_selesai"
-                      className="se-form-control"
-                      value={form.tanggal_selesai}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+                <div className="se-col-12">
+                  <TujuanScheduleEditor
+                    value={tujuanRows}
+                    daerah={daerah}
+                    onChange={(nextRows) => {
+                      setTujuanRows(nextRows);
+                      if (error) setError('');
+                    }}
+                    errors={showTujuanErrors ? tujuanErrors : {}}
+                  />
                 </div>
                 
                 {/* File Upload (hanya untuk create) */}
@@ -699,6 +682,7 @@ Ground Check Pra-prelist SBR SE2026"
                       <label className="se-form-label">
                         <i className="bi bi-paperclip"></i>
                         DOKUMEN SURAT (PDF)
+                        {import.meta.env.DEV ? ' — OPSIONAL DI LOCAL' : ''}
                       </label>
                       <div 
                         className="se-file-upload" 
@@ -717,7 +701,7 @@ Ground Check Pra-prelist SBR SE2026"
                           accept="application/pdf"
                           className="d-none"
                           onChange={(e) => setFile(e.target.files[0])}
-                          required
+                          required={!import.meta.env.DEV}
                         />
                         {file && (
                           <div style={{ marginTop: '15px' }}>
@@ -780,10 +764,18 @@ Ground Check Pra-prelist SBR SE2026"
                       nama_kegiatan: 'Kegiatan Ground Check Pra-prelist SBR SE2026',
                       tujuan_kegiatan: 'Melakukan supervisi dan ground check Sensus Ekonomi 2026 di wilayah Kabupaten Parigi Moutong',
                       pembebanan_biaya: 'GG 2902 BMA 006 529 A 524111 1',
-                      nomor_surat: generateNomorSurat(),
-                      tanggal_mulai: new Date().toISOString().split('T')[0],
-                      tanggal_selesai: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                      nomor_surat: generateNomorSurat()
                     });
+                    const today = new Date().toISOString().split('T')[0];
+                    const finish = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                      .toISOString().split('T')[0];
+                    setTujuanRows([{
+                      ...createEmptyTujuan(),
+                      daerah_id: tujuanRows[0]?.daerah_id || '',
+                      tanggal_mulai: today,
+                      tanggal_selesai: finish,
+                    }]);
+                    setShowTujuanErrors(false);
                   }}
                   className="se-btn se-btn-outline"
                   title="Isi contoh data"
@@ -854,6 +846,7 @@ Ground Check Pra-prelist SBR SE2026"
                     </thead>
                     <tbody>
                       {filteredSuratTugas.map((s) => {
+                        const displayTujuan = getDisplayTujuan(s);
                         return (
                           <tr key={s.id}>
                             <td style={{ fontWeight: '600', color: 'var(--se-dark-blue)' }}>
@@ -908,9 +901,28 @@ Ground Check Pra-prelist SBR SE2026"
                               ) : '-'}
                             </td>
                             <td>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                                 <i className="bi bi-geo-alt" style={{ color: 'var(--se-blue)' }}></i>
-                                <span>{s.daerah?.nama_daerah}</span>
+                                <div>
+                                  {displayTujuan.map((item, index) => (
+                                    <div key={item.id || `${s.id}-${index}`}>
+                                      {index > 0 && (
+                                        <span aria-hidden="true" style={{ color: '#6c757d', marginRight: '6px' }}>
+                                          →
+                                        </span>
+                                      )}
+                                      <span>{item.daerah?.nama_daerah || item.daerah_tujuan || '-'}</span>
+                                      <small style={{ color: '#6c757d', marginLeft: '6px' }}>
+                                        ({formatShortDate(item.tanggal_mulai)}–{formatShortDate(item.tanggal_selesai)})
+                                      </small>
+                                    </div>
+                                  ))}
+                                  {displayTujuan.length > 1 && (
+                                    <span className="se-badge-status se-badge-berjalan" style={{ marginTop: '6px' }}>
+                                      {displayTujuan.length} tujuan
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </td>
                             <td>

@@ -120,6 +120,19 @@ test('POST dua tujuan menyimpan header keseluruhan dan child berurutan', {
     children.map((child) => [child.daerah_id, child.urutan]),
     [[daerahPertama.id, 1], [daerahKedua.id, 2]]
   );
+
+  const listResponse = await fetch(`http://127.0.0.1:${address.port}/api/surat-tugas`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const listPayload = await listResponse.json();
+  const listedSurat = listPayload.find((item) => item.id === payload.data.id);
+
+  assert.equal(listResponse.status, 200, JSON.stringify(listPayload));
+  assert.deepEqual(
+    listedSurat.tujuan.map((item) => [item.daerah_id, item.urutan]),
+    [[daerahPertama.id, 1], [daerahKedua.id, 2]]
+  );
+  assert.equal(listedSurat.tujuan[0].daerah.nama_daerah, daerahPertama.nama_daerah);
 });
 
 test('pegawai tidak dapat membuat surat tugas', {
