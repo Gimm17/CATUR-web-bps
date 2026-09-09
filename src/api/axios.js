@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://catur.bpssulteng.id/api',
+  baseURL: (import.meta.env.VITE_API_BASE_URL || 'https://catur.bpssulteng.id/api')
+    .replace(/\/+$/, ''),
 });
 
 api.interceptors.request.use((config) => {
