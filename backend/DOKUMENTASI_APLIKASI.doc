@@ -1,0 +1,205 @@
+﻿DOKUMENTASI APLIKASI PRESENSI PERJALANAN DINAS
+=================================================
+
+Tanggal: 13 Maret 2026
+
+
+1. RINGKASAN
+-----------
+Aplikasi ini digunakan untuk presensi perjalanan dinas pegawai berbasis lokasi
+dan foto. Pegawai melakukan tagging lokasi + foto, lalu mengisi laporan harian
+dalam batas waktu 24 jam. Atasan dapat melakukan verifikasi/persetujuan, dan
+bagian keuangan memproses pencairan dana berdasarkan laporan.
+
+
+2. FITUR UTAMA
+-------------
+- Tagging lokasi berbasis GPS dengan radius target.
+- Upload foto presensi (selfie di lokasi) dengan timestamp/overlay informasi.
+- Laporan kegiatan harian (rich text) dengan batas waktu 24 jam.
+- Rekap presensi dan status laporan per hari.
+- Upload tanda tangan pegawai dan bukti pembayaran.
+- Generate laporan akhir (PDF & Word) dan simpan ke Google Drive.
+- Persetujuan laporan oleh atasan + tanda tangan atasan.
+- Manajemen data pegawai, surat tugas, notifikasi, dan keuangan.
+
+
+3. TEKNOLOGI YANG DIGUNAKAN
+---------------------------
+Backend:
+- Node.js + Express
+- PostgreSQL + Sequelize
+- PDFKit (PDF), docx (Word)
+- Google Drive API (upload file)
+- Multer (upload file)
+- Jimp (stamping foto presensi)
+
+Frontend:
+- React (folder: Front-end Presensi)
+- Leaflet (peta lokasi)
+- Quill (rich text editor)
+
+
+4. STRUKTUR FOLDER PENTING (BACKEND)
+-----------------------------------
+- src/app.js                : Inisialisasi Express + routing
+- src/controllers           : Logic utama endpoint
+- src/routes                : Definisi endpoint API
+- src/middlewares           : Auth, upload, stamping, dll
+- src/models                : Model Sequelize
+- src/utils                 : PDF/Word generator, Google Drive, helper
+- uploads/                  : File sementara (pdf, word, presensi, ttd, bukti)
+
+
+5. KONFIGURASI ENV (.env)
+------------------------
+Database:
+- DB_NAME
+- DB_USER
+- DB_PASSWORD
+- DB_HOST
+- DB_PORT
+
+Auth:
+- JWT_SECRET
+
+Google Drive:
+- GOOGLE_DRIVE_FOLDER_ID (opsional, default sudah disediakan)
+- GOOGLE_REFRESH_TOKEN (opsional jika token.json tidak ada)
+- GOOGLE_DRIVE_SAMPLE_FILE_ID (opsional)
+
+Tambahan:
+- SOFFICE_PATH (opsional, hanya jika memakai pdfToDocx)
+
+File kredensial Google Drive:
+- credential.json (wajib di root project)
+- token.json (opsional jika GOOGLE_REFRESH_TOKEN tersedia)
+
+
+6. CARA MENJALANKAN
+------------------
+Backend:
+1) npm install
+2) node server.js
+   (atau gunakan nodemon jika tersedia)
+
+Frontend:
+- Masuk folder `Front-end Presensi`
+- Jalankan `npm install`
+- Jalankan script sesuai `package.json` frontend
+
+
+7. ALUR PRESENSI PEGAWAI (RINGKAS)
+----------------------------------
+1) Pegawai memilih surat tugas aktif.
+2) Aplikasi menampilkan target lokasi & radius.
+3) Pegawai melakukan tagging lokasi + upload foto.
+4) Foto diberi timestamp (daerah, koordinat, hari, jam, waktu).
+5) Pegawai mengisi laporan harian (maksimal 24 jam setelah tagging).
+6) Atasan dapat menyetujui laporan & menandatangani.
+7) Laporan akhir bisa diunduh (PDF/Word).
+
+
+8. DAFTAR ENDPOINT API
+----------------------
+Base URL: http://localhost:3000
+
+AUTH
+- POST /api/auth/login
+- POST /api/auth/register
+
+PROFIL & MANAJEMEN USER
+- GET  /api/user/profil
+- PUT  /api/user/profil
+- PUT  /api/user/password
+- GET  /api/user/all          (admin)
+- POST /api/user              (admin)
+- PUT  /api/user/:id          (admin)
+- DELETE /api/user/:id        (admin)
+
+DATA PEGAWAI
+- GET /api/getpegawai
+- GET /api/getpegawai/all
+- GET /api/getpegawai/count
+- GET /api/getpegawai/:id
+
+PRESENSI
+- POST /api/presensi/absen     (upload foto + lokasi)
+- PUT  /api/presensi/laporan   (update laporan harian)
+- GET  /api/presensi/status    (cek status presensi hari ini)
+
+SURAT TUGAS
+- POST /api/surat-tugas
+- GET  /api/surat-tugas
+- GET  /api/surat-tugas/aktif
+- GET  /api/surat-tugas/user/:user_id
+- GET  /api/surat-tugas/stats
+- GET  /api/surat-tugas/:id
+- PUT  /api/surat-tugas/:id
+- DELETE /api/surat-tugas/:id
+
+LAPORAN PERJALANAN (PEGAWAI)
+- GET  /api/perjalanan
+- POST /api/perjalanan/kirim
+- POST /api/perjalanan/ttd-pegawai
+- GET  /api/perjalanan/ttd-pegawai
+- POST /api/perjalanan/bukti-pembayaran
+- GET  /api/perjalanan/bukti-pembayaran
+- DELETE /api/perjalanan/bukti-pembayaran
+
+LAPORAN ATASAN
+- GET  /api/laporan
+- GET  /api/progres-pegawai
+- POST /api/laporan/:id/approve
+
+KEUANGAN
+- GET  /api/keuangan/laporan
+- PUT  /api/keuangan/kembalikan/:id
+- PUT  /api/keuangan/teruskan/:id
+- PUT  /api/keuangan/cairkan/:id   (upload bukti transfer)
+- GET  /api/keuangan/bukti-transfer/:filename
+
+DAERAH
+- POST /api/daerah
+- GET  /api/daerah
+- GET  /api/daerah/count
+- GET  /api/daerah/:id
+- PUT  /api/daerah/:id
+- DELETE /api/daerah/:id
+
+NOTIFIKASI
+- GET  /api/notifikasi
+- PUT  /api/notifikasi/:id/read
+
+FILE PROXY & DRIVE IMAGE
+- GET /api/files/proxy?url=...
+- GET /api/drive/image/:fileId
+- GET /api/drive/image/contoh
+
+STATIC FILES
+- GET /uploads/... (akses file yang sudah disimpan di folder uploads)
+
+
+9. OUTPUT LAPORAN
+-----------------
+- PDF disimpan ke: uploads/pdf
+- Word disimpan ke: uploads/word
+- File juga diunggah ke Google Drive jika konfigurasi aktif.
+
+
+10. CATATAN KEAMANAN & AKSES
+----------------------------
+- Semua endpoint utama dilindungi JWT (auth middleware).
+- Akses atasan memerlukan middleware isAtasan.
+- Akses admin memerlukan middleware isAdmin.
+
+
+11. TROUBLESHOOTING SINGKAT
+---------------------------
+- Jika upload ke Drive gagal, cek credential.json dan token.json.
+- Jika DB gagal connect, pastikan konfigurasi .env benar.
+- Jika foto presensi tidak tampil, pastikan file tersimpan di Drive
+  atau uploads/presensi dan URL dapat diakses.
+
+
+DOKUMENTASI INI DIBUAT UNTUK KEBUTUHAN INTERNAL PROYEK.

@@ -22,3 +22,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Backend runtime and credentials (the backend source is versioned in this repo).
+backend/node_modules/
+backend/.npm-cache/
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/credential*.json
+backend/credentials*.json
+backend/token*.json
+backend/uploads/
+backend/logs/
+backend/daerah.sql
+
+# Legacy duplicate clients and packaged artifacts kept locally for recovery.
+backend/Front-end Presensi/
+backend/Front-end Presensi Flutter/
+backend/*.rar
+backend/*.apk
+backend/*.aab

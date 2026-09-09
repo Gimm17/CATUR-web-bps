@@ -1,0 +1,521 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: A4; margin: 2.5cm 2cm 2.5cm 2cm; }
+
+    /* =========================================================
+       CATATAN PENTING:
+       Tidak ada definisi @font-face di sini.
+       Font akan dikirim langsung oleh Python saat generate PDF.
+       ========================================================= */
+
+    /* Kita tetap menggunakan nama font family yang sama */
+    body { font-family: 'NotulensiSerif', serif; font-size: 12pt; }
+
+    table { width: 100%; border-collapse: collapse; }
+    td, th { border: 1px solid #000; padding: 6px; vertical-align: top; }
+
+    /* ====== IKU TABLE ====== */
+    .tbl-iku { table-layout: fixed; font-size: 10.5pt; }
+    .tbl-iku th { background: #f0f0f0; text-align: center; vertical-align: middle; }
+    .tbl-iku .section { background: #e6e6e6; font-weight: bold; text-align: center; }
+    .tbl-iku .label { font-weight: bold; }
+    .tbl-iku .center { text-align: center; }
+    .tbl-iku .num { text-align: center; white-space: normal; line-height: 1.2; }
+    .num .unit { display: block; font-size: 9pt; margin-top: 2px; }
+
+    .sasaran-mini { width: 100%; border-collapse: collapse; }
+    .sasaran-mini td { border: none; padding: 0; }
+    .sasaran-mini .colon { width: 12px; text-align: center; }
+
+    .tbl-anggaran { table-layout: fixed; }
+
+    .no-border td { border: none; padding: 2px; }
+    .center { text-align: center; }
+    .money { white-space: nowrap; text-align: right; }
+
+    .upaya-text {
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      line-height: 1.35;
+      text-align: justify;
+    }
+
+    .ttd-wrap { margin-top: 18px; }
+
+    .ttd-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .ttd-table td { border: none; padding: 0; vertical-align: top; }
+
+    .ttd-left  { width: 50%; text-align: center; padding-left: 28px; padding-right: 14px; }
+    .ttd-right { width: 50%; text-align: center; padding-left: 14px; padding-right: 28px; }
+
+    .ttd-title { margin: 0 0 2px 0; }
+    .ttd-role  { margin: 0 0 80px 0; text-decoration: underline; font-weight: bold; }
+    .ttd-name  { margin: 0; font-weight: bold; }
+
+    .dh-head { width: 100%; border-collapse: collapse; }
+    .dh-head td { border: none; padding: 0; }
+    .dh-formula { text-align: center; font-style: italic; font-size: 12pt; }
+
+    .frac { display: inline-block; text-align: center; vertical-align: middle; }
+    .frac .top { display: block; border-bottom: 1px solid #000; padding: 0 4px; }
+    .frac .bottom { display: block; padding: 0 4px; }
+
+    .dh-ket { margin: 6px 0 10px 0; }
+    .dh-ket p { margin: 2px 0; }
+
+    .basis-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .basis-table th, .basis-table td { border: 1px solid #000; padding: 6px; vertical-align: top; }
+    .basis-table th { text-align: center; font-style: italic; }
+    .basis-table ol { margin: 0; padding-left: 18px; }
+  </style>
+</head>
+<body>
+
+<h3 class="center">NOTULENSI RAPAT MONITORING CAPAIAN KINERJA</h3>
+<h4 class="center">TRIWULAN {{ tw }} TAHUN {{ tahun }}</h4>
+<h4 class="center">{{ unit_kerja }}</h4>
+
+<table class="no-border">
+  <tr><td width="25%">Agenda Pembahasan</td><td>: {{ agenda }}</td></tr>
+  <tr><td>Hari/Tanggal</td><td>: {{ hari_tanggal }}</td></tr>
+  <tr><td>Waktu</td><td>: {{ waktu }}</td></tr>
+  <tr><td>Tempat</td><td>: {{ tempat }}</td></tr>
+  <tr><td>Pimpinan Rapat</td><td>: {{ pimpinan }}</td></tr>
+</table>
+
+<br>
+<b>Penjelasan Kinerja Triwulan {{ tw }}</b>
+<br><br>
+
+{% for iku in ikus %}
+<table class="tbl-iku">
+  <colgroup>
+    <col style="width: 9%;">
+    <col style="width: 30%;">
+    <col style="width: 12%;">
+    <col style="width: 10%;">
+    <col style="width: 10%;">
+    <col style="width: 17%;">
+    <col style="width: 12%;">
+  </colgroup>
+
+  <tr>
+    <td colspan="7">
+      <table class="sasaran-mini">
+        <tr>
+          <td class="label">Sasaran</td>
+          <td class="colon">:</td>
+          <td><b>{{ iku.sasaran_nama|default("", true) }}</b></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <th rowspan="2">No.</th>
+    <th rowspan="2">Indikator Kinerja</th>
+    <th rowspan="2">Target PK<br>{{ tahun }}</th>
+    <th colspan="3">Triwulan {{ tw }}</th>
+    <th rowspan="2">Capaian<br>Terhadap<br>Target PK</th>
+  </tr>
+  <tr>
+    <th>Target</th>
+    <th>Realisasi</th>
+    <th>Capaian Terhadap<br>Target Triwulanan</th>
+  </tr>
+
+  <tr>
+    <td class="center">{{ iku.iku_kode|default("", true) }}</td>
+    <td>{{ iku.iku_nama|default("", true) }}</td>
+
+    <td class="num">
+      {% set unit = (iku.satuan|string)|trim %}
+      {% if unit|lower in ["persen", "%"] %}
+        {{ iku.target_pk | fmt_num }}%
+      {% else %}
+        <div>{{ iku.target_pk | fmt_num }}</div>
+        {% if unit != "" %}<span class="unit">{{ unit }}</span>{% endif %}
+      {% endif %}
+    </td>
+
+    <td class="num">
+      {% set unit = (iku.satuan|string)|trim %}
+      {% if unit|lower in ["persen", "%"] %}
+        {{ iku.target_tw | fmt_num }}%
+      {% else %}
+        <div>{{ iku.target_tw | fmt_num }}</div>
+        {% if unit != "" %}<span class="unit">{{ unit }}</span>{% endif %}
+      {% endif %}
+    </td>
+
+    <td class="num">
+      {% set unit = (iku.satuan|string)|trim %}
+      {% if unit|lower in ["persen", "%"] %}
+        {{ iku.realisasi_tw | fmt_num }}%
+      {% else %}
+        <div>{{ iku.realisasi_tw | fmt_num }}</div>
+        {% if unit != "" %}<span class="unit">{{ unit }}</span>{% endif %}
+      {% endif %}
+    </td>
+
+    <td class="num">
+      {% set unit = (iku.satuan|string)|trim %}
+      {% if unit|lower in ["persen", "%"] %}
+        {{ iku.capaian_tw | fmt_num }}%
+      {% else %}
+        <div>{{ iku.capaian_tw | fmt_num }}</div>
+        {% if unit != "" %}<span class="unit">{{ unit }}</span>{% endif %}
+      {% endif %}
+    </td>
+
+    <td class="num">
+      {% set unit = (iku.satuan|string)|trim %}
+      {% if unit|lower in ["persen", "%"] %}
+        {{ iku.capaian_pk | fmt_num }}%
+      {% else %}
+        <div>{{ iku.capaian_pk | fmt_num }}</div>
+        {% if unit != "" %}<span class="unit">{{ unit }}</span>{% endif %}
+      {% endif %}
+    </td>
+  </tr>
+
+  <tr><td colspan="7" class="section">Analisis Capaian Kinerja</td></tr>
+  <tr>
+    <td colspan="2" class="label">Kendala:</td>
+    <td colspan="5">{{ iku.kendala|default("", true) }}</td>
+  </tr>
+  <tr>
+    <td colspan="2" class="label">Solusi:</td>
+    <td colspan="5">{{ iku.solusi|default("", true) }}</td>
+  </tr>
+
+  <tr>
+    <td colspan="4" class="label">Rencana Tindak Lanjut (RTL):</td>
+    <td colspan="3" class="label">PIC Tindak Lanjut:</td>
+  </tr>
+  <tr>
+    <td colspan="4" rowspan="3">{{ iku.rtl|default("", true) }}</td>
+    <td colspan="3">{{ iku.pic|default("", true) }}</td>
+  </tr>
+  <tr>
+    <td colspan="3" class="label">Batas Waktu Tindak Lanjut:</td>
+  </tr>
+  <tr>
+    <td colspan="3">{{ iku.batas_waktu|default("", true) }}</td>
+  </tr>
+
+  <tr><td colspan="7" class="section">Dasar Hitung/Bukti Dukung/Lainnya</td></tr>
+
+{% if iku.show_dasar_hitung %}
+    <tr>
+      <td colspan="7">
+
+        {# =======================================================
+           1. RATIO_LIST (1.1.1.1 s.d 1.4.1.3) - Default Logic
+           ======================================================= #}
+        {% if iku.dh_type == "RATIO_LIST" %}
+          <table class="dh-head">
+            <tr>
+              <td class="label" style="width:25%;">Dasar Hitung:</td>
+              <td class="dh-formula" style="width:75%;">
+                y =
+                <span class="frac"><span class="top">n</span><span class="bottom">N</span></span>
+                x 100%
+              </td>
+            </tr>
+          </table>
+          <div class="dh-ket">
+            <p><span class="label">Keterangan:</span></p>
+            <p><i>y</i> = {{ iku.y_desc }}</p>
+            <p><i>n</i> = {{ iku.n_desc }}</p>
+            <p><i>N</i> = {{ iku.N_desc }}</p>
+          </div>
+          <div style="text-align:center; margin: 6px 0 12px 0;">
+            <i>Capaian TW {{ tw }} {{ tahun }}</i> =
+            <span class="frac"><span class="top">{{ iku.dh_n }}</span><span class="bottom">{{ iku.dh_N }}</span></span>
+            x 100%
+            {% if iku.dh_pct != "" %} = {{ iku.dh_pct | fmt_num }}% {% endif %}
+          </div>
+          <p class="label" style="margin: 0 0 6px 0;">Basis Data:</p>
+          <table class="basis-table">
+            <colgroup><col style="width:50%;"><col style="width:50%;"></colgroup>
+            <tr><th>n = {{ iku.dh_n }}</th><th>N = {{ iku.dh_N }}</th></tr>
+            <tr>
+              <td><ol>{% for item in iku.dh_items_n %}<li>{{ item }}</li>{% endfor %}</ol></td>
+              <td><ol>{% for item in iku.dh_items_N %}<li>{{ item }}</li>{% endfor %}</ol></td>
+            </tr>
+          </table>
+
+        {# =======================================================
+           2. TPSS (2.5.1.1) - Sesuai Screenshot Formula Sigma
+           ======================================================= #}
+        {% elif iku.dh_type == "TPSS" %}
+          <table class="dh-head">
+            <tr>
+              <td class="label" style="width:25%;">Dasar Hitung (Formula):</td>
+              <td class="dh-formula" style="width:75%;">
+                TPSS = &sum; w<sub>i</sub>x<sub>i</sub>
+              </td>
+            </tr>
+          </table>
+          <div class="dh-ket">
+            <p><span class="label">Keterangan:</span></p>
+            <p>TPSS: Tingkat Penyelenggaraan Pembinaan Statistik Sektoral sesuai Standar</p>
+            <p><i>w<sub>i</sub></i> : Bobot/penimbang pada indikator ke-i</p>
+            <p><i>x<sub>i</sub></i> : Nilai indikator ke-i</p>
+          </div>
+          <div class="dh-ket" style="margin-top:10px;">
+            <p><span class="label">Basis Data:</span></p>
+            <p><i>Baseline 2024</i> = -</p>
+            <p><i>Target {{ tahun }}</i> = 
+               {% if iku.dh_target_value %}{{ iku.dh_target_value | fmt_num }}{% else %}{{ iku.target_pk | fmt_num }}{% endif %}
+            </p>
+            <p><i>Realisasi TW {{ tw }} {{ tahun }}</i> = {{ iku.dh_value_tw | fmt_num }}</p>
+          </div>
+
+        {# =======================================================
+           3. EDU_PROMO (2.6.1.1) - Sesuai Screenshot
+           ======================================================= #}
+        {% elif iku.dh_type == "EDU_PROMO" %}
+          <table class="dh-head">
+            <tr>
+              <td class="label" style="width:25%;">Dasar Hitung (Formula):</td>
+              <td class="dh-formula" style="width:75%;">
+                y = <span class="frac"><span class="top">n</span><span class="bottom">N</span></span> x 100%
+              </td>
+            </tr>
+          </table>
+          <div class="dh-ket">
+            <p><span class="label">Keterangan:</span></p>
+            <p><i>y</i> = {{ iku.y_desc }}</p>
+            <p><i>n</i> = {{ iku.n_desc }}</p>
+            <p><i>N</i> = {{ iku.N_desc }}</p>
+          </div>
+          <div style="text-align:center; margin: 10px 0;">
+             <i>Nilai TW {{ tw }} {{ tahun }}</i> = 
+             <span class="frac"><span class="top">{{ iku.dh_n }}</span><span class="bottom">{{ iku.dh_N }}</span></span> x 100% 
+             {% if iku.dh_pct != "" %} = {{ iku.dh_pct | fmt_num }}% {% endif %}
+          </div>
+          <div class="dh-ket">
+            <p><span class="label">Basis Data:</span></p>
+            <p>Menggunakan LK monitoring penyelenggaraan kegiatan edukasi dan promosi.</p>
+            <table class="tbl-iku" style="margin-top:5px;">
+               <tr>
+                 <th>Indikator</th>
+                 <th>Target {{ tahun }}</th>
+                 <th>Realisasi TW {{ tw }}</th>
+               </tr>
+               <tr>
+                 <td>Jumlah kegiatan (n)</td>
+                 <td>-</td>
+                 <td class="center">{{ iku.dh_n }}</td>
+               </tr>
+               <tr>
+                 <td>Jumlah dirancang (N)</td>
+                 <td>-</td>
+                 <td class="center">{{ iku.dh_N }}</td>
+               </tr>
+               <tr>
+                 <td><b>Persentase (y)</b></td>
+                 <td class="center"><b>
+                   {% if iku.dh_target_value %}{{ iku.dh_target_value | fmt_num }}%{% else %}{{ iku.target_pk | fmt_num }}%{% endif %}
+                 </b></td>
+                 <td class="center"><b>{% if iku.dh_pct != "" %}{{ iku.dh_pct | fmt_num }}%{% endif %}</b></td>
+               </tr>
+            </table>
+          </div>
+
+        {# =======================================================
+           4. IPP (2.7.1.1) - Sesuai Screenshot PEKPPP
+           ======================================================= #}
+        {% elif iku.dh_type == "IPP" %}
+          <table class="dh-head">
+            <tr>
+              <td class="label" style="width:25%;">Dasar Hitung (Formula):</td>
+              <td class="dh-formula" style="width:75%; font-size:10pt;">
+                IPP = (w<sub>0</sub> x &sum; x<sub>i</sub>) + (w<sub>1</sub> x &sum; y<sub>j</sub>)
+              </td>
+            </tr>
+          </table>
+          <div class="dh-ket" style="font-size:10pt;">
+            <p><i>w<sub>0</sub>, w<sub>1</sub></i> : Bobot instrumen evaluasi</p>
+            <p><i>x<sub>i</sub>, y<sub>j</sub></i> : Skor evaluasi indikator PEKPPP</p>
+          </div>
+          <div class="dh-ket">
+            <p><span class="label">Basis Data:</span></p>
+            <p>Sumber dan cara perhitungan menggunakan Aplikasi PEKPPP - Penilaian Mandiri BPS.</p>
+            <p><i>Baseline 2024</i> = 4,78</p>
+            <p><i>Target Tahun 2026</i> = 
+               {% if iku.dh_target_value %}{{ iku.dh_target_value | fmt_num }}{% else %}{{ iku.target_pk | fmt_num }}{% endif %}
+            </p>
+            <p><i>Realisasi TW {{ tw }} {{ tahun }}</i> = {{ iku.dh_value_tw | fmt_num }}</p>
+          </div>
+
+        {# =======================================================
+           5. SAKIP (3.2.4.1)
+           ======================================================= #}
+        {% elif iku.dh_type == "SAKIP" %}
+          <div class="dh-ket">
+            <p><span class="label">Dasar Hitung:</span> Nilai Evaluasi AKIP.</p>
+            <p><span class="label">Basis Data:</span></p>
+            <p>Berdasarkan laporan hasil evaluasi SAKIP oleh Inspektorat.</p>
+            <p><i>Baseline 2024</i> = 78,10</p>
+            <p><i>Target Tahun 2025/2026</i> = 
+               {% if iku.dh_target_value %}{{ iku.dh_target_value | fmt_num }}{% else %}{{ iku.target_pk | fmt_num }}{% endif %}
+            </p>
+            <p><i>Realisasi TW {{ tw }} {{ tahun }}</i> = {{ iku.dh_value_tw | fmt_num }}</p>
+          </div>
+
+        {# =======================================================
+           6. BERAKHLAK (3.2.4.2)
+           ======================================================= #}
+        {% elif iku.dh_type == "BERAKHLAK" %}
+          <div class="dh-ket">
+            <p><span class="label">Dasar Hitung:</span> Skor Survei Budaya Organisasi (SBO).</p>
+            <p><span class="label">Basis Data:</span></p>
+            <p>Berdasarkan laporan Hasil Survei Budaya Organisasi.</p>
+            <p><i>Baseline 2024</i> = 58,70</p>
+            <p><i>Target Tahun 2026</i> = 
+               {% if iku.dh_target_value %}{{ iku.dh_target_value | fmt_num }}{% else %}{{ iku.target_pk | fmt_num }}{% endif %}
+            </p>
+            <p><i>Realisasi TW {{ tw }} {{ tahun }}</i> = {{ iku.dh_value_tw | fmt_num }}</p>
+          </div>
+
+        {# =======================================================
+           7. ZI_WBK (3.2.5.1) - Logic List + Formula n/N
+           ======================================================= #}
+        {% elif iku.dh_type == "ZI_WBK" %}
+          <table class="dh-head">
+            <tr>
+              <td class="label" style="width:25%;">Dasar Hitung (Formula):</td>
+              <td class="dh-formula" style="width:75%;">
+                y = <span class="frac"><span class="top">n</span><span class="bottom">N</span></span> x 100%
+              </td>
+            </tr>
+          </table>
+          <div class="dh-ket">
+            <p><span class="label">Keterangan:</span></p>
+            <p><i>y</i> = {{ iku.y_desc }}</p>
+            <p><i>n</i> = {{ iku.n_desc }}</p>
+            <p><i>N</i> = {{ iku.N_desc }}</p>
+          </div>
+          <div style="text-align:center; margin: 10px 0;">
+             <i>Nilai TW {{ tw }} {{ tahun }}</i> = 
+             <span class="frac"><span class="top">{{ iku.dh_n }}</span><span class="bottom">{{ iku.dh_N }}</span></span> x 100% 
+             {% if iku.dh_pct != "" %} = {{ iku.dh_pct | fmt_num }}% {% endif %}
+          </div>
+          <div class="dh-ket">
+            <p><span class="label">Basis Data:</span></p>
+            <p>Berdasarkan laporan hasil evaluasi Pembangunan Zona Integritas oleh TPI/TPP.</p>
+            <p><i>Baseline 2024</i> = 100%</p>
+            <p><i>Target Tahun {{ tahun }}</i> = 
+               {% if iku.dh_target_value %}{{ iku.dh_target_value | fmt_num }}%{% else %}{{ iku.target_pk | fmt_num }}%{% endif %}
+            </p>
+          </div>
+          <p class="label" style="margin: 6px 0;">Rincian Satker:</p>
+          <table class="basis-table">
+            <colgroup><col style="width:50%;"><col style="width:50%;"></colgroup>
+            <tr><th>Mencapai (n={{ iku.dh_n }})</th><th>Diusulkan (N={{ iku.dh_N }})</th></tr>
+            <tr>
+              <td><ol>{% for item in iku.dh_items_n %}<li>{{ item }}</li>{% endfor %}</ol></td>
+              <td><ol>{% for item in iku.dh_items_N %}<li>{{ item }}</li>{% endfor %}</ol></td>
+            </tr>
+          </table>
+
+        {# =======================================================
+           DEFAULT / LAINNYA
+           ======================================================= #}
+        {% else %}
+           <p class="label">Target Tahun {{ tahun }}: 
+              {% if iku.dh_target_value %}{{ iku.dh_target_value | fmt_num }}{% else %}{{ iku.target_pk | fmt_num }}{% endif %}
+           </p>
+        {% endif %}
+
+      </td>
+    </tr>
+  {% else %}
+    <tr>
+      <td colspan="2" class="label">Dasar Hitung:</td>
+      <td colspan="5"></td>
+    </tr>
+  {% endif %}
+
+  <tr>
+    <td colspan="7" class="label">Tautan Bukti Dukung Realisasi Target : {{ iku.link_bukti|default("", true) }}</td>
+  </tr>
+
+  <tr>
+    <td colspan="7" class="label">
+      Tautan Bukti Dukung Rencana Tindak Lanjut Triwulan Sebelumnya: {{ iku.link_bukti_rtl_prev|default("", true) }}
+    </td>
+  </tr>
+</table>
+
+{% if not loop.last %}
+  <div style="page-break-after: always;"></div>
+{% endif %}
+{% endfor %}
+
+<br><br>
+
+<br>
+<b>Realisasi Anggaran sampai dengan Triwulan Berjalan</b>
+<table class="tbl-anggaran">
+  <colgroup>
+    <col style="width: 62%;">
+    <col style="width: 19%;">
+    <col style="width: 19%;">
+  </colgroup>
+
+  <tr>
+    <th>Sasaran Kegiatan</th>
+    <th>Pagu</th>
+    <th>Realisasi</th>
+  </tr>
+
+  {% for row in anggaran_rows %}
+  <tr>
+    <td>{{ row.sasaran }}</td>
+    <td class="money">{{ row.pagu_int | rupiah }}</td>
+    <td class="money">{{ row.realisasi_int | rupiah }}</td>
+  </tr>
+  {% endfor %}
+
+  <tr>
+    <td><b>Total</b></td>
+    <td class="money"><b>{{ total_pagu_int | rupiah }}</b></td>
+    <td class="money"><b>{{ total_realisasi_int | rupiah }}</b></td>
+  </tr>
+</table>
+
+{% if upaya_efisiensi and upaya_efisiensi|trim != "" %}
+  <br>
+  <b>Upaya Efisiensi sampai dengan Triwulan Berjalan</b>
+  <div class="upaya-text">{{ upaya_efisiensi }}</div>
+{% endif %}
+
+<br><br>
+<div class="ttd-wrap">
+  <table class="ttd-table">
+    <tr>
+      <td class="ttd-left">
+        <p class="ttd-title">Mengetahui,</p>
+        <p class="ttd-role">Kepala Satker</p>
+        <p class="ttd-name">{{ nama_kasatker }}</p>
+      </td>
+
+      <td class="ttd-right">
+        <p class="ttd-title">{{ kota_ttd }}, {{ tanggal_ttd }}</p>
+        <p class="ttd-role">Notulis</p>
+        <p class="ttd-name">{{ nama_notulis }}</p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>
