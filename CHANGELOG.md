@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-002 — Integritas schema laporan
+
+- **Status:** Selesai
+- **Ringkasan:** Menambahkan status awal `draft`, mencegah lebih dari satu laporan untuk pasangan surat tugas dan pegawai yang sama, serta menambahkan pemeriksaan startup agar schema yang belum dimigrasikan gagal secara eksplisit.
+- **File ditambahkan:** `backend/migrations/20260914-enforce-report-integrity.sql` dan `backend/tests/integration/laporan.schema.test.js`.
+- **File diubah:** `backend/src/models/laporan.perjalanan.js`, `backend/src/utils/ensureSchema.js`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Enum `status` dan deklarasi index pada model `LaporanPerjalanan`; menambahkan `assertReportIntegritySchema` pada pemeriksaan schema startup.
+- **Database:** Tidak ada tabel atau kolom yang ditambah/dihapus. Enum `enum_laporan_perjalanan_status` ditambah nilai `draft`; unique index `uq_laporan_perjalanan_surat_pegawai` ditambahkan pada `(surat_tugas_id, pegawai_id)`. Preflight menemukan 0 pasangan duplikat. Migration diterapkan pada `catur_test` dan `catur_dev`.
+- **API:** Tidak ada endpoint yang diubah; write berikutnya akan menerima constraint database sebagai perlindungan race condition.
+- **Test otomatis:** RED terverifikasi dengan dua kegagalan: enum belum memuat `draft` dan duplicate belum ditolak. GREEN lulus 2/2 pada `laporan.schema.test.js`; seluruh backend lulus 43/43 tanpa skip; backend lint lulus 79 file.
+- **Verifikasi manual:** Metadata PostgreSQL memverifikasi `draft_enum=true` dan `unique_index=true` setelah migration pada database development.
+- **Risiko/catatan:** Backup sebelum migration tersimpan di `C:\Users\HP\PostgreSQL\backups\catur_dev-before-report-integrity-20260914-122647.dump` (4.949.025 byte). Nilai enum PostgreSQL tidak dihapus otomatis saat rollback karena penghapusan nilai enum memerlukan rekonstruksi tipe.
+- **Rollback:** Jalankan `DROP INDEX IF EXISTS uq_laporan_perjalanan_surat_pegawai;`, kembalikan model/startup check, dan pulihkan dump hanya jika rollback data diperlukan. Nilai enum `draft` aman dibiarkan tidak terpakai.
+- **Commit:** `fix: enforce report record integrity`.
+
 ### 2026-09-14 — TASK-001 — Utilitas tanggal WITA dan report window
 
 - **Status:** Selesai

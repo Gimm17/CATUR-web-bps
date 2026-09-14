@@ -27,6 +27,7 @@ const LaporanPerjalanan = sequelize.define(
 
     status: {
       type: DataTypes.ENUM(
+        'draft',            // Pegawai masih menyusun laporan
         'dikirim',          // Pegawai kirim laporan
         'dicek_keuangan',   // Keuangan cek
         'disetujui_keuangan', // Keuangan setujui
@@ -73,6 +74,13 @@ const LaporanPerjalanan = sequelize.define(
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
+    indexes: [
+      {
+        unique: true,
+        name: 'uq_laporan_perjalanan_surat_pegawai',
+        fields: ['surat_tugas_id', 'pegawai_id'],
+      },
+    ],
   }
 );
 

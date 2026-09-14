@@ -217,7 +217,7 @@ git commit -m "feat: add WITA report edit window"
 - Consumes: tabel `laporan_perjalanan` dan enum `enum_laporan_perjalanan_status`.
 - Produces: enum yang menerima `draft` dan unique index `uq_laporan_perjalanan_surat_pegawai`.
 
-- [ ] **Step 1: Tulis integration test bahwa status `draft` dapat disimpan**
+- [x] **Step 1: Tulis integration test bahwa status `draft` dapat disimpan**
 
 ```js
 test('laporan menerima status draft', async () => {
@@ -230,7 +230,7 @@ test('laporan menerima status draft', async () => {
 });
 ```
 
-- [ ] **Step 2: Tulis integration test bahwa laporan kedua ditolak**
+- [x] **Step 2: Tulis integration test bahwa laporan kedua ditolak**
 
 ```js
 await assert.rejects(
@@ -243,12 +243,12 @@ await assert.rejects(
 );
 ```
 
-- [ ] **Step 3: Jalankan test schema dan verifikasi gagal pada enum/index**
+- [x] **Step 3: Jalankan test schema dan verifikasi gagal pada enum/index**
 
 Run: `cd backend && node --test tests/integration/laporan.schema.test.js`  
 Expected: FAIL karena enum belum mempunyai `draft` atau duplicate belum dibatasi.
 
-- [ ] **Step 4: Tambahkan preflight duplicate dan migration non-destruktif**
+- [x] **Step 4: Tambahkan preflight duplicate dan migration non-destruktif**
 
 ```sql
 DO $$
@@ -268,21 +268,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_laporan_perjalanan_surat_pegawai
   ON laporan_perjalanan (surat_tugas_id, pegawai_id);
 ```
 
-- [ ] **Step 5: Sinkronkan model Sequelize dan startup schema check**
+- [x] **Step 5: Sinkronkan model Sequelize dan startup schema check**
 
 Tambahkan `'draft'` sebagai nilai pertama enum model dan validasi keberadaan index melalui query katalog; jangan gunakan `sequelize.sync({ alter: true })` di production.
 
-- [ ] **Step 6: Jalankan migration pada `catur_test`, lalu jalankan test schema**
+- [x] **Step 6: Jalankan migration pada `catur_test`, lalu jalankan test schema**
 
 Run: `psql -d catur_test -v ON_ERROR_STOP=1 -f backend/migrations/20260914-enforce-report-integrity.sql`  
 Run: `cd backend && node --test tests/integration/laporan.schema.test.js`  
 Expected: migration sukses dan seluruh test PASS.
 
-- [ ] **Step 7: Catat perubahan enum/index dan hasil preflight di `CHANGELOG.md`**
+- [x] **Step 7: Catat perubahan enum/index dan hasil preflight di `CHANGELOG.md`**
 
 Catat bahwa tidak ada tabel/kolom yang ditambah atau dihapus serta rollback index: `DROP INDEX IF EXISTS uq_laporan_perjalanan_surat_pegawai;`.
 
-- [ ] **Step 8: Commit Task 2**
+- [x] **Step 8: Commit Task 2**
 
 ```bash
 git add backend/migrations/20260914-enforce-report-integrity.sql backend/src/models/laporan.perjalanan.js backend/src/utils/ensureSchema.js backend/tests/integration/laporan.schema.test.js CHANGELOG.md
