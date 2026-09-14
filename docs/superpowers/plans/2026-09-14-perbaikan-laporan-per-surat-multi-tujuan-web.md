@@ -798,13 +798,13 @@ git commit -m "fix: open selected report from dashboard history"
 - Consumes: semua fungsi service Task 7 dan parameter `suratId`.
 - Produces: halaman progres tunggal yang tidak dapat berganti context secara diam-diam.
 
-- [ ] **Step 1: Tulis test mount `/laporan/11` memanggil service dengan `11`**
+- [x] **Step 1: Tulis test mount `/laporan/11` memanggil service dengan `11`**
 
 ```jsx
 expect(getLaporanPerjalanan).toHaveBeenCalledWith('11');
 ```
 
-- [ ] **Step 2: Tulis test upload, reset, edit harian, dan kirim memakai ID yang sama**
+- [x] **Step 2: Tulis test upload, reset, edit harian, dan kirim memakai ID yang sama**
 
 ```jsx
 expect(uploadTTD).toHaveBeenCalledWith('11', expect.any(FormData));
@@ -812,19 +812,19 @@ expect(kirimLaporanAkhir).toHaveBeenCalledWith('11', expect.any(Object));
 expect(submitLaporan).toHaveBeenCalledWith(presensiId, expect.any(String));
 ```
 
-- [ ] **Step 3: Tulis test mengganti URL 11 ke 22 memuat ulang context**
+- [x] **Step 3: Tulis test mengganti URL 11 ke 22 memuat ulang context**
 
 ```jsx
 expect(getLaporanPerjalanan).toHaveBeenNthCalledWith(1, '11');
 expect(getLaporanPerjalanan).toHaveBeenNthCalledWith(2, '22');
 ```
 
-- [ ] **Step 4: Jalankan test dan verifikasi gagal karena halaman masih memakai endpoint generik**
+- [x] **Step 4: Jalankan test dan verifikasi gagal karena halaman masih memakai endpoint generik**
 
 Run: `npm test -- src/pages/pegawai/LaporanPegawai.test.jsx`  
 Expected: FAIL pada argumen service.
 
-- [ ] **Step 5: Ambil ID dari `useParams()` dan jadikan dependency fetch**
+- [x] **Step 5: Ambil ID dari `useParams()` dan jadikan dependency fetch**
 
 ```jsx
 const { suratId } = useParams();
@@ -833,24 +833,24 @@ useEffect(() => {
 }, [suratId]);
 ```
 
-- [ ] **Step 6: Teruskan ID ke seluruh handler**
+- [x] **Step 6: Teruskan ID ke seluruh handler**
 
 TTD, nota, reset, get TTD, get nota, dan kirim laporan memanggil service dengan `suratId`; edit harian memakai `editPresensi.id`.
 
-- [ ] **Step 7: Reset state ketika ID route berubah**
+- [x] **Step 7: Reset state ketika ID route berubah**
 
 Kosongkan `data`, preview TTD, daftar nota, modal edit, error, dan active stage sebelum fetch context baru agar data surat sebelumnya tidak berkedip pada surat baru.
 
-- [ ] **Step 8: Tangani response `404` dan `409` secara spesifik**
+- [x] **Step 8: Tangani response `404` dan `409` secara spesifik**
 
 `404` menampilkan `Surat tugas tidak ditemukan atau bukan milik Anda`; `REPORT_DEADLINE_PASSED` dan `REPORT_LOCKED_BY_STATUS` menampilkan alasan dari `report_window`.
 
-- [ ] **Step 9: Jalankan test halaman, test suite, lint, dan build**
+- [x] **Step 9: Jalankan test halaman, test suite, lint, dan build**
 
 Run: `npm test -- src/pages/pegawai/LaporanPegawai.test.jsx && npm test && npm run lint && npm run build`  
 Expected: seluruh command exit 0.
 
-- [ ] **Step 10: Update `CHANGELOG.md` dan commit Task 10**
+- [x] **Step 10: Update `CHANGELOG.md` dan commit Task 10**
 
 ```bash
 git add src/pages/pegawai/LaporanPegawai.jsx src/pages/pegawai/LaporanPegawai.test.jsx CHANGELOG.md

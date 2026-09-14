@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import PegawaiLayout from "../../layouts/PegawaiLayout";
 import {
   getLaporanPerjalanan,
@@ -48,7 +49,7 @@ import {
   FaSave,
 } from "react-icons/fa";
 
-const LaporanPerjalanan = () => {
+const LaporanPerjalananContent = ({ suratId }) => {
   /* ================= STATE ================= */
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -173,10 +174,10 @@ const LaporanPerjalanan = () => {
 
     try {
       setTtdLoading(true);
-      await uploadTTD(formData);
+      await uploadTTD(suratId, formData);
       
       // Refresh data setelah upload berhasil
-      await fetchData();
+      await fetchData(suratId);
       
       // Reset state
       handleClearTTD();
@@ -201,7 +202,7 @@ const LaporanPerjalanan = () => {
     }
 
     try {
-      const ttdUrl = await getTTD();
+      const ttdUrl = await getTTD(suratId);
       if (ttdUrl) {
         console.log('TTD loaded from server:', ttdUrl);
         setTtdPreview(ttdUrl);
@@ -259,7 +260,7 @@ const LaporanPerjalanan = () => {
 
     try {
       setNotaLoading(true);
-      await resetBuktiPembayaran();
+      await resetBuktiPembayaran(suratId);
       setNotaList([]);
       showToast("Bukti nota berhasil direset.", { icon: "success" });
     } catch (err) {
@@ -286,9 +287,9 @@ const LaporanPerjalanan = () => {
 
     try {
       setNotaLoading(true);
-      await uploadBuktiPembayaran(formData);
-      await fetchData();
-      const list = await getBuktiPembayaran();
+      await uploadBuktiPembayaran(suratId, formData);
+      await fetchData(suratId);
+      const list = await getBuktiPembayaran(suratId);
       setNotaList(list);
       const input = document.getElementById("notaUpload");
       if (input) input.value = "";
@@ -445,10 +446,7 @@ const LaporanPerjalanan = () => {
     setEditError("");
 
     try {
-      await submitLaporan({
-        laporan: editContent,
-        presensi_id: editPresensi.id,
-      });
+      await submitLaporan(editPresensi.id, editContent);
 
       setData((prev) => {
         if (!prev) return prev;
@@ -473,17 +471,32 @@ const LaporanPerjalanan = () => {
   };
 
   /* ================= FETCH DATA ================= */
-  const fetchData = async () => {
+  const getFetchErrorMessage = (err) => {
+    const status = err.response?.status;
+    const payload = err.response?.data || {};
+
+    if (status === 404) {
+      return "Surat tugas tidak ditemukan atau bukan milik Anda";
+    }
+
+    if (status === 409 && ["REPORT_DEADLINE_PASSED", "REPORT_LOCKED_BY_STATUS"].includes(payload.code)) {
+      return payload.report_window?.reason || payload.message || "Laporan sudah terkunci";
+    }
+
+    return "Gagal memuat laporan perjalanan: " + (payload.message || err.message || "Unknown error");
+  };
+
+  const fetchData = async (targetSuratId = suratId) => {
     try {
       setRefreshing(true);
-      const res = await getLaporanPerjalanan();
+      const res = await getLaporanPerjalanan(targetSuratId);
       setData(res);
       setNotaList(Array.isArray(res?.bukti_pembayaran) ? res.bukti_pembayaran : []);
       updateActiveStage(res);
       setError("");
     } catch (err) {
       console.error("Error fetch data:", err);
-      setError("Gagal memuat laporan perjalanan: " + (err.message || "Unknown error"));
+      setError(getFetchErrorMessage(err));
     } finally {
       setRefreshing(false);
     }
@@ -557,33 +570,27 @@ const LaporanPerjalanan = () => {
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    console.log("Component mounted, fetching initial data");
-    fetchData();
+    fetchData(suratId);
     
     const intervalId = setInterval(() => {
-      if (data?.laporan_akhir?.status === 'dikirim' || 
-          data?.laporan_akhir?.status === 'dicek_keuangan') {
-        fetchData();
-      }
+      fetchData(suratId);
     }, 10000);
     
     return () => {
       clearInterval(intervalId);
     };
-  }, []);
+  }, [suratId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch TTD saat data berubah
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (data) {
       fetchTTD();
       if (!Array.isArray(data?.bukti_pembayaran)) {
-        getBuktiPembayaran().then(setNotaList).catch(() => {});
+        getBuktiPembayaran(suratId).then(setNotaList).catch(() => {});
       }
     }
-  }, [data]);
+  }, [data, suratId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ================= STYLES ================= */
   const theme = {
@@ -839,7 +846,7 @@ const LaporanPerjalanan = () => {
             </div>
             <button 
               className="btn btn-sm btn-light mt-2"
-              onClick={fetchData}
+              onClick={() => fetchData(suratId)}
             >
               <FaSync className="me-2" />
               Coba Lagi
@@ -1099,11 +1106,11 @@ const LaporanPerjalanan = () => {
 
     try {
       setLoadingKirim(true);
-      await kirimLaporanAkhir({ kesimpulan }); // Kirim dalam format HTML
+      await kirimLaporanAkhir(suratId, { kesimpulan }); // Kirim dalam format HTML
       
       showToast("Laporan akhir berhasil " + (isDikembalikan ? "diperbaiki dan " : "") + "dikirim!", { icon: "success" });
       
-      await fetchData();
+      await fetchData(suratId);
       setKesimpulan("");
       const input = document.getElementById("notaUpload");
       if (input) input.value = "";
@@ -2716,6 +2723,11 @@ const LaporanPerjalanan = () => {
       </div>
     </PegawaiLayout>
   );
+};
+
+const LaporanPerjalanan = () => {
+  const { suratId } = useParams();
+  return <LaporanPerjalananContent key={suratId} suratId={suratId} />;
 };
 
 export default LaporanPerjalanan;

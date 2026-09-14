@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-010 — Halaman progres terikat route ID
+
+- **Status:** Selesai dengan catatan baseline lint proyek.
+- **Ringkasan:** Halaman progres laporan kini mengambil `suratId` dari URL dan meneruskannya ke seluruh operasi laporan; perubahan ID meremount context agar state surat sebelumnya tidak pernah terbawa.
+- **File ditambahkan:** `src/pages/pegawai/LaporanPegawai.test.jsx`.
+- **File diubah:** `src/pages/pegawai/LaporanPegawai.jsx` dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Memisahkan `LaporanPerjalananContent` dan wrapper `LaporanPerjalanan`; `fetchData`, `fetchTTD`, upload/reset nota, upload TTD, edit laporan harian, refresh, serta kirim laporan akhir kini memakai ID eksplisit.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data yang diubah.
+- **API:** GET progres, TTD, nota, reset, upload, dan kirim menggunakan `/perjalanan/surat/:suratId`; edit harian menggunakan `/presensi/:presensiId/laporan` melalui signature service baru.
+- **Test otomatis:** RED terverifikasi 2/2 gagal karena pemanggilan lama tidak membawa ID dan route tidak memuat ulang context. GREEN lulus 4/4 pada `LaporanPegawai.test.jsx`, seluruh frontend lulus 19/19, dan production build lulus. Test baru bersih lint; halaman masih memiliki 2 error baseline terkait side effect `fetchTTD` dan komponen modal inline.
+- **Verifikasi manual:** Perpindahan `/laporan/11` ke `/laporan/22` menghasilkan fetch kedua untuk ID 22; TTD, nota, reset, edit presensi ID 91, dan kirim akhir tetap berada pada context surat 11.
+- **Risiko/catatan:** Wrapper memakai `key={suratId}` untuk reset menyeluruh data, preview, modal, error, dan stage. Response 404 menampilkan pesan kepemilikan aman; kode lock 409 menampilkan alasan dari `report_window`.
+- **Rollback:** Kembalikan halaman menjadi satu komponen tanpa route param, pulihkan signature pemanggilan service lama, dan hapus test context route.
+- **Commit:** `fix: bind report page actions to route id`.
+
 ### 2026-09-14 — TASK-009 — Dashboard dan riwayat berbasis surat ID
 
 - **Status:** Selesai dengan catatan baseline lint proyek.
