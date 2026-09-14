@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-012 — Timeline multi-tujuan dan durasi presensi
+
+- **Status:** Selesai dengan catatan baseline lint proyek.
+- **Ringkasan:** Progres dan riwayat laporan kini menampilkan seluruh tujuan satu surat secara berurutan; durasi presensi dihitung dari gabungan tanggal unik semua tujuan dan response progres menyertakan tujuan aktif WITA.
+- **File ditambahkan:** `src/features/surat-tugas/tujuanDuration.js` dan `src/features/surat-tugas/tujuanDuration.test.js`.
+- **File diubah:** `backend/src/controllers/laporan.controller.js`, `backend/tests/integration/laporan.explicit-assignment.test.js`, `src/pages/pegawai/LaporanPegawai.jsx`, `src/pages/pegawai/LaporanPegawai.test.jsx`, `src/pages/pegawai/ReportLaporanPegawai.jsx`, `src/pages/pegawai/ReportLaporanPegawai.test.jsx`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `countScheduledDays`; `hitungDurasiSuratTugas` dan `cekPresensiLengkap` menerima tujuan; `buildPerjalananResponse` mengurutkan tujuan dan menentukan `tujuan_aktif`; kedua halaman laporan merender rangkaian tujuan.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data permanen yang diubah; fixture integration dibersihkan setelah test.
+- **API:** `GET /api/perjalanan/surat/:suratId` kini menjamin `tujuan[]` berurutan berdasarkan `urutan` dan mengirim `tujuan_aktif` yang dihitung dari tanggal WITA. Record legacy tetap memakai envelope tanggal surat.
+- **Test otomatis:** RED util terverifikasi gagal karena module belum ada; RED UI terverifikasi pada progres dan riwayat yang hanya menampilkan lokasi legacy. GREEN util 3/3, test terarah frontend 11/11, seluruh frontend 28/28, backend explicit-assignment 5/5, backend lint 81 file, lint file frontend Task 12 lulus kecuali 2 error baseline halaman progres, dan build production lulus.
+- **Verifikasi manual:** Buol 14–16 dan Tolitoli 17–19 menghasilkan durasi 6 hari; tanggal overlap hanya dihitung sekali; setiap baris menampilkan nomor urut, nama daerah, periode, dan badge `Aktif hari ini` bila ID sama dengan `tujuan_aktif`.
+- **Risiko/catatan:** Perhitungan menggunakan tanggal UTC murni untuk menghindari drift timezone browser. Header legacy hanya menjadi fallback ketika child tujuan kosong.
+- **Rollback:** Hapus util/timeline, pulihkan durasi envelope tunggal, dan keluarkan `tujuan_aktif` dari response progres; tidak ada rollback database.
+- **Commit:** `feat: show multi-destination report timeline`.
+
 ### 2026-09-14 — TASK-011 — Deadline dan status penguncian laporan
 
 - **Status:** Selesai dengan catatan baseline lint proyek.

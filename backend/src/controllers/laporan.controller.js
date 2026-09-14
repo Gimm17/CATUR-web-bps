@@ -9,6 +9,7 @@ const { uploadFileToDrive } = require('../utils/googleDrive');
 const { resolveActiveAssignment } = require('../services/activeAssignment.service');
 const { getOwnedReportContext } = require('../services/reportContext.service');
 const { assertReportEditable } = require('../services/reportWindow.service');
+const { getBusinessDate, isDateWithin } = require('../utils/businessDate');
 const fs = require('fs');
 const path = require('path');
 
@@ -184,11 +185,21 @@ async function buildPerjalananResponse({ userId, surat, reportWindow }) {
     bukti_transfer: laporanAkhir.bukti_transfer,
     tanggal_transfer: laporanAkhir.tanggal_transfer,
   } : null;
+  const tujuan = Array.isArray(surat.tujuan)
+    ? [...surat.tujuan].sort((left, right) => Number(left.urutan) - Number(right.urutan))
+    : [];
+  const businessDate = getBusinessDate();
+  const tujuanAktif = tujuan.find((item) => isDateWithin(
+    businessDate,
+    item.tanggal_mulai,
+    item.tanggal_selesai
+  )) || null;
 
   return {
     user,
     surat_tugas: surat,
-    tujuan: surat.tujuan || [],
+    tujuan,
+    tujuan_aktif: tujuanAktif,
     presensi: normalizePresensiPhotos(presensi),
     laporan_akhir: laporanAkhir,
     pembayaran,

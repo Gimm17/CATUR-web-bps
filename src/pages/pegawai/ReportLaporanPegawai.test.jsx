@@ -30,6 +30,11 @@ describe('ReportLaporanPegawai', () => {
           daerah_tujuan: 'Palu',
           tanggal_mulai: '2026-09-01',
           tanggal_selesai: '2026-09-02',
+          tujuan: [
+            { id: 111, urutan: 1, daerah_tujuan: 'Buol', tanggal_mulai: '2026-09-01', tanggal_selesai: '2026-09-01' },
+            { id: 112, urutan: 2, daerah_tujuan: 'Tolitoli', tanggal_mulai: '2026-09-02', tanggal_selesai: '2026-09-02' },
+          ],
+          tujuan_aktif: { id: 112 },
         },
         {
           id: 22,
@@ -57,6 +62,9 @@ describe('ReportLaporanPegawai', () => {
       .toHaveAttribute('href', '/laporan/11');
     expect(screen.getByRole('link', { name: 'Lihat Laporan SURAT B' }))
       .toHaveAttribute('href', '/laporan/22');
+    expect(screen.getByText('1. Buol')).toBeVisible();
+    expect(screen.getByText('2. Tolitoli')).toBeVisible();
+    expect(screen.getByText('Aktif hari ini')).toBeVisible();
   });
 
   it('surat yang belum memiliki laporan tetap menyediakan aksi lanjutkan', async () => {

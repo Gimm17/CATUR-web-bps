@@ -938,7 +938,7 @@ git commit -m "feat: show report deadline and lock state"
 - Consumes: `tujuan[]` terurut dari report context.
 - Produces: `countScheduledDays(tujuan)` dan UI timeline tujuan lengkap.
 
-- [ ] **Step 1: Tulis test durasi dua tujuan berurutan**
+- [x] **Step 1: Tulis test durasi dua tujuan berurutan**
 
 ```js
 expect(countScheduledDays([
@@ -947,7 +947,7 @@ expect(countScheduledDays([
 ])).toBe(6);
 ```
 
-- [ ] **Step 2: Tulis test defensive bahwa tanggal overlap tidak dihitung dua kali**
+- [x] **Step 2: Tulis test defensive bahwa tanggal overlap tidak dihitung dua kali**
 
 ```js
 expect(countScheduledDays([
@@ -956,12 +956,12 @@ expect(countScheduledDays([
 ])).toBe(4);
 ```
 
-- [ ] **Step 3: Jalankan test dan pastikan gagal karena util belum ada**
+- [x] **Step 3: Jalankan test dan pastikan gagal karena util belum ada**
 
 Run: `npm test -- src/features/surat-tugas/tujuanDuration.test.js`  
 Expected: FAIL dengan module belum ditemukan.
 
-- [ ] **Step 4: Implementasikan penghitungan berbasis set tanggal UTC**
+- [x] **Step 4: Implementasikan penghitungan berbasis set tanggal UTC**
 
 ```js
 export function countScheduledDays(tujuan = []) {
@@ -978,25 +978,25 @@ export function countScheduledDays(tujuan = []) {
 }
 ```
 
-- [ ] **Step 5: Gunakan `tujuan` untuk durasi dan progres presensi**
+- [x] **Step 5: Gunakan `tujuan` untuk durasi dan progres presensi**
 
 Fallback ke tanggal envelope surat hanya untuk record legacy yang belum mempunyai child `surat_tugas_tujuan`.
 
-- [ ] **Step 6: Tampilkan semua tujuan pada halaman progres dan riwayat**
+- [x] **Step 6: Tampilkan semua tujuan pada halaman progres dan riwayat**
 
 Setiap tujuan menampilkan nomor urut, nama daerah, tanggal mulai–selesai, dan badge `Aktif hari ini` bila ID cocok dengan `tujuan_aktif`.
 
-- [ ] **Step 7: Pastikan response backend menyertakan tujuan terurut**
+- [x] **Step 7: Pastikan response backend menyertakan tujuan terurut**
 
 Gunakan association `as: 'tujuan'` dengan order `urutan ASC`; jangan hanya menampilkan kolom legacy `daerah_tujuan`.
 
-- [ ] **Step 8: Jalankan frontend test, backend explicit-assignment test, lint, dan build**
+- [x] **Step 8: Jalankan frontend test, backend explicit-assignment test, lint, dan build**
 
 Run: `npm test -- src/features/surat-tugas/tujuanDuration.test.js && cd backend && node --test tests/integration/laporan.explicit-assignment.test.js`  
 Run: `cd .. && npm run lint && npm run build`  
 Expected: seluruh command exit 0.
 
-- [ ] **Step 9: Update `CHANGELOG.md` dan commit Task 12**
+- [x] **Step 9: Update `CHANGELOG.md` dan commit Task 12**
 
 ```bash
 git add backend/src/controllers/laporan.controller.js src/pages/pegawai/LaporanPegawai.jsx src/pages/pegawai/ReportLaporanPegawai.jsx src/features/surat-tugas/tujuanDuration.js src/features/surat-tugas/tujuanDuration.test.js CHANGELOG.md

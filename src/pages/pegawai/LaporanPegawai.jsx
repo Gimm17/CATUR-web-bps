@@ -16,6 +16,7 @@ import RichTextEditor from "./RichTextEditor";
 import { toPublicFileUrl } from "../../utils/fileUrl";
 import { confirmAction, showToast } from "../../utils/alerts";
 import { getReportWindowPresentation } from "../../features/laporan/reportWindow";
+import { countScheduledDays } from "../../features/surat-tugas/tujuanDuration";
 
 // Ikon untuk UI yang lebih menarik
 import {
@@ -85,7 +86,10 @@ const LaporanPerjalananContent = ({ suratId }) => {
   };
 
   /* ================= FUNGSI HITUNG DURASI SURAT TUGAS ================= */
-  const hitungDurasiSuratTugas = (suratTugas) => {
+  const hitungDurasiSuratTugas = (suratTugas, tujuan = []) => {
+    if (Array.isArray(tujuan) && tujuan.length > 0) {
+      return countScheduledDays(tujuan);
+    }
     if (!suratTugas?.tanggal_mulai || !suratTugas?.tanggal_selesai) {
       return 0;
     }
@@ -101,8 +105,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
   };
 
   // Cek apakah presensi sudah lengkap
-  const cekPresensiLengkap = (suratTugas, presensi) => {
-    const durasi = hitungDurasiSuratTugas(suratTugas);
+  const cekPresensiLengkap = (suratTugas, presensi, tujuan = []) => {
+    const durasi = hitungDurasiSuratTugas(suratTugas, tujuan);
     const jumlahPresensi = presensi?.length || 0;
     const presensiList = Array.isArray(presensi) ? presensi : [];
     const jumlahPresensiFotoLengkap = presensiList.filter((item) => getFotoList(item).length >= 2).length;
@@ -543,7 +547,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
       return;
     }
     
-    const { surat_tugas = {}, presensi = [], laporan_akhir = null } = data;
+    const { surat_tugas = {}, tujuan = [], presensi = [], laporan_akhir = null } = data;
     
     // Hitung kelengkapan presensi
     const {
@@ -552,7 +556,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
       jumlahPresensiFotoLengkap,
       jumlahPresensiFotoBelumLengkap,
       isLengkap,
-    } = cekPresensiLengkap(surat_tugas, presensi);
+    } = cekPresensiLengkap(surat_tugas, presensi, tujuan);
     
     console.log('Debug Presensi:', { durasi, jumlahPresensi, jumlahPresensiFotoLengkap, jumlahPresensiFotoBelumLengkap, isLengkap, presensi });
     
@@ -909,6 +913,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
   // DESTRUCTURING DATA
   const { 
     surat_tugas = {}, 
+    tujuan = [],
+    tujuan_aktif = null,
     presensi = [], 
     laporan_akhir = null, 
     user = {}, 
@@ -922,7 +928,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
     jumlahPresensiFotoLengkap,
     jumlahPresensiFotoBelumLengkap,
     isLengkap,
-  } = cekPresensiLengkap(surat_tugas, presensi);
+  } = cekPresensiLengkap(surat_tugas, presensi, tujuan);
 
   // CEK APAKAH LAPORAN DIKEMBALIKAN
   const isDikembalikan = laporan_akhir?.catatan_keuangan && 
@@ -1474,6 +1480,30 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 </div>
               </div>
             </div>
+            {tujuan.length > 0 && (
+              <div className="mt-3 pt-3 border-top">
+                <h6 className="fw-bold mb-3">Rangkaian Tujuan</h6>
+                <div className="d-grid gap-2">
+                  {tujuan.map((item, index) => {
+                    const isActive = Number(item.id) === Number(tujuan_aktif?.id);
+                    return (
+                      <div
+                        key={`tujuan-${item.id || index}`}
+                        className="d-flex justify-content-between align-items-center rounded border p-3"
+                      >
+                        <div>
+                          <strong>{item.urutan || index + 1}. {item.daerah_tujuan || "-"}</strong>
+                          <div className="text-muted small">
+                            {item.tanggal_mulai || "-"} – {item.tanggal_selesai || "-"}
+                          </div>
+                        </div>
+                        {isActive && <span className="badge bg-success">Aktif hari ini</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

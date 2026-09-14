@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const jwt = require('jsonwebtoken');
 const fs = require('node:fs');
 const path = require('node:path');
+const { getBusinessDate } = require('../../src/utils/businessDate');
 
 const databaseUrl = process.env.CATUR_TEST_DATABASE_URL;
 let sequelize;
@@ -155,7 +156,13 @@ test('GET eksplisit memuat progres surat A dan B tanpa tertukar', {
   skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
 }, async (t) => {
   const baseUrl = await startServer(t);
-  const fixture = await createFixture(t);
+  const todayWita = getBusinessDate();
+  const fixture = await createFixture(t, {
+    periods: [
+      ['A', todayWita, todayWita],
+      ['B', '2099-07-10', '2099-07-11'],
+    ],
+  });
   const request = (suratId) => fetch(
     `${baseUrl}/api/perjalanan/surat/${suratId}`,
     { headers: { authorization: `Bearer ${fixture.token}` } }
@@ -174,6 +181,8 @@ test('GET eksplisit memuat progres surat A dan B tanpa tertukar', {
   assert.equal(payloadB.laporan_akhir.kesimpulan, 'Kesimpulan B');
   assert.equal(payloadA.tujuan[0].id, fixture.tujuanRows[0].id);
   assert.equal(payloadB.tujuan[0].id, fixture.tujuanRows[1].id);
+  assert.equal(payloadA.tujuan_aktif.id, fixture.tujuanRows[0].id);
+  assert.equal(payloadB.tujuan_aktif, null);
   assert.equal(payloadA.report_window.timezone, 'Asia/Makassar');
 });
 

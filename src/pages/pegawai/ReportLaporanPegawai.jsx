@@ -94,6 +94,10 @@ const ReportLaporanPegawai = () => {
     return "-";
   };
 
+  const getTujuanList = (suratTugas) => Array.isArray(suratTugas?.tujuan)
+    ? [...suratTugas.tujuan].sort((left, right) => Number(left.urutan) - Number(right.urutan))
+    : [];
+
   const formatTanggalWaktu = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -181,7 +185,10 @@ const ReportLaporanPegawai = () => {
     const normalizedStatus = deriveStatusLaporan(row?.laporan);
     const matchesStatus = statusFilter === "all" ? true : normalizedStatus === statusFilter;
     if (!normalizedSearch) return matchesStatus;
-    const tujuan = row.surat?.daerah_tujuan?.toLowerCase() || "";
+    const tujuan = [
+      row.surat?.daerah_tujuan,
+      ...getTujuanList(row.surat).map((item) => item.daerah_tujuan),
+    ].filter(Boolean).join(" ").toLowerCase();
     const kegiatan = row.surat?.nama_kegiatan?.toLowerCase() || "";
     return matchesStatus && (tujuan.includes(normalizedSearch) || kegiatan.includes(normalizedSearch));
   });
@@ -331,7 +338,23 @@ const ReportLaporanPegawai = () => {
                               {row.surat?.nama_kegiatan || "-"}
                             </td>
                             <td style={{ padding: "15px", color: "#1e293b" }}>
-                              {row.surat?.daerah_tujuan || "-"}
+                              {getTujuanList(row.surat).length > 0 ? (
+                                <div className="d-grid gap-2">
+                                  {getTujuanList(row.surat).map((item, tujuanIndex) => (
+                                    <div key={`tujuan-${item.id || tujuanIndex}`}>
+                                      <div className="fw-semibold">
+                                        {item.urutan || tujuanIndex + 1}. {item.daerah_tujuan || "-"}
+                                        {Number(item.id) === Number(row.surat?.tujuan_aktif?.id) && (
+                                          <span className="badge bg-success ms-2">Aktif hari ini</span>
+                                        )}
+                                      </div>
+                                      <small className="text-muted">
+                                        {item.tanggal_mulai || "-"} – {item.tanggal_selesai || "-"}
+                                      </small>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (row.surat?.daerah_tujuan || "-")}
                             </td>
                             <td style={{ padding: "15px", color: "#1e293b" }}>
                               {formatTanggalPerjadin(row.surat)}

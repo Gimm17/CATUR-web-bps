@@ -209,4 +209,23 @@ describe('LaporanPegawai route context', () => {
     expect(screen.getByRole('button', { name: /^reset$/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /^kirim laporan akhir$/i })).toBeDisabled();
   });
+
+  it('menggunakan seluruh tujuan untuk durasi dan menampilkan tujuan aktif', async () => {
+    getLaporanPerjalanan.mockResolvedValueOnce({
+      ...reportFixture,
+      tujuan: [
+        { id: 101, urutan: 1, daerah_tujuan: 'Buol', tanggal_mulai: '2026-09-14', tanggal_selesai: '2026-09-16' },
+        { id: 102, urutan: 2, daerah_tujuan: 'Tolitoli', tanggal_mulai: '2026-09-17', tanggal_selesai: '2026-09-19' },
+      ],
+      tujuan_aktif: { id: 102 },
+    });
+
+    renderPage();
+
+    expect(await screen.findByRole('heading', { name: 'Rangkaian Tujuan' })).toBeVisible();
+    expect(screen.getByText('1. Buol')).toBeVisible();
+    expect(screen.getByText('2. Tolitoli')).toBeVisible();
+    expect(screen.getByText('Aktif hari ini')).toBeVisible();
+    expect(screen.getByText('6 Hari')).toBeVisible();
+  });
 });
