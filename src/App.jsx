@@ -20,6 +20,7 @@ import Informasiatasan from './pages/atasan/informasi';
 import ReportSurat from './pages/pegawai/LaporanBySurat';
 import ReportLaporanPegawai from './pages/pegawai/ReportLaporanPegawai';
 import InformasiKeuangan from './pages/keuangan/informasi';
+import LaporanEntry from './pages/pegawai/LaporanEntry';
 export default function App() {
   return (
     <BrowserRouter>
@@ -37,15 +38,27 @@ export default function App() {
              <Route path="/dashboard-keuangan" element={<ProtectedRoute allowedRoles={["keuangan"]}>
               <DashboardKeuangan />
             </ProtectedRoute>} />
-        <Route path="/laporan-surat" element={<ReportSurat />} />
+        <Route path="/laporan-surat/:id" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+              <ReportSurat />
+            </ProtectedRoute>} />
+        <Route path="/laporan-surat" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+              <ReportSurat />
+            </ProtectedRoute>} />
         <Route path="/informasi-keuangan" element={<InformasiKeuangan />} />
         <Route path="/informasi-aplikasi" element={<InformasiAplikasi />} />
         <Route path="/informasi-catur" element={<Informasicatur />} />
         <Route path="/informasi-atasan" element={<Informasiatasan />} />
         <Route path="/surat-tugas" element={<SuratTugas />} />
         <Route path="/presensi" element={<Presensi />} />
-        <Route path="/laporan" element={<LaporanPegawai />} />
-        <Route path="/laporan-report" element={<ReportLaporanPegawai />} />
+        <Route path="/laporan" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+              <LaporanEntry />
+            </ProtectedRoute>} />
+        <Route path="/laporan/:suratId" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+              <LaporanPegawai />
+            </ProtectedRoute>} />
+        <Route path="/laporan-report" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+              <ReportLaporanPegawai />
+            </ProtectedRoute>} />
         <Route path="/profil" element={<Profile />} />
         <Route path="/admin-daerah" element={<AdminDaerah/>} />
         <Route path="/pengaturan-akun" element={<PengaturanAkun/>} />

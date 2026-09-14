@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-008 — Routing laporan yang aman
+
+- **Status:** Selesai dengan catatan baseline lint proyek.
+- **Ringkasan:** Memisahkan resolver surat aktif dari halaman progres, melindungi route laporan pegawai, mengarahkan menu utama ke riwayat, dan mengubah halaman laporan-surat lama menjadi redirect kompatibilitas.
+- **File ditambahkan:** `src/pages/pegawai/LaporanEntry.jsx` dan `src/pages/pegawai/LaporanEntry.test.jsx`.
+- **File diubah:** `src/App.jsx`, `src/fragments/Sidebar.pegawai.jsx`, `src/pages/pegawai/LaporanBySurat.jsx`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Implementasi lama `LaporanBySurat` diganti penuh oleh redirect; path file tetap ada.
+- **Class/fungsi/komponen diubah:** Menambahkan komponen `LaporanEntry`; menyederhanakan `LaporanBySurat`; mengubah konfigurasi route `App` dan navigasi `Sidebar`.
+- **Database:** Tidak ada.
+- **API:** Resolver memakai `getSuratTugasAktif`; tidak ada fallback ke surat terbaru. Route utama adalah `/laporan/:suratId`, `/laporan` hanya resolver, `/laporan-report` riwayat, dan `/laporan-surat/:id` redirect kompatibilitas.
+- **Test otomatis:** RED terverifikasi karena `LaporanEntry` belum tersedia. GREEN lulus 4/4 pada `LaporanEntry.test.jsx`; seluruh frontend lulus 13/13. Lint terarah lima file Task 8 lulus; lint global tetap memiliki utang baseline yang dicatat pada Task 7.
+- **Verifikasi manual:** Surat aktif ID 41 menuju `/laporan/41`; response 404 menuju `/laporan-report`; kegagalan 500 menampilkan retry; URL lama ID 55 menuju `/laporan/55`.
+- **Risiko/catatan:** Menu sidebar tidak lagi membuka context laporan generik dan diberi label `Riwayat Laporan`. Dashboard akan diarahkan ke route ID pada Task 9.
+- **Rollback:** Kembalikan route `/laporan` langsung ke `LaporanPegawai`, restore implementasi lama `LaporanBySurat`, dan pulihkan link sidebar.
+- **Commit:** `fix: route reports by selected assignment`.
+
 ### 2026-09-14 — TASK-007 — Kontrak service frontend berbasis surat ID
 
 - **Status:** Selesai dengan catatan baseline lint proyek.

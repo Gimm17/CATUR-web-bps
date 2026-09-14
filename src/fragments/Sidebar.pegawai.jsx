@@ -66,23 +66,13 @@ export default function Sidebar() {
             </Link>
 
             <Link 
-              to="/laporan" 
-              className={`mobile-nav-item ${location.pathname === "/laporan" ? "active" : ""}`}
+              to="/laporan-report" 
+              className={`mobile-nav-item ${location.pathname.startsWith("/laporan") ? "active" : ""}`}
             >
               <div className="mobile-nav-icon">
                 <FaChartBar />
               </div>
-              <span className="mobile-nav-label">Laporan</span>
-            </Link>
-
-            <Link 
-              to="/laporan-report" 
-              className={`mobile-nav-item ${location.pathname === "/laporan-report" ? "active" : ""}`}
-            >
-              <div className="mobile-nav-icon">
-                <FaClipboardList />
-              </div>
-              <span className="mobile-nav-label">Report</span>
+              <span className="mobile-nav-label">Riwayat Laporan</span>
             </Link>
 
             <Link 
@@ -192,25 +182,13 @@ export default function Sidebar() {
             {/* Laporan */}
             <li className="nav-item sensus-nav-item">
               <Link
-                to="/laporan"
+                to="/laporan-report"
                 className={`nav-link sensus-nav-link ${
-                  location.pathname === "/laporan" ? "active" : ""
+                  location.pathname.startsWith("/laporan") ? "active" : ""
                 }`}
               >
                 <i className="nav-icon"><FaChartBar /></i>
-                <p>Laporan & Statistik</p>
-              </Link>
-            </li>
-
-            <li className="nav-item sensus-nav-item">
-              <Link
-                to="/laporan-report"
-                className={`nav-link sensus-nav-link ${
-                  location.pathname === "/laporan-report" ? "active" : ""
-                }`}
-              >
-                <i className="nav-icon"><FaClipboardList /></i>
-                <p>Report</p>
+                <p>Riwayat Laporan</p>
               </Link>
             </li>
 

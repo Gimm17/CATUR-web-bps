@@ -680,51 +680,51 @@ git commit -m "refactor: require assignment id in report services"
 - Consumes: `getSuratTugasAktif()` dan route hasil Task 7.
 - Produces: `/laporan/:suratId` untuk detail, `/laporan` sebagai resolver aman, dan `/laporan-report` sebagai pemilih riwayat.
 
-- [ ] **Step 1: Tulis test `/laporan` mengarahkan satu surat aktif ke ID**
+- [x] **Step 1: Tulis test `/laporan` mengarahkan satu surat aktif ke ID**
 
 ```jsx
 expect(await screen.findByTestId('location')).toHaveTextContent('/laporan/41');
 ```
 
-- [ ] **Step 2: Tulis test tanpa surat aktif mengarahkan ke riwayat**
+- [x] **Step 2: Tulis test tanpa surat aktif mengarahkan ke riwayat**
 
 ```jsx
 expect(await screen.findByTestId('location')).toHaveTextContent('/laporan-report');
 ```
 
-- [ ] **Step 3: Jalankan test dan pastikan gagal karena entry resolver belum ada**
+- [x] **Step 3: Jalankan test dan pastikan gagal karena entry resolver belum ada**
 
 Run: `npm test -- src/pages/pegawai/LaporanEntry.test.jsx`  
 Expected: FAIL dengan component belum ditemukan.
 
-- [ ] **Step 4: Implementasikan `LaporanEntry` tanpa fallback latest**
+- [x] **Step 4: Implementasikan `LaporanEntry` tanpa fallback latest**
 
 ```jsx
 if (active?.id) return <Navigate to={`/laporan/${active.id}`} replace />;
 return <Navigate to="/laporan-report" replace />;
 ```
 
-- [ ] **Step 5: Daftarkan route terlindungi**
+- [x] **Step 5: Daftarkan route terlindungi**
 
 ```jsx
 <Route path="/laporan" element={<ProtectedRoute allowedRoles={['pegawai']}><LaporanEntry /></ProtectedRoute>} />
 <Route path="/laporan/:suratId" element={<ProtectedRoute allowedRoles={['pegawai']}><LaporanPegawai /></ProtectedRoute>} />
 ```
 
-- [ ] **Step 6: Arahkan menu sidebar ke `/laporan-report`**
+- [x] **Step 6: Arahkan menu sidebar ke `/laporan-report`**
 
 Label menu menjadi `Riwayat Laporan`; progress surat aktif tetap dibuka dari dashboard menggunakan ID.
 
-- [ ] **Step 7: Jadikan `/laporan-surat/:id` redirect kompatibilitas**
+- [x] **Step 7: Jadikan `/laporan-surat/:id` redirect kompatibilitas**
 
 `LaporanBySurat` tidak lagi menjalankan flow edit terpisah; redirect ke `/laporan/{id}` agar hanya ada satu halaman progres utama.
 
-- [ ] **Step 8: Jalankan test routing, seluruh frontend test, dan lint**
+- [x] **Step 8: Jalankan test routing, seluruh frontend test, dan lint**
 
 Run: `npm test -- src/pages/pegawai/LaporanEntry.test.jsx && npm test && npm run lint`  
 Expected: seluruh test PASS.
 
-- [ ] **Step 9: Update `CHANGELOG.md` dan commit Task 8**
+- [x] **Step 9: Update `CHANGELOG.md` dan commit Task 8**
 
 ```bash
 git add src/pages/pegawai/LaporanEntry.jsx src/pages/pegawai/LaporanEntry.test.jsx src/App.jsx src/fragments/Sidebar.pegawai.jsx src/pages/pegawai/LaporanBySurat.jsx CHANGELOG.md
