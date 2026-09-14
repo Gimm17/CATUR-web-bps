@@ -5,6 +5,14 @@ function createLoadOwnedReportContext({
 } = {}) {
   return async function loadOwnedReportContext(req, res, next) {
     try {
+      const bodySuratId = req.body?.surat_tugas_id;
+      if (bodySuratId !== undefined
+        && String(bodySuratId) !== String(req.params?.suratId)) {
+        const error = new Error('ID surat tugas pada URL dan body tidak sama.');
+        error.status = 400;
+        error.code = 'SURAT_ID_MISMATCH';
+        throw error;
+      }
       req.reportContext = await getOwnedReportContext({
         suratId: req.params?.suratId,
         userId: req.user?.id,

@@ -8,6 +8,7 @@ const appendBuktiPagesToSignedPDF = require('../utils/pdfAppendBukti');
 const { uploadFileToDrive } = require('../utils/googleDrive');
 const { resolveActiveAssignment } = require('../services/activeAssignment.service');
 const { getOwnedReportContext } = require('../services/reportContext.service');
+const { assertReportEditable } = require('../services/reportWindow.service');
 const fs = require('fs');
 const path = require('path');
 
@@ -129,6 +130,29 @@ async function findPreferredSuratForUser(userId) {
   return activeAssignment?.surat || null;
 }
 
+async function resolveSuratFromRequest(req, userId) {
+  return req.reportContext?.surat || findPreferredSuratForUser(userId);
+}
+
+function sendControllerError(res, error, fallbackMessage) {
+  const isReportUniqueConflict = error?.name === 'SequelizeUniqueConstraintError'
+    && (error?.parent?.constraint === 'uq_laporan_perjalanan_surat_pegawai'
+      || error?.original?.constraint === 'uq_laporan_perjalanan_surat_pegawai');
+  if (isReportUniqueConflict) {
+    return res.status(409).json({
+      success: false,
+      code: 'REPORT_ALREADY_EXISTS',
+      message: 'Laporan untuk surat tugas ini sudah tersedia.',
+    });
+  }
+  const isKnownError = Number.isInteger(error.status) && error.code;
+  return res.status(isKnownError ? error.status : 500).json({
+    success: false,
+    code: isKnownError ? error.code : 'INTERNAL_SERVER_ERROR',
+    message: isKnownError ? error.message : fallbackMessage,
+  });
+}
+
 async function buildPerjalananResponse({ userId, surat, reportWindow }) {
   const user = await User.findOne({ where: { id: userId } });
   if (!user) {
@@ -241,7 +265,7 @@ exports.getLaporanPerjalanan = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const surat = await findPreferredSuratForUser(userId);
+    const surat = await resolveSuratFromRequest(req, userId);
 
     if (!surat) {
       return res.status(404).json({
@@ -272,6 +296,7 @@ exports.getLaporanPerjalanan = async (req, res) => {
 exports.uploadTTDPegawai = async (req, res) => {
   try {
     const userId = req.user.id;
+    if (req.reportContext) assertReportEditable(req.reportContext.reportWindow);
 
     // Validasi file
     if (!req.file) {
@@ -281,7 +306,7 @@ exports.uploadTTDPegawai = async (req, res) => {
     }
 
     // Cari surat tugas aktif user
-    const surat = await findPreferredSuratForUser(userId);
+    const surat = await resolveSuratFromRequest(req, userId);
 
     if (!surat) {
       return res.status(404).json({
@@ -290,7 +315,7 @@ exports.uploadTTDPegawai = async (req, res) => {
     }
 
     // Cek apakah sudah ada laporan atau draft
-    let existingLaporan = await LaporanPerjalanan.findOne({
+    let existingLaporan = req.reportContext?.laporan || await LaporanPerjalanan.findOne({
       where: {
         pegawai_id: userId,
         surat_tugas_id: surat.id,
@@ -346,10 +371,7 @@ exports.uploadTTDPegawai = async (req, res) => {
       }
     }
     
-    res.status(500).json({ 
-      success: false,
-      message: err.message 
-    });
+    return sendControllerError(res, err, 'Gagal menyimpan tanda tangan.');
   }
 };
 
@@ -359,8 +381,9 @@ exports.uploadTTDPegawai = async (req, res) => {
 exports.validateUploadBuktiPembayaran = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    if (req.reportContext) assertReportEditable(req.reportContext.reportWindow);
 
-    const surat = await findPreferredSuratForUser(userId);
+    const surat = await resolveSuratFromRequest(req, userId);
 
     if (!surat) {
       return res.status(404).json({
@@ -369,7 +392,7 @@ exports.validateUploadBuktiPembayaran = async (req, res, next) => {
       });
     }
 
-    const existingLaporan = await LaporanPerjalanan.findOne({
+    const existingLaporan = req.reportContext?.laporan || await LaporanPerjalanan.findOne({
       where: {
         pegawai_id: userId,
         surat_tugas_id: surat.id,
@@ -399,6 +422,7 @@ exports.validateUploadBuktiPembayaran = async (req, res, next) => {
 exports.uploadBuktiPembayaran = async (req, res) => {
   try {
     const userId = req.user.id;
+    if (req.reportContext) assertReportEditable(req.reportContext.reportWindow);
 
     if (!Array.isArray(req.files) || req.files.length === 0) {
       return res.status(400).json({
@@ -407,7 +431,7 @@ exports.uploadBuktiPembayaran = async (req, res) => {
       });
     }
 
-    const surat = req.currentSurat || await findPreferredSuratForUser(userId);
+    const surat = req.currentSurat || await resolveSuratFromRequest(req, userId);
 
     if (!surat) {
       return res.status(404).json({
@@ -416,7 +440,9 @@ exports.uploadBuktiPembayaran = async (req, res) => {
       });
     }
 
-    const existingLaporan = req.currentLaporan || await LaporanPerjalanan.findOne({
+    const existingLaporan = req.currentLaporan
+      || req.reportContext?.laporan
+      || await LaporanPerjalanan.findOne({
       where: {
         pegawai_id: userId,
         surat_tugas_id: surat.id,
@@ -499,7 +525,7 @@ exports.getBuktiPembayaran = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const surat = await findPreferredSuratForUser(userId);
+    const surat = await resolveSuratFromRequest(req, userId);
 
     if (!surat) {
       return res.status(404).json({
@@ -527,8 +553,9 @@ exports.getBuktiPembayaran = async (req, res) => {
 exports.resetBuktiPembayaran = async (req, res) => {
   try {
     const userId = req.user.id;
+    if (req.reportContext) assertReportEditable(req.reportContext.reportWindow);
 
-    const surat = await findPreferredSuratForUser(userId);
+    const surat = await resolveSuratFromRequest(req, userId);
 
     if (!surat) {
       return res.status(404).json({
@@ -569,7 +596,7 @@ exports.getTTDPegawai = async (req, res) => {
     const userId = req.user.id;
 
     // Cari surat tugas aktif
-    const surat = await findPreferredSuratForUser(userId);
+    const surat = await resolveSuratFromRequest(req, userId);
 
     if (!surat) {
       return res.status(404).json({
@@ -578,7 +605,7 @@ exports.getTTDPegawai = async (req, res) => {
     }
 
     // Cari laporan atau draft
-    const laporan = await LaporanPerjalanan.findOne({
+    const laporan = req.reportContext?.laporan || await LaporanPerjalanan.findOne({
       where: {
         pegawai_id: userId,
         surat_tugas_id: surat.id,
@@ -617,6 +644,7 @@ exports.getTTDPegawai = async (req, res) => {
 exports.kirimLaporanAkhir = async (req, res) => {
   try {
     const userId = req.user.id;
+    if (req.reportContext) assertReportEditable(req.reportContext.reportWindow);
     const { kesimpulan } = req.body;
 
     if (!kesimpulan) {
@@ -625,7 +653,7 @@ exports.kirimLaporanAkhir = async (req, res) => {
       });
     }
 
-    const surat = await findPreferredSuratForUser(userId);
+    const surat = await resolveSuratFromRequest(req, userId);
 
     if (!surat) {
       return res.status(404).json({
@@ -668,7 +696,7 @@ exports.kirimLaporanAkhir = async (req, res) => {
     }
 
     // Cek apakah sudah ada laporan/draft
-    let existingLaporan = await LaporanPerjalanan.findOne({
+    let existingLaporan = req.reportContext?.laporan || await LaporanPerjalanan.findOne({
       where: {
         pegawai_id: userId,
         surat_tugas_id: surat.id,
@@ -779,10 +807,7 @@ exports.kirimLaporanAkhir = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ 
-      success: false,
-      message: err.message 
-    });
+    return sendControllerError(res, err, 'Gagal mengirim laporan akhir.');
   }
 };
 

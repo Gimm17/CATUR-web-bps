@@ -13,6 +13,53 @@ router.get(
   laporanController.getLaporanPerjalananBySuratId
 );
 
+router.post(
+  '/perjalanan/surat/:suratId/kirim',
+  auth,
+  loadOwnedReportContext,
+  laporanController.kirimLaporanAkhir
+);
+
+router.post(
+  '/perjalanan/surat/:suratId/ttd-pegawai',
+  auth,
+  loadOwnedReportContext,
+  uploadTTDMiddleware.single('ttd_pegawai'),
+  uploadToDrive,
+  laporanController.uploadTTDPegawai
+);
+
+router.get(
+  '/perjalanan/surat/:suratId/ttd-pegawai',
+  auth,
+  loadOwnedReportContext,
+  laporanController.getTTDPegawai
+);
+
+router.post(
+  '/perjalanan/surat/:suratId/bukti-pembayaran',
+  auth,
+  loadOwnedReportContext,
+  laporanController.validateUploadBuktiPembayaran,
+  uploadBuktiPembayaran,
+  uploadToDrive,
+  laporanController.uploadBuktiPembayaran
+);
+
+router.get(
+  '/perjalanan/surat/:suratId/bukti-pembayaran',
+  auth,
+  loadOwnedReportContext,
+  laporanController.getBuktiPembayaran
+);
+
+router.delete(
+  '/perjalanan/surat/:suratId/bukti-pembayaran',
+  auth,
+  loadOwnedReportContext,
+  laporanController.resetBuktiPembayaran
+);
+
 router.get(
   '/perjalanan',
   auth,

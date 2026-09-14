@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-005 — Endpoint write laporan berdasarkan surat tugas
+
+- **Status:** Selesai
+- **Ringkasan:** Mengikat kirim laporan, tanda tangan pegawai, serta manifest nota ke surat tugas eksplisit sehingga operasi pada Surat A tidak dapat membaca atau mengubah data Surat B.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `backend/src/controllers/laporan.controller.js`, `backend/src/routes/laporan.route.js`, `backend/src/middlewares/reportContext.middleware.js`, `backend/tests/integration/laporan.explicit-assignment.test.js`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `resolveSuratFromRequest` dan `sendControllerError`; handler `kirimLaporanAkhir`, `uploadTTDPegawai`, `getTTDPegawai`, `validateUploadBuktiPembayaran`, `uploadBuktiPembayaran`, `getBuktiPembayaran`, serta `resetBuktiPembayaran` menggunakan report context terpilih.
+- **Database:** Tidak ada tabel, kolom, index, atau enum baru. Pengiriman ulang meng-update record pasangan `(surat_tugas_id, pegawai_id)` yang sama; race unique dipetakan menjadi `409 REPORT_ALREADY_EXISTS`.
+- **API:** Menambahkan `POST /api/perjalanan/surat/:suratId/kirim`, `POST|GET /api/perjalanan/surat/:suratId/ttd-pegawai`, dan `POST|GET|DELETE /api/perjalanan/surat/:suratId/bukti-pembayaran`. Body `surat_tugas_id` yang tidak sama dengan URL ditolak dengan `400 SURAT_ID_MISMATCH`.
+- **Test otomatis:** RED terverifikasi karena route eksplisit belum tersedia (404 HTML). GREEN lulus 5/5 pada `laporan.explicit-assignment.test.js`; seluruh backend lulus 54/54 tanpa skip; backend lint lulus 81 file. Generator dokumen dan Google Drive diganti test double pada integration boundary agar test tidak melakukan upload eksternal.
+- **Verifikasi manual:** Kirim laporan A memperbarui kesimpulan A tanpa mengubah B; GET TTD A mengarah ke file A; reset manifest A tidak menghapus manifest B; konflik ID URL/body ditolak.
+- **Risiko/catatan:** Route legacy masih tersedia untuk kompatibilitas dan hanya menggunakan assignment aktif. Semua route write eksplisit memverifikasi kepemilikan sebelum pemrosesan file.
+- **Rollback:** Lepas enam route eksplisit dan kembalikan resolver handler ke assignment aktif; file manifest dan data laporan yang sudah ada tidak perlu dimigrasikan.
+- **Commit:** `fix: scope report writes to assignment id`.
+
 ### 2026-09-14 — TASK-004 — Endpoint read progres berdasarkan surat tugas
 
 - **Status:** Selesai

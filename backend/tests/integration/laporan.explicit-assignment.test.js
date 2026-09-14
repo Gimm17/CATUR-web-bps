@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const jwt = require('jsonwebtoken');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const databaseUrl = process.env.CATUR_TEST_DATABASE_URL;
 let sequelize;
@@ -10,6 +12,7 @@ let Daerah;
 let SuratTugas;
 let SuratTugasTujuan;
 let LaporanPerjalanan;
+let Presensi;
 
 if (databaseUrl) {
   const parsedDatabaseUrl = new URL(databaseUrl);
@@ -21,12 +24,24 @@ if (databaseUrl) {
   process.env.JWT_SECRET = 'catur-report-integration-secret';
 
   sequelize = require('../../src/config/database');
+  const pdfGeneratorPath = require.resolve('../../src/utils/pdfGenerator');
+  const wordGeneratorPath = require.resolve('../../src/utils/wordGenerator');
+  const googleDrive = require('../../src/utils/googleDrive');
+  require(pdfGeneratorPath);
+  require(wordGeneratorPath);
+  require.cache[pdfGeneratorPath].exports = async () => 'integration-report.pdf';
+  require.cache[wordGeneratorPath].exports = async () => 'integration-report.docx';
+  googleDrive.uploadFileToDrive = async ({ fileName }) => ({
+    id: `test-${fileName}`,
+    webContentLink: `https://drive.test/${fileName}`,
+  });
   app = require('../../src/app');
   User = require('../../src/models/user.model');
   Daerah = require('../../src/models/daerah.model');
   SuratTugas = require('../../src/models/suratTugas.model');
   SuratTugasTujuan = require('../../src/models/suratTugasTujuan.model');
   LaporanPerjalanan = require('../../src/models/laporan.perjalanan');
+  Presensi = require('../../src/models/presensi.model');
 }
 
 async function startServer(t) {
@@ -39,7 +54,13 @@ async function startServer(t) {
   return `http://127.0.0.1:${server.address().port}`;
 }
 
-async function createFixture(t) {
+async function createFixture(t, {
+  periods = [
+    ['A', '2026-07-01', '2026-07-02'],
+    ['B', '2026-07-10', '2026-07-11'],
+  ],
+  includePresensi = false,
+} = {}) {
   const suffix = `${process.pid}-${Date.now()}`;
   const pegawai = await User.create({
     nama: 'Pegawai Laporan Eksplisit',
@@ -57,10 +78,7 @@ async function createFixture(t) {
   const suratRows = [];
   const tujuanRows = [];
 
-  for (const [label, mulai, selesai] of [
-    ['A', '2026-07-01', '2026-07-02'],
-    ['B', '2026-07-10', '2026-07-11'],
-  ]) {
+  for (const [label, mulai, selesai] of periods) {
     const surat = await SuratTugas.create({
       user_id: pegawai.id,
       nomor_surat: `ST-REPORT-${label}-${suffix}`,
@@ -93,10 +111,27 @@ async function createFixture(t) {
       pegawai_id: pegawai.id,
       kesimpulan: `Kesimpulan ${label}`,
       status: 'dikirim',
+      ttd_pegawai: `https://signature.test/${label}.png`,
     });
+    if (includePresensi) {
+      await Presensi.create({
+        user_id: pegawai.id,
+        surat_tugas_id: surat.id,
+        surat_tugas_tujuan_id: tujuanRows.at(-1).id,
+        latitude: daerah.latitude,
+        longitude: daerah.longitude,
+        foto: JSON.stringify([`${label}-1.jpg`, `${label}-2.jpg`]),
+        laporan: `Laporan harian ${label}`,
+        tanggal_presensi: mulai,
+        jam_presensi: '08:00:00',
+      });
+    }
   }
 
   t.after(async () => {
+    await Presensi.destroy({
+      where: { surat_tugas_id: suratRows.map((row) => row.id) },
+    });
     await LaporanPerjalanan.destroy({
       where: { surat_tugas_id: suratRows.map((row) => row.id) },
     });
@@ -140,6 +175,129 @@ test('GET eksplisit memuat progres surat A dan B tanpa tertukar', {
   assert.equal(payloadA.tujuan[0].id, fixture.tujuanRows[0].id);
   assert.equal(payloadB.tujuan[0].id, fixture.tujuanRows[1].id);
   assert.equal(payloadA.report_window.timezone, 'Asia/Makassar');
+});
+
+test('kirim laporan melalui Surat A tidak mengubah laporan Surat B', {
+  skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
+}, async (t) => {
+  const baseUrl = await startServer(t);
+  const fixture = await createFixture(t, {
+    periods: [
+      ['A', '2099-07-01', '2099-07-02'],
+      ['B', '2099-07-10', '2099-07-11'],
+    ],
+    includePresensi: true,
+  });
+
+  const response = await fetch(
+    `${baseUrl}/api/perjalanan/surat/${fixture.suratRows[0].id}/kirim`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${fixture.token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ kesimpulan: 'Kesimpulan A diperbarui' }),
+    }
+  );
+  const payload = await response.json();
+  const savedA = await LaporanPerjalanan.findOne({
+    where: {
+      surat_tugas_id: fixture.suratRows[0].id,
+      pegawai_id: fixture.pegawai.id,
+    },
+  });
+  const savedB = await LaporanPerjalanan.findOne({
+    where: {
+      surat_tugas_id: fixture.suratRows[1].id,
+      pegawai_id: fixture.pegawai.id,
+    },
+  });
+
+  assert.equal(response.status, 200, JSON.stringify(payload));
+  assert.equal(savedA.kesimpulan, 'Kesimpulan A diperbarui');
+  assert.equal(savedB.kesimpulan, 'Kesimpulan B');
+});
+
+test('TTD dan reset manifest nota terisolasi berdasarkan surat tugas', {
+  skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
+}, async (t) => {
+  const baseUrl = await startServer(t);
+  const fixture = await createFixture(t, {
+    periods: [
+      ['A', '2099-07-01', '2099-07-02'],
+      ['B', '2099-07-10', '2099-07-11'],
+    ],
+  });
+  const manifestDir = path.resolve(__dirname, '../../uploads/bukti-nota-pembayaran');
+  const manifestA = path.join(
+    manifestDir,
+    `manifest-${fixture.pegawai.id}-${fixture.suratRows[0].id}.json`
+  );
+  const manifestB = path.join(
+    manifestDir,
+    `manifest-${fixture.pegawai.id}-${fixture.suratRows[1].id}.json`
+  );
+  fs.mkdirSync(manifestDir, { recursive: true });
+  fs.writeFileSync(manifestA, JSON.stringify([{ filename: 'nota-a.pdf' }]));
+  fs.writeFileSync(manifestB, JSON.stringify([{ filename: 'nota-b.pdf' }]));
+  t.after(() => {
+    for (const manifest of [manifestA, manifestB]) {
+      if (fs.existsSync(manifest)) fs.unlinkSync(manifest);
+    }
+  });
+
+  const signatureResponse = await fetch(
+    `${baseUrl}/api/perjalanan/surat/${fixture.suratRows[0].id}/ttd-pegawai`,
+    {
+      redirect: 'manual',
+      headers: { authorization: `Bearer ${fixture.token}` },
+    }
+  );
+  const resetResponse = await fetch(
+    `${baseUrl}/api/perjalanan/surat/${fixture.suratRows[0].id}/bukti-pembayaran`,
+    {
+      method: 'DELETE',
+      headers: { authorization: `Bearer ${fixture.token}` },
+    }
+  );
+
+  assert.equal(signatureResponse.status, 302);
+  assert.equal(signatureResponse.headers.get('location'), 'https://signature.test/A.png');
+  assert.equal(resetResponse.status, 200);
+  assert.deepEqual(JSON.parse(fs.readFileSync(manifestA, 'utf8')), []);
+  assert.equal(JSON.parse(fs.readFileSync(manifestB, 'utf8'))[0].filename, 'nota-b.pdf');
+});
+
+test('endpoint eksplisit menolak surat ID di body yang berbeda dari URL', {
+  skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
+}, async (t) => {
+  const baseUrl = await startServer(t);
+  const fixture = await createFixture(t, {
+    periods: [
+      ['A', '2099-07-01', '2099-07-02'],
+      ['B', '2099-07-10', '2099-07-11'],
+    ],
+  });
+
+  const response = await fetch(
+    `${baseUrl}/api/perjalanan/surat/${fixture.suratRows[0].id}/kirim`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${fixture.token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        surat_tugas_id: fixture.suratRows[1].id,
+        kesimpulan: 'Tidak boleh tersimpan',
+      }),
+    }
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 400, JSON.stringify(payload));
+  assert.equal(payload.code, 'SURAT_ID_MISMATCH');
 });
 
 test('endpoint legacy tidak memilih surat terakhir saat tidak ada assignment aktif hari ini', {

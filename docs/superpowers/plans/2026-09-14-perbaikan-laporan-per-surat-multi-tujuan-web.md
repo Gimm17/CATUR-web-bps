@@ -458,40 +458,40 @@ git commit -m "fix: load report progress by assignment id"
 - Consumes: `req.reportContext`, `reportWindow.editable`, dan unique index Task 2.
 - Produces: enam endpoint upload/read/reset/kirim berbasis `:suratId` yang selalu mengubah report context terpilih.
 
-- [ ] **Step 1: Tulis test kirim laporan Surat A tidak mengubah Surat B**
+- [x] **Step 1: Tulis test kirim laporan Surat A tidak mengubah Surat B**
 
 ```js
 assert.equal(savedA.surat_tugas_id, suratA.id);
 assert.equal(await countReports(suratB.id, userId), 0);
 ```
 
-- [ ] **Step 2: Tulis test TTD dan manifest nota terisolasi per surat**
+- [x] **Step 2: Tulis test TTD dan manifest nota terisolasi per surat**
 
 ```js
 assert.equal(readBuktiManifest(userId, suratA.id).length, 1);
 assert.equal(readBuktiManifest(userId, suratB.id).length, 0);
 ```
 
-- [ ] **Step 3: Tulis test body ID yang bertentangan ditolak**
+- [x] **Step 3: Tulis test body ID yang bertentangan ditolak**
 
 ```js
 assert.equal(conflictResponse.status, 400);
 assert.equal(conflictResponse.body.code, 'SURAT_ID_MISMATCH');
 ```
 
-- [ ] **Step 4: Jalankan test dan verifikasi gagal pada endpoint write baru**
+- [x] **Step 4: Jalankan test dan verifikasi gagal pada endpoint write baru**
 
 Run: `cd backend && node --test tests/integration/laporan.explicit-assignment.test.js`  
 Expected: FAIL pada endpoint kirim/TTD/nota berbasis ID.
 
-- [ ] **Step 5: Refactor controller untuk menggunakan context yang sudah divalidasi**
+- [x] **Step 5: Refactor controller untuk menggunakan context yang sudah divalidasi**
 
 ```js
 const { surat, reportWindow } = req.reportContext;
 assertReportEditable(reportWindow);
 ```
 
-- [ ] **Step 6: Daftarkan route write eksplisit**
+- [x] **Step 6: Daftarkan route write eksplisit**
 
 ```js
 router.post('/perjalanan/surat/:suratId/kirim', auth, loadOwnedReportContext, laporanController.kirimLaporanAkhir);
@@ -499,20 +499,20 @@ router.post('/perjalanan/surat/:suratId/ttd-pegawai', auth, loadOwnedReportConte
 router.get('/perjalanan/surat/:suratId/ttd-pegawai', auth, loadOwnedReportContext, laporanController.getTTDPegawai);
 ```
 
-- [ ] **Step 7: Daftarkan tiga route bukti pembayaran berbasis ID**
+- [x] **Step 7: Daftarkan tiga route bukti pembayaran berbasis ID**
 
 Gunakan prefix `/perjalanan/surat/:suratId/bukti-pembayaran` untuk `POST`, `GET`, dan `DELETE`, dengan `loadOwnedReportContext` sebelum middleware upload.
 
-- [ ] **Step 8: Pastikan pengiriman ulang melakukan update record yang sama**
+- [x] **Step 8: Pastikan pengiriman ulang melakukan update record yang sama**
 
 Gunakan `findOne({ where: { surat_tugas_id: surat.id, pegawai_id: userId } })`; tangani unique violation sebagai `409 REPORT_ALREADY_EXISTS`, bukan membuat duplikat.
 
-- [ ] **Step 9: Jalankan integration test dan backend suite**
+- [x] **Step 9: Jalankan integration test dan backend suite**
 
 Run: `cd backend && node --test tests/integration/laporan.explicit-assignment.test.js && npm test`  
 Expected: operasi A/B terisolasi dan seluruh test PASS.
 
-- [ ] **Step 10: Update `CHANGELOG.md` dan commit Task 5**
+- [x] **Step 10: Update `CHANGELOG.md` dan commit Task 5**
 
 ```bash
 git add backend/src/controllers/laporan.controller.js backend/src/routes/laporan.route.js backend/tests/integration/laporan.explicit-assignment.test.js CHANGELOG.md
