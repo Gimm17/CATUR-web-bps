@@ -1,8 +1,66 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { Client } = require('pg');
 
 const databaseUrl = process.env.CATUR_TEST_DATABASE_URL;
+
+test('migration mengubah status VARCHAR dari dump lama menjadi enum tanpa kehilangan data', {
+  skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
+}, async () => {
+  const client = new Client({ connectionString: databaseUrl });
+  const schema = `legacy_report_${process.pid}_${Date.now()}`;
+  const migration = fs.readFileSync(
+    path.resolve(__dirname, '../../migrations/20260914-enforce-report-integrity.sql'),
+    'utf8'
+  );
+  await client.connect();
+
+  try {
+    await client.query(`CREATE SCHEMA ${schema}`);
+    await client.query(`SET search_path TO ${schema}`);
+    await client.query(`
+      CREATE TABLE laporan_perjalanan (
+        id BIGSERIAL PRIMARY KEY,
+        surat_tugas_id INTEGER NOT NULL,
+        pegawai_id INTEGER NOT NULL,
+        status VARCHAR(50) DEFAULT 'dikirim'
+      )
+    `);
+    await client.query(`
+      INSERT INTO laporan_perjalanan (surat_tugas_id, pegawai_id, status)
+      VALUES (10, 20, 'draft'), (11, 20, 'dana_turun')
+    `);
+
+    await client.query(migration);
+
+    const column = await client.query(
+      `SELECT data_type, udt_name
+       FROM information_schema.columns
+       WHERE table_schema = $1
+         AND table_name = 'laporan_perjalanan'
+         AND column_name = 'status'`,
+      [schema]
+    );
+    const rows = await client.query(
+      'SELECT surat_tugas_id, pegawai_id, status::text FROM laporan_perjalanan ORDER BY id'
+    );
+
+    assert.deepEqual(column.rows[0], {
+      data_type: 'USER-DEFINED',
+      udt_name: 'enum_laporan_perjalanan_status',
+    });
+    assert.deepEqual(rows.rows, [
+      { surat_tugas_id: 10, pegawai_id: 20, status: 'draft' },
+      { surat_tugas_id: 11, pegawai_id: 20, status: 'dana_turun' },
+    ]);
+  } finally {
+    await client.query('SET search_path TO public').catch(() => {});
+    await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`).catch(() => {});
+    await client.end();
+  }
+});
 
 test('enum laporan menerima status draft', {
   skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
@@ -85,4 +143,3 @@ test('satu pegawai hanya dapat memiliki satu laporan per surat tugas', {
     await client.end();
   }
 });
-

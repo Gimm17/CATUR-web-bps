@@ -1,8 +1,84 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { Client } = require('pg');
 
 const databaseUrl = process.env.CATUR_TEST_DATABASE_URL;
+
+test('backfill menghubungkan presensi lama ke tujuan yang mencakup tanggalnya', {
+  skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
+}, async () => {
+  const client = new Client({ connectionString: databaseUrl });
+  const schema = `legacy_tujuan_${process.pid}_${Date.now()}`;
+  const createMigration = fs.readFileSync(
+    path.resolve(__dirname, '../../migrations/20260909-create-surat-tugas-tujuan.sql'),
+    'utf8'
+  );
+  const backfillMigration = fs.readFileSync(
+    path.resolve(__dirname, '../../migrations/20260909-backfill-surat-tugas-tujuan.sql'),
+    'utf8'
+  );
+  await client.connect();
+
+  try {
+    await client.query(`CREATE SCHEMA ${schema}`);
+    await client.query(`SET search_path TO ${schema}`);
+    await client.query(`
+      CREATE TABLE daerah (id INTEGER PRIMARY KEY);
+      CREATE TABLE surat_tugas (
+        id INTEGER PRIMARY KEY,
+        daerah_id INTEGER NOT NULL REFERENCES daerah(id),
+        daerah_tujuan VARCHAR(255) NOT NULL,
+        latitude NUMERIC(10,6) NOT NULL,
+        longitude NUMERIC(10,6) NOT NULL,
+        radius INTEGER NOT NULL,
+        tanggal_mulai DATE NOT NULL,
+        tanggal_selesai DATE NOT NULL,
+        created_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ
+      );
+      CREATE TABLE presensi (
+        id INTEGER PRIMARY KEY,
+        surat_tugas_id INTEGER NOT NULL,
+        tanggal_presensi DATE NOT NULL
+      );
+      INSERT INTO daerah (id) VALUES (7);
+      INSERT INTO surat_tugas (
+        id, daerah_id, daerah_tujuan, latitude, longitude, radius,
+        tanggal_mulai, tanggal_selesai, created_at, updated_at
+      ) VALUES (
+        10, 7, 'Buol', -0.900000, 119.870000, 100,
+        '2026-09-14', '2026-09-16', NOW(), NOW()
+      );
+      INSERT INTO presensi (id, surat_tugas_id, tanggal_presensi)
+      VALUES (20, 10, '2026-09-15');
+    `);
+
+    await client.query(createMigration);
+    await client.query(backfillMigration);
+
+    const result = await client.query(`
+      SELECT presensi.surat_tugas_tujuan_id IS NOT NULL AS linked,
+             tujuan.surat_tugas_id,
+             tujuan.urutan
+      FROM presensi
+      JOIN surat_tugas_tujuan AS tujuan
+        ON tujuan.id = presensi.surat_tugas_tujuan_id
+      WHERE presensi.id = 20
+    `);
+
+    assert.deepEqual(result.rows, [{
+      linked: true,
+      surat_tugas_id: 10,
+      urutan: 1,
+    }]);
+  } finally {
+    await client.query('SET search_path TO public').catch(() => {});
+    await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`).catch(() => {});
+    await client.end();
+  }
+});
 
 test('menegakkan urutan unik untuk setiap surat tugas', {
   skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',

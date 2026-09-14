@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-014 — Kompatibilitas import database lama
+
+- **Status:** Restore dan migration lokal lulus; import production menunggu PostgreSQL hosting aktif.
+- **Ringkasan:** Memvalidasi `dump.sql` PostgreSQL 10 pada PostgreSQL 17, memperbaiki migration agar schema lama berbasis `VARCHAR` dapat dikonversi ke enum, dan menghubungkan presensi lama ke tujuan hasil backfill tanpa menghapus data yatim.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `.gitignore`, `backend/migrations/20260909-backfill-surat-tugas-tujuan.sql`, `backend/migrations/20260914-enforce-report-integrity.sql`, `backend/tests/integration/suratTugasTujuan.schema.test.js`, `backend/tests/integration/laporan.schema.test.js`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada; `dump.sql` asli tidak dimodifikasi.
+- **Class/fungsi/komponen diubah:** Tidak ada class runtime. Migration integritas sekarang membuat enum laporan bila belum ada, menolak nilai status asing, lalu mengonversi kolom `status`; migration backfill memetakan presensi hanya ketika tepat satu tujuan mencakup tanggalnya.
+- **Database:** Restore uji berisi 102 user, 197 daerah, 97 surat tugas, 150 presensi, 34 laporan perjalanan, dan 215 notifikasi. Dibuat 97 child tujuan; 133 presensi valid berhasil dipetakan. Terdapat 17 presensi yatim dari data sumber yang tetap dipertahankan dan tidak dipetakan. Tidak ada pasangan laporan duplikat.
+- **API:** Tidak ada perubahan endpoint atau response.
+- **Test otomatis:** RED migration enum gagal dengan PostgreSQL error `42704`; GREEN compatibility test lulus. RED backfill menghasilkan relasi kosong; GREEN backfill test lulus. Seluruh backend lulus 64/64 tanpa skip pada hasil restore dump lama dan lint backend lulus 81 file.
+- **Verifikasi manual:** Restore plain SQL selesai dengan exit 0 setelah metadata owner PostgreSQL 10 dibersihkan hanya pada salinan sementara. Migration multi-tujuan, backfill, enum, dan unique index berhasil pada `catur_test`.
+- **Risiko/catatan:** Tujuh belas presensi yatim memerlukan keputusan bisnis terpisah karena surat induknya tidak tersedia. Dump dan file password cPanel ditambahkan ke `.gitignore`; tidak boleh masuk commit.
+- **Rollback:** Backup sebelum restore tersedia di `C:\Users\HP\PostgreSQL\backups\catur_test-before-old-dump-20260914-144522.dump`. Restore production belum dilakukan, sehingga belum memerlukan rollback hosting.
+- **Commit:** `fix: support legacy database import`.
+
 ### 2026-09-14 — TASK-013 — Regression, dokumentasi QA, dan kesiapan rilis
 
 - **Status:** Implementasi dan verifikasi otomatis lokal selesai; QA manual, staging, serta backup production belum dijalankan.

@@ -36,6 +36,11 @@ backend/uploads/
 backend/logs/
 backend/daerah.sql
 
+# Local database exports and deployment credentials.
+/dump.sql
+/dump.sql.gz
+/deploy/pwsupersecretcpanel.txt
+
 # Legacy duplicate clients and packaged artifacts kept locally for recovery.
 backend/Front-end Presensi/
 backend/Front-end Presensi Flutter/

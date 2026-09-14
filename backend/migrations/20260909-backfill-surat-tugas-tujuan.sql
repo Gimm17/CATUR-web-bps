@@ -33,4 +33,22 @@ WHERE NOT EXISTS (
 )
 ON CONFLICT (surat_tugas_id, urutan) DO NOTHING;
 
+UPDATE presensi
+SET surat_tugas_tujuan_id = matched.tujuan_id
+FROM (
+  SELECT
+    presensi_lama.id AS presensi_id,
+    MIN(tujuan.id) AS tujuan_id
+  FROM presensi AS presensi_lama
+  JOIN surat_tugas_tujuan AS tujuan
+    ON tujuan.surat_tugas_id = presensi_lama.surat_tugas_id
+   AND presensi_lama.tanggal_presensi
+       BETWEEN tujuan.tanggal_mulai AND tujuan.tanggal_selesai
+  WHERE presensi_lama.surat_tugas_tujuan_id IS NULL
+  GROUP BY presensi_lama.id
+  HAVING COUNT(*) = 1
+) AS matched
+WHERE presensi.id = matched.presensi_id
+  AND presensi.surat_tugas_tujuan_id IS NULL;
+
 COMMIT;
