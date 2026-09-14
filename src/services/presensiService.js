@@ -9,8 +9,8 @@ export const submitPresensi = async (formData) => {
   });
 };
 
-export const submitLaporan = async (data) => {
-  return axios.put('/presensi/laporan', data, {
+export const submitLaporan = async (presensiId, laporan) => {
+  return axios.put(`/presensi/${presensiId}/laporan`, { laporan }, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
       'Content-Type': 'application/json',

@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-007 — Kontrak service frontend berbasis surat ID
+
+- **Status:** Selesai dengan catatan baseline lint proyek.
+- **Ringkasan:** Seluruh service laporan frontend kini mewajibkan ID surat tugas dan membangun endpoint eksplisit; penyimpanan laporan harian menggunakan ID presensi pada URL.
+- **File ditambahkan:** `src/services/laporan.service.test.js`.
+- **File diubah:** `src/services/laporan.service.js`, `src/services/presensiService.js`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `requireSuratId`; mengubah signature `getLaporanPerjalanan`, `kirimLaporanAkhir`, `uploadTTD`, `getTTD`, `uploadBuktiPembayaran`, `getBuktiPembayaran`, `resetBuktiPembayaran`, dan `submitLaporan`.
+- **Database:** Tidak ada.
+- **API:** Semua request laporan memakai `/perjalanan/surat/:suratId/...`; laporan harian memakai `/presensi/:presensiId/laporan`. ID kosong/non-integer ditolak sebelum request dan ID tidak diduplikasiasikan ke body.
+- **Test otomatis:** RED terverifikasi 4 kegagalan pada URL/signature lama. GREEN lulus 4/4 pada `laporan.service.test.js`. Lint terarah untuk tiga file Task 7 lulus. `npm run lint` global tetap gagal pada baseline: ESLint lama memindai backend CommonJS sebagai browser ESM dan `src/**` memiliki 33 error/15 warning lama; perubahan Task 7 tidak menambah error.
+- **Verifikasi manual:** URL GET, kirim, TTD, nota, reset, dan laporan harian diverifikasi melalui test double boundary Axios; interceptor token tetap berada di `src/api/axios.js`.
+- **Risiko/catatan:** Semua pemanggil lama harus diperbarui untuk mengirim `suratId`; pekerjaan tersebut dijadwalkan pada Task 8–10. Utang konfigurasi/global lint perlu task tersendiri agar tidak mencampur refactor ratusan file dengan perbaikan laporan.
+- **Rollback:** Pulihkan signature tanpa ID dan endpoint generik pada dua service, lalu hapus test kontrak.
+- **Commit:** `refactor: require assignment id in report services`.
+
 ### 2026-09-14 — TASK-006 — Enforcement deadline laporan harian dan akhir
 
 - **Status:** Selesai

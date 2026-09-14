@@ -609,31 +609,31 @@ git commit -m "feat: enforce report editing deadline"
 - Consumes: endpoint eksplisit Tasks 4–6.
 - Produces: `getLaporanPerjalanan(suratId)`, `kirimLaporanAkhir(suratId, payload)`, `uploadTTD(suratId, formData)`, `getTTD(suratId)`, `uploadBuktiPembayaran(suratId, formData)`, `getBuktiPembayaran(suratId)`, `resetBuktiPembayaran(suratId)`, dan `submitLaporan(presensiId, laporan)`.
 
-- [ ] **Step 1: Tulis test service GET membangun URL dari ID**
+- [x] **Step 1: Tulis test service GET membangun URL dari ID**
 
 ```js
 expect(axios.get).toHaveBeenCalledWith('/perjalanan/surat/41');
 ```
 
-- [ ] **Step 2: Tulis test seluruh service write memakai ID yang sama**
+- [x] **Step 2: Tulis test seluruh service write memakai ID yang sama**
 
 ```js
 expect(axios.post).toHaveBeenCalledWith('/perjalanan/surat/41/kirim', payload);
 expect(axios.delete).toHaveBeenCalledWith('/perjalanan/surat/41/bukti-pembayaran');
 ```
 
-- [ ] **Step 3: Tulis test ID kosong ditolak sebelum request**
+- [x] **Step 3: Tulis test ID kosong ditolak sebelum request**
 
 ```js
 await expect(getLaporanPerjalanan()).rejects.toThrow('suratId wajib diisi');
 ```
 
-- [ ] **Step 4: Jalankan Vitest dan pastikan kontrak lama gagal**
+- [x] **Step 4: Jalankan Vitest dan pastikan kontrak lama gagal**
 
 Run: `npm test -- src/services/laporan.service.test.js`  
 Expected: FAIL karena service lama menggunakan endpoint generik.
 
-- [ ] **Step 5: Tambahkan validator ID tunggal**
+- [x] **Step 5: Tambahkan validator ID tunggal**
 
 ```js
 function requireSuratId(suratId) {
@@ -643,23 +643,23 @@ function requireSuratId(suratId) {
 }
 ```
 
-- [ ] **Step 6: Ubah seluruh fungsi service ke endpoint berbasis ID**
+- [x] **Step 6: Ubah seluruh fungsi service ke endpoint berbasis ID**
 
 Jangan mengirim `surat_tugas_id` ganda di body; URL adalah sumber ID. Pertahankan token melalui interceptor `src/api/axios.js`.
 
-- [ ] **Step 7: Ubah `submitLaporan` ke URL presensi eksplisit**
+- [x] **Step 7: Ubah `submitLaporan` ke URL presensi eksplisit**
 
 ```js
 export const submitLaporan = (presensiId, laporan) =>
   axios.put(`/presensi/${presensiId}/laporan`, { laporan });
 ```
 
-- [ ] **Step 8: Jalankan test service dan lint frontend**
+- [x] **Step 8: Jalankan test service dan lint frontend**
 
 Run: `npm test -- src/services/laporan.service.test.js && npm run lint`  
 Expected: PASS dan lint exit 0.
 
-- [ ] **Step 9: Update `CHANGELOG.md` dan commit Task 7**
+- [x] **Step 9: Update `CHANGELOG.md` dan commit Task 7**
 
 ```bash
 git add src/services/laporan.service.js src/services/presensiService.js src/services/laporan.service.test.js CHANGELOG.md
