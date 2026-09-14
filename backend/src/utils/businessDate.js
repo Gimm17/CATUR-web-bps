@@ -57,6 +57,12 @@ function addBusinessDays(value, days) {
   return formatUtcDate(date);
 }
 
+function differenceInBusinessDates(from, to) {
+  const start = parseBusinessDate(from);
+  const end = parseBusinessDate(to);
+  return Math.floor((end.getTime() - start.getTime()) / 86400000);
+}
+
 function isDateWithin(value, start, end) {
   const normalizedValue = formatUtcDate(parseBusinessDate(value));
   const normalizedStart = formatUtcDate(parseBusinessDate(start));
@@ -68,5 +74,6 @@ module.exports = {
   BUSINESS_TIMEZONE,
   getBusinessDate,
   addBusinessDays,
+  differenceInBusinessDates,
   isDateWithin,
 };

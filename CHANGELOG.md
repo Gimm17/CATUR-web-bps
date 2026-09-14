@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-001 — Utilitas tanggal WITA dan report window
+
+- **Status:** Selesai
+- **Ringkasan:** Menambahkan perhitungan tanggal akhir perjalanan, deadline tujuh hari kalender, sisa hari, status editable, dan alasan penguncian laporan berdasarkan tanggal WITA serta status proses.
+- **File ditambahkan:** `backend/src/services/reportWindow.service.js` dan `backend/tests/unit/reportWindow.service.test.js`.
+- **File diubah:** `backend/src/utils/businessDate.js` dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `differenceInBusinessDates`, `getLastDestinationEndDate`, `buildReportWindow`, dan `assertReportEditable`.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data yang diubah.
+- **API:** Tidak ada endpoint yang diubah; service ini menjadi kontrak internal untuk task endpoint berikutnya.
+- **Test otomatis:** RED terverifikasi karena module `reportWindow.service` belum ada. GREEN lulus 13/13 pada `reportWindow.service.test.js`; backend lint lulus 79 file.
+- **Verifikasi manual:** Boundary hari terakhir pukul 23:59:59 WITA tetap editable; pukul 00:00 hari berikutnya terkunci; status proses keuangan terkunci sebelum deadline.
+- **Risiko/catatan:** Status yang tidak dikenal diperlakukan terkunci secara fail-closed. Surat legacy tanpa child tujuan menggunakan `surat_tugas.tanggal_selesai`.
+- **Rollback:** Hapus `reportWindow.service.js` beserta test dan kembalikan export `differenceInBusinessDates` dari `businessDate.js`.
+- **Commit:** `feat: add WITA report edit window`.
+
 ### 2026-09-14 — PRE-001 — Perbaikan fixture integration test schema tujuan
 
 - **Status:** Selesai

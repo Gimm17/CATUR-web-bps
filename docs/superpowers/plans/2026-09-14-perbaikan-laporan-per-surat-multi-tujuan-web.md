@@ -114,7 +114,7 @@
 - Consumes: `getBusinessDate(now)`, `addBusinessDays(date, days)`, dan array tujuan terurut.
 - Produces: `getLastDestinationEndDate({ tujuan, fallbackEndDate })`, `buildReportWindow({ tujuan, fallbackEndDate, status, now })`, `assertReportEditable(reportWindow)`, dan object `{ timezone, trip_end_date, deadline_date, editable, remaining_days, lock_reason }`.
 
-- [ ] **Step 1: Tulis test tanggal akhir dan deadline tujuh hari**
+- [x] **Step 1: Tulis test tanggal akhir dan deadline tujuh hari**
 
 ```js
 test('deadline tujuh hari dihitung dari tujuan terakhir', () => {
@@ -132,7 +132,7 @@ test('deadline tujuh hari dihitung dari tujuan terakhir', () => {
 });
 ```
 
-- [ ] **Step 2: Tulis test boundary WITA, lewat deadline, dan status terkunci**
+- [x] **Step 2: Tulis test boundary WITA, lewat deadline, dan status terkunci**
 
 ```js
 test('dicek_keuangan terkunci walau deadline belum lewat', () => {
@@ -146,12 +146,12 @@ test('dicek_keuangan terkunci walau deadline belum lewat', () => {
 });
 ```
 
-- [ ] **Step 3: Jalankan unit test dan pastikan gagal karena service belum ada**
+- [x] **Step 3: Jalankan unit test dan pastikan gagal karena service belum ada**
 
 Run: `cd backend && node --test tests/unit/reportWindow.service.test.js`  
 Expected: FAIL dengan module `reportWindow.service` belum ditemukan.
 
-- [ ] **Step 4: Tambahkan helper selisih tanggal pada `businessDate.js`**
+- [x] **Step 4: Tambahkan helper selisih tanggal pada `businessDate.js`**
 
 ```js
 function differenceInBusinessDates(from, to) {
@@ -161,7 +161,7 @@ function differenceInBusinessDates(from, to) {
 }
 ```
 
-- [ ] **Step 5: Implementasikan `reportWindow.service.js` dengan status lock eksplisit**
+- [x] **Step 5: Implementasikan `reportWindow.service.js` dengan status lock eksplisit**
 
 ```js
 const LOCKED_STATUSES = new Set([
@@ -188,16 +188,16 @@ function assertReportEditable(reportWindow) {
 }
 ```
 
-- [ ] **Step 6: Jalankan unit test sampai seluruh boundary lulus**
+- [x] **Step 6: Jalankan unit test sampai seluruh boundary lulus**
 
 Run: `cd backend && node --test tests/unit/reportWindow.service.test.js`  
 Expected: PASS untuk akhir perjalanan, hari deadline, lewat deadline, `draft`, `dikirim`, dan seluruh status lock.
 
-- [ ] **Step 7: Tambahkan record Task 1 ke `CHANGELOG.md`**
+- [x] **Step 7: Tambahkan record Task 1 ke `CHANGELOG.md`**
 
 Record wajib mencantumkan dua file kode, satu file test, fungsi baru, tidak ada perubahan DB/API, hasil test, risiko timezone, dan rollback.
 
-- [ ] **Step 8: Commit Task 1**
+- [x] **Step 8: Commit Task 1**
 
 ```bash
 git add backend/src/utils/businessDate.js backend/src/services/reportWindow.service.js backend/tests/unit/reportWindow.service.test.js CHANGELOG.md
