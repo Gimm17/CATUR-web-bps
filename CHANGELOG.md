@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-015 — Terapkan database lama ke development lokal
+
+- **Status:** Selesai pada environment development lokal; production belum diubah.
+- **Ringkasan:** Mengganti schema `catur_dev` yang kosong dengan data `dump.sql` yang telah tervalidasi, mempertahankan akun lokal `@catur.test`, menjalankan seluruh migration terbaru, dan menghidupkan ulang backend.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `CHANGELOG.md`.
+- **File dihapus:** Tidak ada; `dump.sql` asli tidak dimodifikasi.
+- **Class/fungsi/komponen diubah:** Tidak ada.
+- **Database:** `catur_dev` sekarang berisi 104 user, 197 daerah, 97 surat tugas, 97 tujuan, 150 presensi, 34 laporan perjalanan, dan 215 notifikasi. Sebanyak 133 presensi valid terpetakan ke tujuan; 17 presensi yatim dipertahankan; presensi valid tanpa tujuan berjumlah 0.
+- **API:** Tidak ada perubahan kontrak. Smoke test lokal: `GET /api/surat-tugas` HTTP 200 dengan 97 row, `GET /api/surat-tugas/stats` HTTP 200, dan `GET /api/getpegawai` HTTP 200 dengan 97 row.
+- **Test otomatis:** Menggunakan migration dan regression suite TASK-014 yang sebelumnya lulus 64/64 tanpa skip; `ensureSchema` development lulus dan backend kembali listen pada port 3000.
+- **Verifikasi manual:** Dashboard browser perlu logout/login ulang agar JWT lama tidak menunjuk ID user sebelum restore, kemudian refresh halaman.
+- **Risiko/catatan:** Dua akun lokal dipertahankan melalui schema staging. Token login lama harus dibuang setelah penggantian database. Tujuh belas presensi yatim belum dihapus atau diubah.
+- **Rollback:** Backup sebelum penggantian tersedia di `C:\Users\HP\PostgreSQL\backups\catur_dev-before-old-dump-20260914-150000.dump` (4.950.093 byte).
+- **Commit:** `docs: record local legacy database restore`.
+
 ### 2026-09-14 — TASK-014 — Kompatibilitas import database lama
 
 - **Status:** Restore dan migration lokal lulus; import production menunggu PostgreSQL hosting aktif.
