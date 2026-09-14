@@ -7,6 +7,9 @@ const requirePresensiPhoto = require('../middlewares/requirePresensiPhoto.middle
 const stampPresensiPhoto = require('../middlewares/stampPresensi.middleware');
 const uploadToDrive = require('../middlewares/uploadToDrive.middleware');
 
+// Riwayat presensi hanya untuk user yang sedang login.
+router.get('/', authMiddleware, presensiController.listPresensiSaya);
+
 // Route untuk absen awal (foto + lokasi)
 router.post(
   '/absen',

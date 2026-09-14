@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { submitPresensi, cekStatusPresensi, submitLaporan } from "../../services/presensiService";
-import { getSuratTugasAktif } from "../../services/surat.service";
+import { getSuratTugasAktifAtauNull } from "../../services/surat.service";
 import { getProfil } from "../../services/akun.service";
 import PegawaiLayout from "../../layouts/PegawaiLayout";
 import {
@@ -933,7 +933,7 @@ const PresensiPegawai = () => {
 
         // Load surat tugas
         try {
-          const response = await getSuratTugasAktif();
+          const response = await getSuratTugasAktifAtauNull();
           console.log("Surat tugas response:", response);
           
           let suratData = null;
@@ -959,8 +959,6 @@ const PresensiPegawai = () => {
             }
             
             setSurat(suratData);
-          } else {
-            setError("Tidak ada surat tugas aktif");
           }
         } catch (apiError) {
           console.error("Error load surat:", apiError);

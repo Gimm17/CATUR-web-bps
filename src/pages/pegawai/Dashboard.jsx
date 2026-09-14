@@ -3,6 +3,7 @@ import { getSuratTugasAktif} from "../../services/surat.service";
 import { getAllSuratTugas } from "../../services/suratTugas.service";
 import { cekStatusPresensi } from "../../services/presensiService";
 import { getLaporanPerjalanan } from "../../services/laporan.service";
+import { loadActivePresensiTimeline } from "../../utils/activePresensiTimeline";
 import { getDaerah, getDaerahById } from "../../services/daerahService";
 import api from "../../api/axios";
 import { getUser } from "../../utils/auth";
@@ -651,25 +652,15 @@ const DashboardPegawai = () => {
       // 7. CEK STATUS PRESENSI HARI INI (REAL-TIME)
       await cekStatusHariIni();
 
-      let perjalananAktif = null;
+      let activeTimeline = [];
       try {
-        perjalananAktif = await getLaporanPerjalanan();
+        activeTimeline = await loadActivePresensiTimeline(
+          suratAktif,
+          getLaporanPerjalanan
+        );
       } catch (perjalananErr) {
         console.warn("Error mengambil timeline presensi aktif:", perjalananErr.message);
       }
-
-      const activeTimeline = Array.isArray(perjalananAktif?.presensi)
-        ? perjalananAktif.presensi
-            .filter((item) => {
-              const tanggal = item?.tanggal_presensi;
-              if (!tanggal || !suratAktif?.tanggal_mulai || !suratAktif?.tanggal_selesai) return true;
-              return tanggal >= suratAktif.tanggal_mulai && tanggal <= suratAktif.tanggal_selesai;
-            })
-            .map((item, index) => ({
-              ...item,
-              hari_ke: item?.hari_ke || index + 1,
-            }))
-        : [];
 
       setSurat(suratAktif);
       setSuratStatus(suratStatusInfo);

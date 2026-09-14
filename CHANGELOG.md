@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-016 — Pemulihan halaman tagging dan data dashboard pegawai
+
+- **Status:** Selesai dan aktif pada environment development lokal; verifikasi klik browser oleh pengguna menunggu hard refresh.
+- **Ringkasan:** Memperbaiki error bootstrap AdminLTE `Cannot read properties of undefined (reading 'fn')`, membedakan respons 404 surat aktif sebagai empty state yang valid, menyediakan kembali riwayat presensi milik pegawai, dan menghentikan pemanggilan timeline laporan tanpa ID surat.
+- **File ditambahkan:** `backend/tests/unit/presensi.list.test.js`, `src/bootstrapScripts.test.js`, `src/services/surat.service.test.js`, `src/utils/activePresensiTimeline.js`, dan `src/utils/activePresensiTimeline.test.js`.
+- **File diubah:** `backend/src/controllers/presensi.controller.js`, `backend/src/routes/presensi.routes.js`, `index.html`, `src/pages/pegawai/Dashboard.jsx`, `src/pages/pegawai/PresensiPegawai.jsx`, `src/services/surat.service.js`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `listPresensiSaya`, `getSuratTugasAktifAtauNull`, dan `loadActivePresensiTimeline`; `DashboardPegawai` kini hanya mengambil timeline bila `suratAktif.id` tersedia; `PresensiPegawai` tidak lagi mengubah kondisi tanpa tugas menjadi banner error.
+- **Database:** Tidak ada tabel, kolom, index, enum, migration, atau data yang diubah.
+- **API:** Menambahkan `GET /api/presensi` terautentikasi untuk mengambil riwayat presensi user login, terurut terbaru, beserta ringkasan surat dan metadata foto. Smoke test lokal user 87 menghasilkan HTTP 200 dengan 10 record. `GET /api/surat-tugas/aktif` tetap menggunakan HTTP 404 sebagai kontrak sah ketika tidak ada tugas pada tanggal WITA berjalan.
+- **Test otomatis:** Siklus RED terverifikasi untuk fungsi/route yang belum tersedia. GREEN: frontend 33/33 lulus, backend 66/66 lulus tanpa skip pada `catur_test`, backend lint lulus 81 file, dan build produksi lulus. Lint halaman legacy masih memiliki baseline lama React Hooks; file utility/service baru bersih setelah test path diperbaiki.
+- **Verifikasi manual:** Backend development direstart dan listen di port 3000; request bertoken ke `GET /api/presensi` berhasil. Frontend tetap listen di `127.0.0.1:5174`; pengguna perlu hard refresh lalu membuka Dashboard dan Tagging Perjadin untuk memastikan empty state netral serta console bebas error `fn`, `/api/presensi` 404, dan `suratId wajib diisi`.
+- **Risiko/catatan:** User 87 memang tidak memiliki surat aktif pada 14 September 2026; empat suratnya berakhir pada 17 Juli, 14 Agustus, 9 September, dan 12 September 2026. Karena itu tampilan `Tidak Ada Surat Tugas Aktif` adalah hasil yang benar, bukan kehilangan data.
+- **Rollback:** Hapus route GET riwayat dan controller-nya, pulihkan urutan script lama serta pemanggilan timeline lama, lalu restart backend. Tidak ada rollback database.
+- **Commit:** `fix: restore employee attendance dashboard flow`.
+
 ### 2026-09-14 — TASK-015 — Terapkan database lama ke development lokal
 
 - **Status:** Selesai pada environment development lokal; production belum diubah.

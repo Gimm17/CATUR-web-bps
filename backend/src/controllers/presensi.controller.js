@@ -166,6 +166,51 @@ function buildPresensiResponseItem(presensi, hariKe) {
   };
 }
 
+exports.listPresensiSaya = async (req, res) => {
+  try {
+    const rows = await Presensi.findAll({
+      where: { user_id: req.user.id },
+      include: [{
+        model: SuratTugas,
+        as: 'surat_tugas',
+        required: false,
+        attributes: [
+          'id',
+          'nomor_surat',
+          'nama_kegiatan',
+          'daerah_tujuan',
+          'tanggal_mulai',
+          'tanggal_selesai',
+        ],
+      }],
+      order: [
+        ['tanggal_presensi', 'DESC'],
+        ['id', 'DESC'],
+      ],
+    });
+
+    const totalBySurat = rows.reduce((totals, row) => {
+      const key = String(row.surat_tugas_id);
+      totals[key] = (totals[key] || 0) + 1;
+      return totals;
+    }, {});
+
+    const result = rows.map((row) => {
+      const key = String(row.surat_tugas_id);
+      const item = buildPresensiResponseItem(row, totalBySurat[key]);
+      totalBySurat[key] -= 1;
+      return item;
+    });
+
+    return res.json(result);
+  } catch (err) {
+    console.error('Error listPresensiSaya:', err);
+    return res.status(500).json({
+      message: 'Gagal mengambil riwayat presensi',
+    });
+  }
+};
+
 // Method untuk absen awal (foto + lokasi)
 exports.presensiDinas = async (req, res) => {
   try {

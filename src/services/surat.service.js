@@ -8,3 +8,12 @@ export const getSuratTugasAktif = async () => {
   });
   return res.data;
 };
+
+export const getSuratTugasAktifAtauNull = async () => {
+  try {
+    return await getSuratTugasAktif();
+  } catch (error) {
+    if (error?.response?.status === 404) return null;
+    throw error;
+  }
+};
