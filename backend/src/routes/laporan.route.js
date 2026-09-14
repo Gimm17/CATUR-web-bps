@@ -4,6 +4,14 @@ const laporanController = require('../controllers/laporan.controller');
 const auth = require('../middlewares/auth.middleware');
 const { uploadTTDMiddleware, uploadBuktiPembayaran } = require('../middlewares/upload.middleware');
 const uploadToDrive = require('../middlewares/uploadToDrive.middleware');
+const loadOwnedReportContext = require('../middlewares/reportContext.middleware');
+
+router.get(
+  '/perjalanan/surat/:suratId',
+  auth,
+  loadOwnedReportContext,
+  laporanController.getLaporanPerjalananBySuratId
+);
 
 router.get(
   '/perjalanan',

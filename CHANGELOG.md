@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-004 — Endpoint read progres berdasarkan surat tugas
+
+- **Status:** Selesai
+- **Ringkasan:** Menambahkan endpoint progres laporan berbasis `suratId`, menyatukan pembentukan response progres, dan menghapus fallback legacy yang sebelumnya memilih surat terbaru ketika tidak ada tugas aktif pada tanggal WITA.
+- **File ditambahkan:** `backend/tests/integration/laporan.explicit-assignment.test.js`.
+- **File diubah:** `backend/src/controllers/laporan.controller.js`, `backend/src/routes/laporan.route.js`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `buildPerjalananResponse` dan `getLaporanPerjalananBySuratId`; `findPreferredSuratForUser` kini menggunakan `resolveActiveAssignment`; `getLaporanPerjalanan` mengembalikan error stabil bila tidak ada tugas aktif.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data permanen yang diubah; integration fixture dibersihkan setelah test.
+- **API:** Menambahkan `GET /api/perjalanan/surat/:suratId`. `GET /api/perjalanan` kini menghasilkan `404 NO_ACTIVE_ASSIGNMENT` tanpa fallback ke surat terbaru dan `409 ACTIVE_ASSIGNMENT_CONFLICT` bila jadwal aktif ambigu.
+- **Test otomatis:** RED terverifikasi: endpoint eksplisit menghasilkan 404 HTML dan endpoint legacy salah menghasilkan 200 dengan surat terakhir. GREEN lulus 2/2 pada `laporan.explicit-assignment.test.js`; seluruh backend lulus 51/51 tanpa skip; backend lint lulus 81 file.
+- **Verifikasi manual:** Dua surat milik pegawai yang sama diminta berdasarkan ID dan menghasilkan surat, tujuan, kesimpulan, serta report window masing-masing tanpa tertukar.
+- **Risiko/catatan:** Client lama yang mengandalkan fallback surat terakhir harus beralih ke endpoint eksplisit; endpoint legacy tetap tersedia hanya untuk tugas yang benar-benar aktif hari ini.
+- **Rollback:** Hapus route eksplisit dan handler/builder, lalu pulihkan resolver legacy pada controller. Tidak ada rollback database.
+- **Commit:** `fix: load report progress by assignment id`.
+
 ### 2026-09-14 — TASK-003 — Report context dan validasi kepemilikan
 
 - **Status:** Selesai

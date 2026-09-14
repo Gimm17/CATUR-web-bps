@@ -376,14 +376,14 @@ git commit -m "feat: add owned report context"
 - Consumes: `req.reportContext` dari Task 3.
 - Produces: `GET /api/perjalanan/surat/:suratId` dengan `report_window`; resolver legacy hanya menerima satu surat aktif hari ini.
 
-- [ ] **Step 1: Buat fixture dua surat untuk satu pegawai**
+- [x] **Step 1: Buat fixture dua surat untuk satu pegawai**
 
 ```js
 const suratA = await createSurat({ userId, nomor: 'A', start: '2026-09-14', end: '2026-09-16' });
 const suratB = await createSurat({ userId, nomor: 'B', start: '2026-09-17', end: '2026-09-19' });
 ```
 
-- [ ] **Step 2: Tulis test GET A dan GET B tidak tertukar**
+- [x] **Step 2: Tulis test GET A dan GET B tidak tertukar**
 
 ```js
 assert.equal(responseA.body.surat_tugas.id, suratA.id);
@@ -391,19 +391,19 @@ assert.equal(responseB.body.surat_tugas.id, suratB.id);
 assert.notEqual(responseA.body.surat_tugas.id, responseB.body.surat_tugas.id);
 ```
 
-- [ ] **Step 3: Tulis test endpoint legacy tidak fallback ke latest**
+- [x] **Step 3: Tulis test endpoint legacy tidak fallback ke latest**
 
 ```js
 assert.equal(noActiveResponse.status, 404);
 assert.equal(noActiveResponse.body.code, 'NO_ACTIVE_ASSIGNMENT');
 ```
 
-- [ ] **Step 4: Jalankan integration test dan verifikasi kegagalan flow lama**
+- [x] **Step 4: Jalankan integration test dan verifikasi kegagalan flow lama**
 
 Run: `cd backend && node --test tests/integration/laporan.explicit-assignment.test.js`  
 Expected: FAIL karena endpoint eksplisit belum terdaftar atau endpoint lama memilih latest.
 
-- [ ] **Step 5: Ekstrak builder response dari controller**
+- [x] **Step 5: Ekstrak builder response dari controller**
 
 ```js
 async function buildPerjalananResponse({ userId, surat, reportWindow }) {
@@ -420,26 +420,26 @@ async function buildPerjalananResponse({ userId, surat, reportWindow }) {
 }
 ```
 
-- [ ] **Step 6: Daftarkan route eksplisit sebelum route legacy**
+- [x] **Step 6: Daftarkan route eksplisit sebelum route legacy**
 
 ```js
 router.get('/perjalanan/surat/:suratId', auth, loadOwnedReportContext, laporanController.getLaporanPerjalananBySuratId);
 ```
 
-- [ ] **Step 7: Ubah resolver legacy agar hanya memakai active assignment WITA**
+- [x] **Step 7: Ubah resolver legacy agar hanya memakai active assignment WITA**
 
 Hapus fallback `order: [['created_at', 'DESC']]`; kembalikan `NO_ACTIVE_ASSIGNMENT` bila tidak ada tujuan aktif.
 
-- [ ] **Step 8: Jalankan integration test, backend suite, dan lint**
+- [x] **Step 8: Jalankan integration test, backend suite, dan lint**
 
 Run: `cd backend && node --test tests/integration/laporan.explicit-assignment.test.js && npm test && npm run lint`  
 Expected: seluruh test PASS dan lint exit 0.
 
-- [ ] **Step 9: Tambahkan record Task 4 ke `CHANGELOG.md`**
+- [x] **Step 9: Tambahkan record Task 4 ke `CHANGELOG.md`**
 
 Catat endpoint baru, helper controller, perubahan resolver legacy, file test, dan rollback route.
 
-- [ ] **Step 10: Commit Task 4**
+- [x] **Step 10: Commit Task 4**
 
 ```bash
 git add backend/src/controllers/laporan.controller.js backend/src/routes/laporan.route.js backend/src/services/activeAssignment.service.js backend/tests/integration/laporan.explicit-assignment.test.js CHANGELOG.md

@@ -6,8 +6,8 @@ const generateLaporanPDF = require('../utils/pdfGenerator');
 const generateLaporanWord = require('../utils/wordGenerator');
 const appendBuktiPagesToSignedPDF = require('../utils/pdfAppendBukti');
 const { uploadFileToDrive } = require('../utils/googleDrive');
-const { getTodayDate } = require('../utils/date');
-const { Op } = require('sequelize');
+const { resolveActiveAssignment } = require('../services/activeAssignment.service');
+const { getOwnedReportContext } = require('../services/reportContext.service');
 const fs = require('fs');
 const path = require('path');
 
@@ -125,27 +125,69 @@ function deleteLocalBuktiFile(fileRef = '') {
 }
 
 async function findPreferredSuratForUser(userId) {
-  const today = getTodayDate();
+  const activeAssignment = await resolveActiveAssignment(userId);
+  return activeAssignment?.surat || null;
+}
 
-  const suratAktif = await SuratTugas.findOne({
-    where: {
-      user_id: userId,
-      status: 'AKTIF',
-      tanggal_mulai: { [Op.lte]: today },
-      tanggal_selesai: { [Op.gte]: today },
-    },
-    order: [['tanggal_mulai', 'ASC'], ['created_at', 'DESC']],
-  });
-
-  if (suratAktif) {
-    return suratAktif;
+async function buildPerjalananResponse({ userId, surat, reportWindow }) {
+  const user = await User.findOne({ where: { id: userId } });
+  if (!user) {
+    const error = new Error('Data pegawai tidak ditemukan.');
+    error.status = 404;
+    error.code = 'USER_NOT_FOUND';
+    throw error;
   }
 
-  return SuratTugas.findOne({
-    where: { user_id: userId },
-    order: [['created_at', 'DESC']],
-  });
+  const [presensi, laporanAkhir] = await Promise.all([
+    Presensi.findAll({
+      where: { user_id: userId, surat_tugas_id: surat.id },
+      order: [['tanggal_presensi', 'ASC']],
+    }),
+    LaporanPerjalanan.findOne({
+      where: { pegawai_id: userId, surat_tugas_id: surat.id },
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'nama', 'nip', 'email', 'role', 'unit_kerja'],
+      }],
+    }),
+  ]);
+
+  const pembayaran = laporanAkhir ? {
+    status: laporanAkhir.status_pembayaran,
+    nominal: laporanAkhir.nominal_dana,
+    bukti_transfer: laporanAkhir.bukti_transfer,
+    tanggal_transfer: laporanAkhir.tanggal_transfer,
+  } : null;
+
+  return {
+    user,
+    surat_tugas: surat,
+    tujuan: surat.tujuan || [],
+    presensi: normalizePresensiPhotos(presensi),
+    laporan_akhir: laporanAkhir,
+    pembayaran,
+    bukti_pembayaran: readBuktiManifest(userId, surat.id),
+    report_window: reportWindow,
+  };
 }
+
+exports.getLaporanPerjalananBySuratId = async (req, res) => {
+  try {
+    const { surat, reportWindow } = req.reportContext;
+    return res.json(await buildPerjalananResponse({
+      userId: req.user.id,
+      surat,
+      reportWindow,
+    }));
+  } catch (error) {
+    console.error('Error getLaporanPerjalananBySuratId:', error);
+    return res.status(error.status || 500).json({
+      code: error.code || 'INTERNAL_SERVER_ERROR',
+      message: error.status ? error.message : 'Gagal mengambil progres laporan.',
+    });
+  }
+};
 
 /* ===============================
    GET LAPORAN BY SURAT (PEGAWAI)
@@ -203,73 +245,23 @@ exports.getLaporanPerjalanan = async (req, res) => {
 
     if (!surat) {
       return res.status(404).json({
-        message: 'Surat tugas tidak ditemukan',
+        code: 'NO_ACTIVE_ASSIGNMENT',
+        message: 'Tidak ada surat tugas aktif hari ini.',
       });
     }
-
-    const user = await User.findOne({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        message: 'Data pegawai tidak ditemukan',
-      });
-    }
-
-    const presensi = await Presensi.findAll({
-      where: {
-        user_id: userId,
-        surat_tugas_id: surat.id,
-        tanggal_presensi: {
-          [Op.between]: [
-            surat.tanggal_mulai,
-            surat.tanggal_selesai,
-          ],
-        },
-      },
-      order: [['tanggal_presensi', 'ASC']],
-    });
-
-    // Mencari laporan akhir atau draft
-    const laporanAkhir = await LaporanPerjalanan.findOne({
-      where: {
-        pegawai_id: userId,
-        surat_tugas_id: surat.id,
-      },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'nama', 'nip', 'email', 'role', 'unit_kerja']
-        }
-      ]
-    });
-
-    // Tambahkan informasi pembayaran jika ada
-    let pembayaran = null;
-    if (laporanAkhir) {
-      pembayaran = {
-        status: laporanAkhir.status_pembayaran,
-        nominal: laporanAkhir.nominal_dana,
-        bukti_transfer: laporanAkhir.bukti_transfer,
-        tanggal_transfer: laporanAkhir.tanggal_transfer
-      };
-    }
-
-    const buktiPembayaran = readBuktiManifest(userId, surat.id);
-
-    res.json({
-      user: user,
-      surat_tugas: surat,
-      presensi: normalizePresensiPhotos(presensi),
-      laporan_akhir: laporanAkhir,
-      pembayaran,
-      bukti_pembayaran: buktiPembayaran
-    });
+    const context = await getOwnedReportContext({ suratId: surat.id, userId });
+    return res.json(await buildPerjalananResponse({
+      userId,
+      surat: context.surat,
+      reportWindow: context.reportWindow,
+    }));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: err.message });
+    const isConflict = err.code === 'ACTIVE_ASSIGNMENT_CONFLICT';
+    res.status(isConflict ? 409 : 500).json({
+      code: err.code || 'INTERNAL_SERVER_ERROR',
+      message: isConflict ? err.message : 'Gagal mengambil progres laporan.',
+    });
   }
 };
 
@@ -793,3 +785,5 @@ exports.kirimLaporanAkhir = async (req, res) => {
     });
   }
 };
+
+exports.buildPerjalananResponse = buildPerjalananResponse;
