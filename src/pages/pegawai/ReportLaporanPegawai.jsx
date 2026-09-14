@@ -4,6 +4,7 @@ import api from "../../api/axios";
 import { getAllSuratTugas } from "../../services/suratTugas.service";
 import { getUser } from "../../utils/auth";
 import { FaFileAlt, FaClipboardList } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import "../../css/dashboard.css";
 
 const ReportLaporanPegawai = () => {
@@ -190,10 +191,6 @@ const ReportLaporanPegawai = () => {
   const startIndex = (safePage - 1) * pageSize;
   const paginatedRows = filteredRows.slice(startIndex, startIndex + pageSize);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, rows.length]);
-
   return (
     <PegawaiLayout>
       <div style={{ minHeight: "calc(100vh - 70px)", backgroundColor: "#f8fafc", padding: "20px" }}>
@@ -253,14 +250,20 @@ const ReportLaporanPegawai = () => {
                     <input
                       type="text"
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                      }}
                       className="form-control form-control-sm"
                       placeholder="Cari tujuan perjadin..."
                       style={{ minWidth: "220px" }}
                     />
                     <select
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
+                      onChange={(e) => {
+                        setStatusFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
                       className="form-select form-select-sm"
                       style={{ minWidth: "170px" }}
                     >
@@ -310,11 +313,17 @@ const ReportLaporanPegawai = () => {
                           <th style={{ width: "17%", fontWeight: "600", color: "#1e293b", padding: "15px", borderBottom: "2px solid #e2e8f0" }}>Pengiriman Laporan</th>
                           <th style={{ width: "13%", fontWeight: "600", color: "#1e293b", padding: "15px", borderBottom: "2px solid #e2e8f0" }}>Pencairan Anggaran</th>
                           <th style={{ width: "12%", fontWeight: "600", color: "#1e293b", padding: "15px", borderBottom: "2px solid #e2e8f0" }}>Nilai Pencairan</th>
+                          <th style={{ width: "12%", fontWeight: "600", color: "#1e293b", padding: "15px", borderBottom: "2px solid #e2e8f0" }}>Aksi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginatedRows.map((row, index) => (
-                          <tr key={`${row.laporan?.id || "laporan"}-${index}`} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <tr
+                            key={row.laporan?.id
+                              ? `laporan-${row.laporan.id}`
+                              : `surat-${row.surat.id}`}
+                            style={{ borderBottom: "1px solid #f1f5f9" }}
+                          >
                             <td style={{ padding: "15px", fontWeight: "600", textAlign: "center", color: "#1e293b" }}>
                               {startIndex + index + 1}
                             </td>
@@ -340,6 +349,15 @@ const ReportLaporanPegawai = () => {
                             </td>
                             <td style={{ padding: "15px", fontWeight: "600", color: "#1e293b" }}>
                               Rp {formatRupiah(row.laporan?.nominal_dana)}
+                            </td>
+                            <td style={{ padding: "15px" }}>
+                              <Link
+                                to={`/laporan/${row.surat.id}`}
+                                aria-label={`${row.laporan ? "Lihat Laporan" : "Lanjutkan"} ${row.surat.nomor_surat}`}
+                                className="btn btn-sm btn-primary"
+                              >
+                                {row.laporan ? "Lihat Laporan" : "Lanjutkan"}
+                              </Link>
                             </td>
                           </tr>
                         ))}

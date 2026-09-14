@@ -743,44 +743,44 @@ git commit -m "fix: route reports by selected assignment"
 - Consumes: route `/laporan/:suratId`.
 - Produces: tombol `Lihat Detail`, `Lanjutkan`, atau `Lihat Laporan` yang selalu membawa `row.surat.id`.
 
-- [ ] **Step 1: Tulis test dua baris riwayat memiliki target berbeda**
+- [x] **Step 1: Tulis test dua baris riwayat memiliki target berbeda**
 
 ```jsx
 expect(screen.getByRole('link', { name: /surat a/i })).toHaveAttribute('href', '/laporan/11');
 expect(screen.getByRole('link', { name: /surat b/i })).toHaveAttribute('href', '/laporan/22');
 ```
 
-- [ ] **Step 2: Tulis test surat tanpa laporan tetap mempunyai tombol `Lanjutkan`**
+- [x] **Step 2: Tulis test surat tanpa laporan tetap mempunyai tombol `Lanjutkan`**
 
 ```jsx
 expect(screen.getByRole('link', { name: /lanjutkan surat a/i })).toBeVisible();
 ```
 
-- [ ] **Step 3: Jalankan test dan pastikan tabel lama gagal karena tidak memiliki aksi**
+- [x] **Step 3: Jalankan test dan pastikan tabel lama gagal karena tidak memiliki aksi**
 
 Run: `npm test -- src/pages/pegawai/ReportLaporanPegawai.test.jsx`  
 Expected: FAIL karena link detail belum ada.
 
-- [ ] **Step 4: Ganti `window.location.href = '/laporan'` pada dashboard**
+- [x] **Step 4: Ganti `window.location.href = '/laporan'` pada dashboard**
 
 ```js
 const handleLaporanClick = (surat) => navigate(`/laporan/${surat.id}`);
 ```
 
-- [ ] **Step 5: Tambahkan kolom aksi pada tabel riwayat**
+- [x] **Step 5: Tambahkan kolom aksi pada tabel riwayat**
 
 Setiap tombol harus memiliki accessible name yang menyertakan nomor surat dan target `/laporan/${row.surat.id}`.
 
-- [ ] **Step 6: Pertahankan semua record dan pagination**
+- [x] **Step 6: Pertahankan semua record dan pagination**
 
 Gunakan key `surat-${row.surat.id}` untuk baris tanpa laporan dan `laporan-${row.laporan.id}` untuk baris dengan laporan; jangan memakai index sebagai identitas utama.
 
-- [ ] **Step 7: Jalankan test halaman, seluruh frontend test, dan lint**
+- [x] **Step 7: Jalankan test halaman, seluruh frontend test, dan lint**
 
 Run: `npm test -- src/pages/pegawai/ReportLaporanPegawai.test.jsx && npm test && npm run lint`  
 Expected: dua surat menuju URL berbeda dan seluruh test PASS.
 
-- [ ] **Step 8: Update `CHANGELOG.md` dan commit Task 9**
+- [x] **Step 8: Update `CHANGELOG.md` dan commit Task 9**
 
 ```bash
 git add src/pages/pegawai/Dashboard.jsx src/pages/pegawai/ReportLaporanPegawai.jsx src/pages/pegawai/ReportLaporanPegawai.test.jsx CHANGELOG.md

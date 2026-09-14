@@ -43,8 +43,10 @@ import {
   FaRegClock
 } from "react-icons/fa";
 import '../../css/dashboard.css';
+import { useNavigate } from "react-router-dom";
 
 const DashboardPegawai = () => {
+  const navigate = useNavigate();
   const [surat, setSurat] = useState(null);
   const [loading, setLoading] = useState(true);
   const [_stats, setStats] = useState({
@@ -732,26 +734,7 @@ const DashboardPegawai = () => {
 
   // Fungsi untuk handle klik tombol laporan
   const handleLaporanClick = (surat) => {
-    const laporanFile = getLaporanFile(surat);
-    if (laporanFile) {
-      handleViewLaporanPDF(laporanFile);
-      return;
-    }
-
-    // Jika surat sudah selesai (expired), arahkan ke halaman laporan
-    if (surat.statusInfo?.status === 'expired') {
-      window.location.href = '/laporan';
-      return;
-    }
-
-    // Jika surat aktif dan sudah absen, arahkan ke halaman laporan
-    if (statusHariIni.sudahAbsen) {
-      window.location.href = '/laporan';
-    } 
-    // Jika surat aktif tapi belum absen, arahkan ke halaman presensi
-    else {
-      window.location.href = '/presensi';
-    }
+    if (surat?.id) navigate(`/laporan/${surat.id}`);
   };
 
   // Fungsi untuk menampilkan detail surat
@@ -1431,7 +1414,7 @@ const DashboardPegawai = () => {
                     </div>
                     {!statusHariIni.sudahLaporan && (
                       <a
-                        href="/laporan"
+                        href={surat?.id ? `/laporan/${surat.id}` : "/laporan-report"}
                         style={{
                           background: '#f59e0b',
                           color: 'white',
@@ -1538,7 +1521,7 @@ const DashboardPegawai = () => {
                 </a>
               ) : (
                 <a
-                  href="/laporan"
+                  href={surat?.id ? `/laporan/${surat.id}` : "/laporan-report"}
                   style={{
                     flex: 1,
                     background: '#10b981',
@@ -2287,7 +2270,7 @@ const DashboardPegawai = () => {
             </a>
 
             <a
-              href="/laporan"
+              href={surat?.id ? `/laporan/${surat.id}` : "/laporan-report"}
               style={{
                 background: 'white',
                 borderRadius: '16px',
@@ -2991,7 +2974,7 @@ const DashboardPegawai = () => {
               ) : selectedSurat.statusInfo?.status === 'expired' ? (
                 /* Jika tidak ada file laporan, arahkan ke halaman laporan */
                 <button
-                  onClick={() => window.location.href = '/laporan'}
+                  onClick={() => handleLaporanClick(selectedSurat)}
                   style={{
                     flex: 1,
                     background: '#6b7280',

@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-009 — Dashboard dan riwayat berbasis surat ID
+
+- **Status:** Selesai dengan catatan baseline lint proyek.
+- **Ringkasan:** Semua aksi laporan pada dashboard dan tabel riwayat kini membuka laporan untuk surat tugas yang dipilih secara eksplisit, bukan context generik atau record terakhir.
+- **File ditambahkan:** `src/pages/pegawai/ReportLaporanPegawai.test.jsx`.
+- **File diubah:** `src/pages/pegawai/Dashboard.jsx`, `src/pages/pegawai/ReportLaporanPegawai.jsx`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `DashboardPegawai.handleLaporanClick` memakai `useNavigate` dan `surat.id`; `ReportLaporanPegawai` menambahkan kolom aksi, accessible name, reset pagination pada filter, serta key baris stabil.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data yang diubah.
+- **API:** Tidak ada endpoint baru; semua tautan menggunakan route frontend `/laporan/:suratId` yang meneruskan context ke endpoint eksplisit Task 4–7.
+- **Test otomatis:** RED terverifikasi 2/2 gagal karena tabel lama belum memiliki link aksi. GREEN lulus 2/2 pada `ReportLaporanPegawai.test.jsx`, seluruh frontend lulus 15/15, dan production build lulus. Lint dua file riwayat lulus; `Dashboard.jsx` masih memiliki 5 error dan 1 warning baseline terkait deklarasi fungsi/komponen di dalam komponen induk, bukan routing yang diubah pada task ini.
+- **Verifikasi manual:** Surat A ID 11 menuju `/laporan/11`, Surat B ID 22 menuju `/laporan/22`, dan surat tanpa laporan menampilkan tombol `Lanjutkan`; nomor surat masuk ke accessible name setiap aksi.
+- **Risiko/catatan:** Halaman progres tujuan route tersebut baru meneruskan `suratId` ke seluruh service pada Task 10. Peringatan bundle Vite di atas 500 kB tetap merupakan utang performa terpisah.
+- **Rollback:** Pulihkan link dashboard ke route generik, hapus kolom aksi riwayat dan test Task 9, serta kembalikan key baris lama.
+- **Commit:** `fix: open selected report from dashboard history`.
+
 ### 2026-09-14 — TASK-008 — Routing laporan yang aman
 
 - **Status:** Selesai dengan catatan baseline lint proyek.
