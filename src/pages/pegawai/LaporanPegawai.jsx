@@ -15,6 +15,7 @@ import RichTextRenderer from "./RichTextRenderer";
 import RichTextEditor from "./RichTextEditor";
 import { toPublicFileUrl } from "../../utils/fileUrl";
 import { confirmAction, showToast } from "../../utils/alerts";
+import { getReportWindowPresentation } from "../../features/laporan/reportWindow";
 
 // Ikon untuk UI yang lebih menarik
 import {
@@ -122,9 +123,36 @@ const LaporanPerjalananContent = ({ suratId }) => {
     return ["draft", "dikirim", "dicek_keuangan"].includes(status);
   };
 
+  const reportPresentation = data?.report_window
+    ? getReportWindowPresentation(data.report_window)
+    : null;
+  const reportEditable = reportPresentation?.editable !== false;
+  const reportLockMessage = reportPresentation?.message || "Perubahan laporan sedang dikunci.";
+
+  const guardReportEditable = () => {
+    if (reportEditable) return true;
+    showToast(reportLockMessage, { icon: "warning" });
+    return false;
+  };
+
+  const getActionErrorMessage = (err, fallback) => {
+    const payload = err.response?.data || {};
+    if (err.response?.status === 409 && payload.report_window) {
+      return payload.message || getReportWindowPresentation(payload.report_window).message;
+    }
+    return payload.message || err.message || fallback;
+  };
+
+  const refreshAfterLockConflict = async (err) => {
+    if (err.response?.status === 409) {
+      await fetchData(suratId);
+    }
+  };
+
   /* ================= FUNGSI UNTUK TANDA TANGAN ================= */
   // Handle upload file tanda tangan
   const handleTTDChange = (e) => {
+    if (!guardReportEditable()) return;
     const file = e.target.files[0];
     if (!file) return;
 
@@ -164,6 +192,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
   // Upload tanda tangan ke server
   const handleUploadTTD = async () => {
+    if (!guardReportEditable()) return;
     if (!ttdFile) {
       setTtdError("Pilih file tanda tangan terlebih dahulu");
       return;
@@ -185,7 +214,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
       
       showToast("Tanda tangan berhasil diupload! Anda bisa mengirim laporan sekarang.", { icon: "success" });
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Gagal mengupload tanda tangan";
+      await refreshAfterLockConflict(err);
+      const errorMessage = getActionErrorMessage(err, "Gagal mengupload tanda tangan");
       setTtdError(errorMessage);
       console.error("Error uploading TTD:", err);
     } finally {
@@ -214,6 +244,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
   /* ================= FUNGSI BUKTI NOTA/PEMBAYARAN ================= */
   const handleNotaChange = (e) => {
+    if (!guardReportEditable()) return;
     if (!canUploadNotaByStatus(data?.laporan_akhir?.status)) {
       setNotaError("Upload nota dinas hanya bisa dilakukan sebelum disetujui keuangan");
       return;
@@ -245,6 +276,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
   };
 
   const handleClearNota = async () => {
+    if (!guardReportEditable()) return;
     const input = document.getElementById("notaUpload");
     if (input) {
       input.value = "";
@@ -264,7 +296,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
       setNotaList([]);
       showToast("Bukti nota berhasil direset.", { icon: "success" });
     } catch (err) {
-      const message = err.response?.data?.message || err.message || "Gagal reset bukti nota";
+      await refreshAfterLockConflict(err);
+      const message = getActionErrorMessage(err, "Gagal reset bukti nota");
       setNotaError(message);
     } finally {
       setNotaLoading(false);
@@ -272,6 +305,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
   };
 
   const handleUploadNota = async () => {
+    if (!guardReportEditable()) return;
     if (!canUploadNotaByStatus(data?.laporan_akhir?.status)) {
       setNotaError("Upload nota dinas hanya bisa dilakukan sebelum disetujui keuangan");
       return;
@@ -297,7 +331,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
       setNotaError("");
       showToast("Bukti nota/pembayaran berhasil diupload. PDF bertanda tangan sudah diperbarui dengan lampiran nota di halaman baru.", { icon: "success" });
     } catch (err) {
-      const message = err.response?.data?.message || err.message || "Gagal upload bukti nota/pengeluaran";
+      await refreshAfterLockConflict(err);
+      const message = getActionErrorMessage(err, "Gagal upload bukti nota/pengeluaran");
       setNotaError(message);
     } finally {
       setNotaLoading(false);
@@ -416,6 +451,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
   /* ================= FUNGSI EDIT LAPORAN HARIAN ================= */
   const handleOpenEditLaporan = (presensiItem) => {
+    if (!guardReportEditable()) return;
     setEditPresensi(presensiItem || null);
     setEditContent(presensiItem?.laporan || "");
     setEditError("");
@@ -431,6 +467,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
   };
 
   const handleSaveEditLaporan = async () => {
+    if (!guardReportEditable()) return;
     if (!editPresensi?.id) {
       setEditError("Data presensi tidak valid.");
       return;
@@ -460,10 +497,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
       handleCloseEditLaporan();
     } catch (err) {
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        "Gagal menyimpan laporan harian";
+      await refreshAfterLockConflict(err);
+      const message = getActionErrorMessage(err, "Gagal menyimpan laporan harian");
       setEditError(message);
     } finally {
       setEditLoading(false);
@@ -792,7 +827,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={!ttdFile || ttdLoading}
+                disabled={!reportEditable || !ttdFile || ttdLoading}
+                title={!reportEditable ? reportLockMessage : undefined}
                 onClick={handleUploadTTD}
                 style={{
                   background: `linear-gradient(135deg, ${theme.signature} 0%, ${theme.primary} 100%)`,
@@ -1068,6 +1104,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
   /* ================= SUBMIT LAPORAN ================= */
   const handleKirimLaporan = async () => {
+    if (!guardReportEditable()) return;
     // Strip HTML tags untuk validasi panjang teks
     const textContent = kesimpulan.replace(/<[^>]*>/g, '');
     
@@ -1125,10 +1162,11 @@ const LaporanPerjalananContent = ({ suratId }) => {
       }
     } catch (err) {
       console.error("Error kirim laporan:", err);
-      alert(
-        err?.response?.data?.message ||
-          " Gagal mengirim laporan akhir. Pastikan koneksi internet stabil."
-      );
+      await refreshAfterLockConflict(err);
+      alert(getActionErrorMessage(
+        err,
+        "Gagal mengirim laporan akhir. Pastikan koneksi internet stabil."
+      ));
     } finally {
       setLoadingKirim(false);
     }
@@ -1189,7 +1227,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
                     value={editContent}
                     onChange={setEditContent}
                     placeholder="Tulis laporan harian di sini..."
-                    readOnly={editLoading}
+                    readOnly={!reportEditable || editLoading}
                   />
                 </div>
 
@@ -1206,7 +1244,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                   type="button"
                   className="btn btn-outline-secondary"
                   onClick={handleCloseEditLaporan}
-                  disabled={editLoading}
+                  disabled={!reportEditable || editLoading}
+                  title={!reportEditable ? reportLockMessage : undefined}
                 >
                   <FaTimes className="me-2" />
                   Batal
@@ -1261,6 +1300,24 @@ const LaporanPerjalananContent = ({ suratId }) => {
           </div>
         </div>
 
+        {reportPresentation && (
+          <section
+            className={`alert alert-${reportPresentation.tone} border-0 shadow-sm mb-4`}
+            aria-labelledby="report-window-title"
+          >
+            <h5 id="report-window-title" className="alert-heading fw-bold">
+              {reportPresentation.title}
+            </h5>
+            <p className="mb-2">{reportPresentation.message}</p>
+            <div className="d-flex flex-wrap gap-3 small">
+              <span>Selesai perjalanan: {data.report_window.trip_end_date || "-"}</span>
+              <span>Deadline: {data.report_window.deadline_date || "-"}</span>
+              <span>Zona waktu: {data.report_window.timezone || "Asia/Makassar"} (WITA)</span>
+              <span>Sisa hari: {data.report_window.remaining_days ?? 0}</span>
+            </div>
+          </section>
+        )}
+
         {/* TANDA TANGAN QUICK ACTION */}
         <div className="card border-0 shadow-sm mb-4"
              style={{ 
@@ -1300,6 +1357,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 <button
                   className="btn btn-primary d-flex align-items-center"
                   onClick={() => setShowTTDModal(true)}
+                  disabled={!reportEditable}
+                  title={!reportEditable ? reportLockMessage : undefined}
                   style={{
                     background: `linear-gradient(135deg, ${theme.signature} 0%, ${theme.primary} 100%)`,
                     border: 'none'
@@ -1509,6 +1568,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
                         >
                           <button
                             onClick={() => setShowTTDModal(true)}
+                            disabled={!reportEditable}
                             className="btn btn-sm btn-warning rounded-circle shadow-lg p-0 d-flex align-items-center justify-content-center"
                             style={{
                               width: '35px',
@@ -1622,6 +1682,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                                 {stage.id === 3 && !stage.completed && (
                                   <button
                                     onClick={() => setShowTTDModal(true)}
+                                    disabled={!reportEditable}
+                                    title={!reportEditable ? reportLockMessage : undefined}
                                     className="btn btn-sm btn-link p-0 ms-2 text-decoration-none"
                                     style={{ color: theme.signature }}
                                   >
@@ -1654,7 +1716,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                                     <button
                                       onClick={() => setShowTTDModal(true)}
                                       className="btn btn-sm btn-outline-warning d-flex align-items-center"
-                                      title="Upload Tanda Tangan"
+                                      disabled={!reportEditable}
+                                      title={!reportEditable ? reportLockMessage : "Upload Tanda Tangan"}
                                     >
                                       <FaUpload className="me-1" />
                                       Upload
@@ -1914,6 +1977,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                               type="button"
                               className="btn btn-sm btn-outline-primary"
                               onClick={() => handleOpenEditLaporan(p)}
+                              disabled={!reportEditable}
+                              title={!reportEditable ? reportLockMessage : undefined}
                             >
                               <FaEdit className="me-1" />
                               Edit
@@ -1964,6 +2029,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                       <button
                         className="btn btn-sm btn-warning ms-2"
                         onClick={() => setShowTTDModal(true)}
+                        disabled={!reportEditable}
+                        title={!reportEditable ? reportLockMessage : undefined}
                       >
                         <FaUpload className="me-1" />
                         Upload Tanda Tangan
@@ -2060,7 +2127,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
                       "Perbaiki kesimpulan sesuai catatan dari keuangan:\n1. Perbaikan yang diminta: [sesuaikan]\n2. Tambahan informasi: [tambahkan]\n3. Revisi lainnya: [revisi]" :
                       "Tuliskan secara detail:\n1. Pencapaian selama perjalanan dinas\n2. Kendala yang dihadapi\n3. Rekomendasi untuk perjalanan berikutnya\n4. Hasil sensus/data yang berhasil dikumpulkan"
                     }
-                    readOnly={loadingKirim}
+                    readOnly={!reportEditable || loadingKirim}
                   />
                 </div>
                 
@@ -2086,13 +2153,15 @@ const LaporanPerjalananContent = ({ suratId }) => {
                       accept=".jpg,.jpeg,.png,.pdf"
                       multiple
                       onChange={handleNotaChange}
-                      disabled={notaLoading || loadingKirim}
+                      disabled={!reportEditable || notaLoading || loadingKirim}
+                      title={!reportEditable ? reportLockMessage : undefined}
                     />
                     <button
                       className="btn btn-outline-secondary"
                       type="button"
                       onClick={() => document.getElementById("notaUpload")?.click()}
-                      disabled={notaLoading || loadingKirim}
+                      disabled={!reportEditable || notaLoading || loadingKirim}
+                      title={!reportEditable ? reportLockMessage : undefined}
                     >
                       <FaUpload className="me-1" />
                       Pilih File
@@ -2104,7 +2173,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                       type="button"
                       className="btn btn-warning btn-sm"
                       onClick={handleUploadNota}
-                      disabled={notaLoading || loadingKirim || notaFiles.length === 0}
+                      disabled={!reportEditable || notaLoading || loadingKirim || notaFiles.length === 0}
+                      title={!reportEditable ? reportLockMessage : undefined}
                     >
                       {notaLoading ? (
                         <>
@@ -2122,7 +2192,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                       type="button"
                       className="btn btn-outline-secondary btn-sm"
                       onClick={handleClearNota}
-                      disabled={notaLoading || loadingKirim}
+                      disabled={!reportEditable || notaLoading || loadingKirim}
+                      title={!reportEditable ? reportLockMessage : undefined}
                     >
                       <FaTimes className="me-1" />
                       Reset
@@ -2204,6 +2275,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                   <button
                     className="btn btn-lg fw-semibold me-2"
                     onClick={() => setShowTTDModal(true)}
+                    disabled={!reportEditable}
+                    title={!reportEditable ? reportLockMessage : undefined}
                     style={{
                       background: `linear-gradient(135deg, ${theme.signature} 0%, ${theme.primary} 100%)`,
                       color: 'white',
@@ -2218,7 +2291,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                   
                   <button
                     className="btn btn-lg fw-semibold"
-                    disabled={loadingKirim || kesimpulan.replace(/<[^>]*>/g, '').length < 100}
+                    disabled={!reportEditable || loadingKirim || kesimpulan.replace(/<[^>]*>/g, '').length < 100}
+                    title={!reportEditable ? reportLockMessage : undefined}
                     onClick={handleKirimLaporan}
                     style={{
                       background: (kesimpulan.replace(/<[^>]*>/g, '').length >= 100)
@@ -2564,6 +2638,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                           <button
                             className="btn btn-primary d-flex align-items-center justify-content-center"
                             onClick={() => setShowTTDModal(true)}
+                            disabled={!reportEditable}
+                            title={!reportEditable ? reportLockMessage : undefined}
                           >
                             <FaSignature className="me-2" />
                             Ganti TTD
@@ -2574,6 +2650,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                       <button
                         className="btn btn-primary w-100"
                         onClick={() => setShowTTDModal(true)}
+                        disabled={!reportEditable}
+                        title={!reportEditable ? reportLockMessage : undefined}
                         style={{
                           background: `linear-gradient(135deg, ${theme.signature} 0%, ${theme.primary} 100%)`,
                           border: 'none'

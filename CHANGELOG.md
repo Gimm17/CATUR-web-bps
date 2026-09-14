@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-011 — Deadline dan status penguncian laporan
+
+- **Status:** Selesai dengan catatan baseline lint proyek.
+- **Ringkasan:** Menambahkan presenter report window dan kartu deadline yang menjelaskan masa edit atau alasan penguncian; seluruh aksi mutasi laporan dinonaktifkan dan dijaga ketika backend menyatakan laporan tidak editable.
+- **File ditambahkan:** `src/features/laporan/reportWindow.js` dan `src/features/laporan/reportWindow.test.js`.
+- **File diubah:** `src/pages/pegawai/LaporanPegawai.jsx`, `src/pages/pegawai/LaporanPegawai.test.jsx`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `getReportWindowPresentation`, `guardReportEditable`, `getActionErrorMessage`, dan `refreshAfterLockConflict`; komponen progres menampilkan section deadline dan state disabled pada edit, TTD, nota, reset, serta kirim.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data yang diubah.
+- **API:** Mengonsumsi `report_window` backend tanpa menghitung ulang timezone di browser. Response mutasi 409 memicu refresh GET context dan alasan backend ditampilkan kepada pengguna.
+- **Test otomatis:** RED presenter terverifikasi gagal karena module belum ada; RED page terverifikasi gagal karena kartu lock belum tersedia. GREEN lulus 9/9 untuk presenter dan halaman, seluruh frontend lulus 24/24, production build lulus, serta semua file baru bersih lint. Halaman induk masih memiliki 2 error lint baseline lama.
+- **Verifikasi manual:** Kondisi aktif, hari terakhir, deadline lewat, dan proses keuangan menghasilkan tone/judul berbeda; kartu menampilkan `trip_end_date`, `deadline_date`, `timezone`, serta `remaining_days`; tombol mutasi memiliki tooltip alasan saat disabled.
+- **Risiko/catatan:** Disable frontend hanya UX. Middleware backend Task 6 tetap menolak request terlambat; penanganan 409 menutup celah state browser yang basi.
+- **Rollback:** Hapus presenter dan kartu deadline, pulihkan state tombol/guard, serta hapus test Task 11; backend enforcement tidak berubah.
+- **Commit:** `feat: show report deadline and lock state`.
+
 ### 2026-09-14 — TASK-010 — Halaman progres terikat route ID
 
 - **Status:** Selesai dengan catatan baseline lint proyek.

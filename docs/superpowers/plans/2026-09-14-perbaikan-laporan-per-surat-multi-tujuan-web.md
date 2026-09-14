@@ -869,7 +869,7 @@ git commit -m "fix: bind report page actions to route id"
 - Consumes: `report_window` dari backend.
 - Produces: `getReportWindowPresentation(reportWindow)` dengan `{ tone, title, message, editable }`.
 
-- [ ] **Step 1: Tulis test presentation untuk aktif, hari terakhir, expired, dan finance lock**
+- [x] **Step 1: Tulis test presentation untuk aktif, hari terakhir, expired, dan finance lock**
 
 ```js
 expect(getReportWindowPresentation({ editable: true, remaining_days: 0 }).title)
@@ -878,12 +878,12 @@ expect(getReportWindowPresentation({ editable: false, lock_reason: 'deadline_pas
   .toBe('danger');
 ```
 
-- [ ] **Step 2: Jalankan test dan pastikan gagal karena presenter belum ada**
+- [x] **Step 2: Jalankan test dan pastikan gagal karena presenter belum ada**
 
 Run: `npm test -- src/features/laporan/reportWindow.test.js`  
 Expected: FAIL dengan module belum ditemukan.
 
-- [ ] **Step 3: Implementasikan presenter murni tanpa hitung ulang timezone**
+- [x] **Step 3: Implementasikan presenter murni tanpa hitung ulang timezone**
 
 ```js
 export function getReportWindowPresentation(window) {
@@ -900,24 +900,24 @@ export function getReportWindowPresentation(window) {
 }
 ```
 
-- [ ] **Step 4: Tampilkan kartu deadline dekat judul surat**
+- [x] **Step 4: Tampilkan kartu deadline dekat judul surat**
 
 Kartu menampilkan tanggal selesai perjalanan, deadline, timezone WITA, sisa hari, dan alasan lock.
 
-- [ ] **Step 5: Disable seluruh tombol edit ketika `editable === false`**
+- [x] **Step 5: Disable seluruh tombol edit ketika `editable === false`**
 
 Tombol edit harian, upload TTD, upload/reset nota, dan kirim laporan diberi `disabled`, tooltip alasan, dan guard pada handler.
 
-- [ ] **Step 6: Jangan mengandalkan disable frontend sebagai keamanan**
+- [x] **Step 6: Jangan mengandalkan disable frontend sebagai keamanan**
 
 Jika request tetap mendapat `409`, refresh data dan tampilkan pesan backend; backend Task 6 tetap menjadi enforcement final.
 
-- [ ] **Step 7: Jalankan unit test, page test, accessibility query, dan build**
+- [x] **Step 7: Jalankan unit test, page test, accessibility query, dan build**
 
 Run: `npm test -- src/features/laporan/reportWindow.test.js src/pages/pegawai/LaporanPegawai.test.jsx && npm run build`  
 Expected: PASS dan build exit 0.
 
-- [ ] **Step 8: Update `CHANGELOG.md` dan commit Task 11**
+- [x] **Step 8: Update `CHANGELOG.md` dan commit Task 11**
 
 ```bash
 git add src/features/laporan/reportWindow.js src/features/laporan/reportWindow.test.js src/pages/pegawai/LaporanPegawai.jsx CHANGELOG.md

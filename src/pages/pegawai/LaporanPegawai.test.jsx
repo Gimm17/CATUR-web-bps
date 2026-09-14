@@ -183,4 +183,30 @@ describe('LaporanPegawai route context', () => {
 
     expect(await screen.findByText('Batas edit tujuh hari WITA telah lewat')).toBeVisible();
   });
+
+  it('menampilkan detail deadline dan menonaktifkan seluruh aksi edit saat terkunci', async () => {
+    getLaporanPerjalanan.mockResolvedValueOnce({
+      ...reportFixture,
+      report_window: {
+        timezone: 'Asia/Makassar',
+        trip_end_date: '2026-09-14',
+        deadline_date: '2026-09-21',
+        editable: false,
+        remaining_days: 0,
+        lock_reason: 'finance_processing',
+      },
+    });
+
+    renderPage();
+
+    expect(await screen.findByRole('heading', { name: 'Laporan sedang diproses' })).toBeVisible();
+    expect(screen.getByText('Selesai perjalanan: 2026-09-14')).toBeVisible();
+    expect(screen.getByText('Deadline: 2026-09-21')).toBeVisible();
+    expect(screen.getByText(/Asia\/Makassar/)).toBeVisible();
+    expect(screen.getByRole('button', { name: /^edit$/i })).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: /ganti ttd/i })[0]).toBeDisabled();
+    expect(screen.getByRole('button', { name: /upload bukti$/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^reset$/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^kirim laporan akhir$/i })).toBeDisabled();
+  });
 });
