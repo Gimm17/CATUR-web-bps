@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — PRE-001 — Perbaikan fixture integration test schema tujuan
+
+- **Status:** Selesai
+- **Ringkasan:** Melengkapi fixture SQL pada test unique order tujuan dengan timestamp wajib sehingga integration test menguji constraint yang dimaksud, bukan gagal lebih awal pada validasi `NOT NULL`.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `backend/tests/integration/suratTugasTujuan.schema.test.js`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Helper lokal `insertTujuan` pada integration test menambahkan `created_at` dan `updated_at` menggunakan `NOW()`.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data permanen yang diubah; seluruh fixture dijalankan di dalam transaksi dan di-rollback.
+- **API:** Tidak ada endpoint yang diubah.
+- **Test otomatis:** Frontend baseline 5/5 lulus. Backend baseline dengan `catur_test` aktif lulus 28/28 tanpa skip setelah sebelumnya mereproduksi kegagalan fixture `23502` pada `created_at`.
+- **Verifikasi manual:** DDL migration, model Sequelize, fixture test, dan metadata kolom `catur_test` dibandingkan. Kegagalan konsisten berasal dari fixture raw SQL yang tidak mengirim timestamp.
+- **Risiko/catatan:** Perubahan hanya pada test; behavior produksi tidak berubah.
+- **Rollback:** Kembalikan penambahan `created_at`, `updated_at`, dan dua `NOW()` pada helper `insertTujuan`.
+- **Commit:** `test: fix destination schema fixture timestamps`.
+
 ### 2026-09-14 — PLAN-001 — Spesifikasi dan implementation plan perbaikan laporan web
 
 - **Status:** Selesai

@@ -57,8 +57,8 @@ test('menegakkan urutan unik untuk setiap surat tugas', {
     const insertTujuan = (urutan) => client.query(
       `INSERT INTO surat_tugas_tujuan (
          surat_tugas_id, daerah_id, urutan, daerah_tujuan, latitude,
-         longitude, radius, tanggal_mulai, tanggal_selesai
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+         longitude, radius, tanggal_mulai, tanggal_selesai, created_at, updated_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())`,
       [
         suratTugasId,
         daerahId,
