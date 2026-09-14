@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-013 — Regression, dokumentasi QA, dan kesiapan rilis
+
+- **Status:** Implementasi dan verifikasi otomatis lokal selesai; QA manual, staging, serta backup production belum dijalankan.
+- **Ringkasan:** Memperkuat regression flow dua surat agar operasi laporan akhir dan harian tidak tertukar, menutup seluruh endpoint surat dari pegawai yang bukan pemilik, memverifikasi batas deadline WITA, dan mengganti README boilerplate dengan panduan setup, QA, rollout, serta rollback.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `backend/tests/integration/laporan.explicit-assignment.test.js`, `backend/tests/integration/laporan.edit-window.test.js`, `src/pages/pegawai/LaporanPegawai.test.jsx`, `README.md`, `CHANGELOG.md`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Fixture `createFixture` mendukung catatan keuangan; regression test memverifikasi context route A/B, write laporan akhir/harian, authorization semua endpoint laporan, manifest nota, serta transisi deadline; tidak ada class runtime yang diubah.
+- **Database:** Tidak ada perubahan schema atau data permanen pada Task 13. Backup database development lokal tersedia di `C:\Users\HP\PostgreSQL\backups\catur_dev-before-report-integrity-20260914-122647.dump` (4.949.025 byte) dan preflight pasangan laporan duplikat menghasilkan 0 baris. Backup serta migration production belum dijalankan.
+- **API:** Tidak ada endpoint runtime baru. Test mengunci kontrak GET/POST/PUT/DELETE eksplisit berbasis `suratId`/`presensiId`, response 404 untuk bukan pemilik, isolasi manifest, dan response penguncian deadline.
+- **Test otomatis:** Backend 62/62 lulus tanpa skip pada `catur_test`; backend lint lulus 81 file. Frontend 28/28 lulus, lint terarah file Task 13 lulus, dan build production lulus. Lint global masih gagal pada baseline lama: 690 masalah (681 error, 9 warning), termasuk konfigurasi root yang memindai CommonJS backend sebagai ESM dan pelanggaran lama React.
+- **Verifikasi manual:** Checklist klik admin, pegawai, multi-tujuan, pergantian surat, upload, deadline, staging, dan production telah didokumentasikan di README tetapi belum dieksekusi pada browser di Task 13.
+- **Risiko/catatan:** Gate otomatis untuk kode yang disentuh lulus. Release production belum boleh dinyatakan selesai sampai lint global dipisahkan/dibereskan, QA manual lulus, backup production dibuat, dan smoke test staging selesai.
+- **Rollback:** Kembalikan aplikasi ke commit release sebelumnya; bila index perlu dilepas gunakan `DROP INDEX IF EXISTS uq_laporan_perjalanan_surat_pegawai;`; pertahankan enum `draft`; restore dump hanya bila migration atau verifikasi data gagal.
+- **Commit:** `test: verify report selection and deadline flow`.
+
 ### 2026-09-14 — TASK-012 — Timeline multi-tujuan dan durasi presensi
 
 - **Status:** Selesai dengan catatan baseline lint proyek.

@@ -109,14 +109,27 @@ describe('LaporanPegawai route context', () => {
   });
 
   it('memuat ulang context ketika suratId pada URL berubah', async () => {
+    getLaporanPerjalanan
+      .mockResolvedValueOnce({
+        ...reportFixture,
+        tujuan: [{ id: 101, urutan: 1, daerah_tujuan: 'Buol', tanggal_mulai: '2026-09-14', tanggal_selesai: '2026-09-14' }],
+      })
+      .mockResolvedValueOnce({
+        ...reportFixture,
+        surat_tugas: { ...reportFixture.surat_tugas, id: 22, nomor_surat: 'SURAT B' },
+        tujuan: [{ id: 202, urutan: 1, daerah_tujuan: 'Poso', tanggal_mulai: '2026-09-20', tanggal_selesai: '2026-09-20' }],
+      });
     renderPage();
 
     await waitFor(() => expect(getLaporanPerjalanan).toHaveBeenCalledWith('11'));
+    expect(await screen.findByText('1. Buol')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Ganti surat' }));
 
     await waitFor(() => {
       expect(getLaporanPerjalanan).toHaveBeenNthCalledWith(2, '22');
     });
+    expect(await screen.findByText('1. Poso')).toBeVisible();
+    expect(screen.queryByText('1. Buol')).not.toBeInTheDocument();
   });
 
   it('meneruskan ID surat atau presensi yang sama ke seluruh aksi', async () => {

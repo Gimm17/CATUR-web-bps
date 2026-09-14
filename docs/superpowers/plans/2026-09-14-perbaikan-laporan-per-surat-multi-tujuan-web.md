@@ -1017,19 +1017,19 @@ git commit -m "feat: show multi-destination report timeline"
 - Consumes: seluruh endpoint, service, route, migration, dan UI Tasks 1–12.
 - Produces: bukti test lengkap, panduan QA, prosedur rollout, serta rollback yang dapat dijalankan.
 
-- [ ] **Step 1: Tambahkan regression scenario end-to-end dua surat**
+- [x] **Step 1: Tambahkan regression scenario end-to-end dua surat**
 
 Fixture membuat Surat A dan B, presensi berbeda, laporan berbeda, serta memastikan semua GET/POST/PUT tetap terisolasi berdasarkan ID.
 
-- [ ] **Step 2: Tambahkan regression scenario tujuh hari WITA**
+- [x] **Step 2: Tambahkan regression scenario tujuh hari WITA**
 
 Gunakan clock tetap untuk hari selesai, deadline, satu detik sebelum pergantian tanggal WITA, dan satu detik setelah deadline.
 
-- [ ] **Step 3: Tambahkan regression authorization**
+- [x] **Step 3: Tambahkan regression authorization**
 
 Token Pegawai A mencoba semua endpoint Surat B dan harus menerima `404`; tidak ada row atau file manifest yang berubah.
 
-- [ ] **Step 4: Jalankan seluruh verifikasi otomatis backend**
+- [x] **Step 4: Jalankan seluruh verifikasi otomatis backend**
 
 Run: `cd backend && npm test && npm run lint`  
 Expected: seluruh unit/integration test PASS dan lint exit 0.
@@ -1051,7 +1051,7 @@ Login pegawai, buka Surat A dari dashboard, buka Surat B dari riwayat, kembali k
 
 Gunakan fixture tanggal untuk memverifikasi edit sebelum deadline, tepat pada deadline, setelah deadline, status `dikirim`, status dikembalikan dengan catatan, dan status `dicek_keuangan`.
 
-- [ ] **Step 9: Dokumentasikan setup, route, dan QA di `README.md`**
+- [x] **Step 9: Dokumentasikan setup, route, dan QA di `README.md`**
 
 Tambahkan perintah migration, perintah test, URL flow manual, definisi deadline WITA, serta daftar endpoint legacy yang masih tersedia.
 
@@ -1068,15 +1068,15 @@ Expected: backup berhasil dan preflight duplicate menghasilkan nol baris sebelum
 
 Jalankan migration, backend, dan build frontend di staging; verifikasi login empat role, create surat multi-tujuan, pemilihan laporan berdasarkan ID, upload file, deadline, dan history.
 
-- [ ] **Step 12: Siapkan rollback terukur**
+- [x] **Step 12: Siapkan rollback terukur**
 
 Rollback aplikasi ke commit release sebelumnya. Jika index perlu dilepas, jalankan `DROP INDEX IF EXISTS uq_laporan_perjalanan_surat_pegawai;`. Nilai enum `draft` dibiarkan karena penghapusan enum PostgreSQL berisiko dan tidak mengganggu versi lama. Pulihkan database dari dump hanya jika migration/data verification gagal.
 
-- [ ] **Step 13: Update record final `CHANGELOG.md`**
+- [x] **Step 13: Update record final `CHANGELOG.md`**
 
 Catat seluruh file akhir, simbol, enum/index, endpoint, hasil test, hasil QA, backup path, migration result, staging result, risiko tersisa, rollback, dan commit release.
 
-- [ ] **Step 14: Commit dokumentasi dan bukti verifikasi**
+- [x] **Step 14: Commit dokumentasi dan bukti verifikasi**
 
 ```bash
 git add backend/tests src/pages/pegawai/LaporanPegawai.test.jsx src/pages/pegawai/ReportLaporanPegawai.test.jsx README.md CHANGELOG.md
@@ -1098,16 +1098,16 @@ git commit -m "test: verify report selection and deadline flow"
 ## Definition of Done
 
 - [ ] Seluruh 13 task dan checklist-nya ditandai selesai berdasarkan bukti.
-- [ ] `CHANGELOG.md` memiliki satu record lengkap untuk setiap task.
-- [ ] Tidak ada endpoint web laporan yang bergantung pada record latest.
-- [ ] Seluruh operasi write tervalidasi kepemilikan dan report window.
-- [ ] Satu surat hanya mempunyai satu laporan akhir per pegawai.
-- [ ] Semua tujuan tampil dan tujuan aktif sesuai tanggal WITA.
-- [ ] Riwayat lama dapat dibuka kembali melalui ID.
-- [ ] Deadline tujuh hari tampil dan ditegakkan backend.
-- [ ] Backend test dan lint lulus.
+- [x] `CHANGELOG.md` memiliki satu record lengkap untuk setiap task.
+- [x] Tidak ada endpoint web laporan yang bergantung pada record latest.
+- [x] Seluruh operasi write tervalidasi kepemilikan dan report window.
+- [x] Satu surat hanya mempunyai satu laporan akhir per pegawai.
+- [x] Semua tujuan tampil dan tujuan aktif sesuai tanggal WITA.
+- [x] Riwayat lama dapat dibuka kembali melalui ID.
+- [x] Deadline tujuh hari tampil dan ditegakkan backend.
+- [x] Backend test dan lint lulus.
 - [ ] Frontend test, lint, dan build lulus.
 - [ ] QA manual admin dan pegawai lulus.
 - [ ] Backup dan rollback telah diverifikasi sebelum production.
-- [ ] Tidak ada credential, `.env`, dump, token, atau uploads yang masuk commit.
-- [ ] Commit history per task jelas dan dapat di-rollback per batch.
+- [x] Tidak ada credential, `.env`, dump, token, atau uploads yang masuk commit.
+- [x] Commit history per task jelas dan dapat di-rollback per batch.

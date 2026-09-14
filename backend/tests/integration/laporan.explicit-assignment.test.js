@@ -209,6 +209,20 @@ test('kirim laporan melalui Surat A tidak mengubah laporan Surat B', {
       body: JSON.stringify({ kesimpulan: 'Kesimpulan A diperbarui' }),
     }
   );
+  const presensiA = await Presensi.findOne({
+    where: { surat_tugas_id: fixture.suratRows[0].id },
+  });
+  const dailyResponse = await fetch(
+    `${baseUrl}/api/presensi/${presensiA.id}/laporan`,
+    {
+      method: 'PUT',
+      headers: {
+        authorization: `Bearer ${fixture.token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ laporan: 'Harian A diperbarui' }),
+    }
+  );
   const payload = await response.json();
   const savedA = await LaporanPerjalanan.findOne({
     where: {
@@ -222,10 +236,83 @@ test('kirim laporan melalui Surat A tidak mengubah laporan Surat B', {
       pegawai_id: fixture.pegawai.id,
     },
   });
+  await presensiA.reload();
+  const dailyB = await Presensi.findOne({ where: { surat_tugas_id: fixture.suratRows[1].id } });
 
   assert.equal(response.status, 200, JSON.stringify(payload));
+  assert.equal(dailyResponse.status, 200, await dailyResponse.text());
   assert.equal(savedA.kesimpulan, 'Kesimpulan A diperbarui');
   assert.equal(savedB.kesimpulan, 'Kesimpulan B');
+  assert.equal(presensiA.laporan, 'Harian A diperbarui');
+  assert.equal(dailyB.laporan, 'Laporan harian B');
+});
+
+test('pegawai lain ditolak oleh seluruh endpoint surat dan tidak dapat mengubah data atau manifest', {
+  skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
+}, async (t) => {
+  const baseUrl = await startServer(t);
+  const fixture = await createFixture(t, {
+    periods: [['A', '2099-07-01', '2099-07-02']],
+    includePresensi: true,
+  });
+  const suffix = `${process.pid}-${Date.now()}-outsider`;
+  const outsider = await User.create({
+    nama: 'Pegawai Lain',
+    email: `pegawai-lain-${suffix}@catur.test`,
+    password: 'not-used',
+    role: 'pegawai',
+  });
+  t.after(() => User.destroy({ where: { id: outsider.id } }));
+  const outsiderToken = jwt.sign(
+    { id: outsider.id, role: outsider.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '5m' }
+  );
+  const suratId = fixture.suratRows[0].id;
+  const presensi = await Presensi.findOne({ where: { surat_tugas_id: suratId } });
+  const manifestDir = path.resolve(__dirname, '../../uploads/bukti-nota-pembayaran');
+  const manifestPath = path.join(manifestDir, `manifest-${fixture.pegawai.id}-${suratId}.json`);
+  fs.mkdirSync(manifestDir, { recursive: true });
+  fs.writeFileSync(manifestPath, JSON.stringify([{ filename: 'nota-rahasia.pdf' }]));
+  t.after(() => {
+    if (fs.existsSync(manifestPath)) fs.unlinkSync(manifestPath);
+  });
+
+  const cases = [
+    [`/api/perjalanan/surat/${suratId}`, { method: 'GET' }],
+    [`/api/perjalanan/surat/${suratId}/kirim`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ kesimpulan: 'Tidak boleh masuk' }),
+    }],
+    [`/api/perjalanan/surat/${suratId}/ttd-pegawai`, { method: 'GET', redirect: 'manual' }],
+    [`/api/perjalanan/surat/${suratId}/bukti-pembayaran`, { method: 'GET' }],
+    [`/api/perjalanan/surat/${suratId}/bukti-pembayaran`, { method: 'DELETE' }],
+    [`/api/presensi/${presensi.id}/laporan`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ laporan: 'Tidak boleh masuk' }),
+    }],
+  ];
+
+  for (const [url, options] of cases) {
+    const response = await fetch(`${baseUrl}${url}`, {
+      ...options,
+      headers: {
+        ...options.headers,
+        authorization: `Bearer ${outsiderToken}`,
+      },
+    });
+    assert.equal(response.status, 404, `${options.method} ${url}: ${await response.text()}`);
+  }
+
+  const savedReport = await LaporanPerjalanan.findOne({
+    where: { surat_tugas_id: suratId, pegawai_id: fixture.pegawai.id },
+  });
+  await presensi.reload();
+  assert.equal(savedReport.kesimpulan, 'Kesimpulan A');
+  assert.equal(presensi.laporan, 'Laporan harian A');
+  assert.equal(JSON.parse(fs.readFileSync(manifestPath, 'utf8'))[0].filename, 'nota-rahasia.pdf');
 });
 
 test('TTD dan reset manifest nota terisolasi berdasarkan surat tugas', {

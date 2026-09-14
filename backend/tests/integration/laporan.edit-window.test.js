@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const jwt = require('jsonwebtoken');
+const { buildReportWindow } = require('../../src/services/reportWindow.service');
 
 const databaseUrl = process.env.CATUR_TEST_DATABASE_URL;
 let sequelize;
@@ -44,7 +45,7 @@ async function startServer(t) {
   return `http://127.0.0.1:${server.address().port}`;
 }
 
-async function createFixture(t, { tripEndDate, reportStatus = null }) {
+async function createFixture(t, { tripEndDate, reportStatus = null, reportCatatan = null }) {
   const suffix = `${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const pegawai = await User.create({
     nama: 'Pegawai Edit Window',
@@ -102,6 +103,7 @@ async function createFixture(t, { tripEndDate, reportStatus = null }) {
       pegawai_id: pegawai.id,
       status: reportStatus,
       kesimpulan: 'Laporan untuk status lock',
+      catatan_keuangan: reportCatatan,
     });
   }
 
@@ -124,6 +126,24 @@ async function createFixture(t, { tripEndDate, reportStatus = null }) {
     ),
   };
 }
+
+test('boundary WITA tetap editable satu detik sebelum pergantian hari dan terkunci sesudahnya', () => {
+  const beforeMidnight = buildReportWindow({
+    tujuan: [{ tanggal_selesai: '2026-09-19' }],
+    status: 'draft',
+    now: new Date('2026-09-26T15:59:59Z'),
+  });
+  const afterMidnight = buildReportWindow({
+    tujuan: [{ tanggal_selesai: '2026-09-19' }],
+    status: 'draft',
+    now: new Date('2026-09-26T16:00:00Z'),
+  });
+
+  assert.equal(beforeMidnight.editable, true);
+  assert.equal(beforeMidnight.remaining_days, 0);
+  assert.equal(afterMidnight.editable, false);
+  assert.equal(afterMidnight.lock_reason, 'deadline_passed');
+});
 
 async function updateDailyReport(baseUrl, fixture, laporan, legacy = false) {
   return fetch(
@@ -187,6 +207,23 @@ test('status proses keuangan mengunci laporan harian sebelum deadline', {
   assert.equal(response.status, 409, JSON.stringify(payload));
   assert.equal(payload.code, 'REPORT_LOCKED_BY_STATUS');
   assert.equal(payload.report_window.lock_reason, 'finance_processing');
+});
+
+test('laporan berstatus dikirim dan dikembalikan dengan catatan tetap dapat diperbaiki sebelum deadline', {
+  skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
+}, async (t) => {
+  const baseUrl = await startServer(t);
+  const fixture = await createFixture(t, {
+    tripEndDate: getBusinessDate(),
+    reportStatus: 'dikirim',
+    reportCatatan: 'Perbaiki rincian kegiatan.',
+  });
+
+  const response = await updateDailyReport(baseUrl, fixture, 'Laporan harian setelah koreksi');
+  const payload = await response.json();
+
+  assert.equal(response.status, 200, JSON.stringify(payload));
+  assert.equal(payload.data.laporan, 'Laporan harian setelah koreksi');
 });
 
 test('adapter legacy memakai handler yang sama dan menandai deprecation', {
