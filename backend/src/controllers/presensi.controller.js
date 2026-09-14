@@ -4,6 +4,8 @@ const Daerah = require('../models/daerah.model');
 const { isPointInsideGeojson } = require('../utils/geojsonPolygon');
 const { getTodayDate } = require('../utils/date');
 const { Op } = require('sequelize');
+const { getOwnedReportContext } = require('../services/reportContext.service');
+const { assertReportEditable } = require('../services/reportWindow.service');
 
 const LOCAL_AREAS = ['palu', 'sigi', 'donggala'];
 const DEFAULT_GPS_TOLERANCE_METERS = Number.parseInt(
@@ -393,6 +395,7 @@ exports.updateLaporan = async (req, res) => {
   try {
     const { laporan, presensi_id } = req.body;
     const userId = req.user.id;
+    const presensiId = req.params.presensiId || presensi_id;
 
     if (!laporan) {
       return res.status(400).json({
@@ -403,7 +406,7 @@ exports.updateLaporan = async (req, res) => {
     // Cari presensi milik user
     const presensi = await Presensi.findOne({
       where: {
-        id: presensi_id,
+        id: presensiId,
         user_id: userId
       }
     });
@@ -413,6 +416,12 @@ exports.updateLaporan = async (req, res) => {
         message: 'Data presensi tidak ditemukan'
       });
     }
+
+    const context = await getOwnedReportContext({
+      suratId: presensi.surat_tugas_id,
+      userId,
+    });
+    assertReportEditable(context.reportWindow);
 
     const fotoList = parseFotoList(presensi.foto);
     if (fotoList.length < 2) {
@@ -437,8 +446,13 @@ exports.updateLaporan = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Error updateLaporan:', err);
-    res.status(500).json({ message: err.message });
+    const isKnownError = Number.isInteger(err.status) && err.code;
+    if (!isKnownError) console.error('Error updateLaporan:', err);
+    res.status(isKnownError ? err.status : 500).json({
+      code: isKnownError ? err.code : 'INTERNAL_SERVER_ERROR',
+      message: isKnownError ? err.message : 'Gagal menyimpan laporan harian.',
+      ...(err.reportWindow ? { report_window: err.reportWindow } : {}),
+    });
   }
 };
 

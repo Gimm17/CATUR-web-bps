@@ -5,6 +5,9 @@ const auth = require('../middlewares/auth.middleware');
 const { uploadTTDMiddleware, uploadBuktiPembayaran } = require('../middlewares/upload.middleware');
 const uploadToDrive = require('../middlewares/uploadToDrive.middleware');
 const loadOwnedReportContext = require('../middlewares/reportContext.middleware');
+const {
+  requireEditableReportContext,
+} = require('../middlewares/reportContext.middleware');
 
 router.get(
   '/perjalanan/surat/:suratId',
@@ -17,6 +20,7 @@ router.post(
   '/perjalanan/surat/:suratId/kirim',
   auth,
   loadOwnedReportContext,
+  requireEditableReportContext,
   laporanController.kirimLaporanAkhir
 );
 
@@ -24,6 +28,7 @@ router.post(
   '/perjalanan/surat/:suratId/ttd-pegawai',
   auth,
   loadOwnedReportContext,
+  requireEditableReportContext,
   uploadTTDMiddleware.single('ttd_pegawai'),
   uploadToDrive,
   laporanController.uploadTTDPegawai
@@ -40,6 +45,7 @@ router.post(
   '/perjalanan/surat/:suratId/bukti-pembayaran',
   auth,
   loadOwnedReportContext,
+  requireEditableReportContext,
   laporanController.validateUploadBuktiPembayaran,
   uploadBuktiPembayaran,
   uploadToDrive,
@@ -57,6 +63,7 @@ router.delete(
   '/perjalanan/surat/:suratId/bukti-pembayaran',
   auth,
   loadOwnedReportContext,
+  requireEditableReportContext,
   laporanController.resetBuktiPembayaran
 );
 

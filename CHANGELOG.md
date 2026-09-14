@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-006 — Enforcement deadline laporan harian dan akhir
+
+- **Status:** Selesai
+- **Ringkasan:** Menegakkan batas edit tujuh hari WITA dan penguncian status proses pada backend untuk laporan harian, pengiriman laporan akhir, tanda tangan, serta nota; response penolakan membawa report window agar alasan dapat ditampilkan frontend.
+- **File ditambahkan:** `backend/tests/integration/laporan.edit-window.test.js`.
+- **File diubah:** `backend/src/controllers/presensi.controller.js`, `backend/src/routes/presensi.routes.js`, `backend/src/controllers/laporan.controller.js`, `backend/src/middlewares/reportContext.middleware.js`, `backend/src/routes/laporan.route.js`, dan `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `updateLaporan` kini memuat presensi berdasarkan ID dan kepemilikan lalu memanggil `getOwnedReportContext` serta `assertReportEditable`; menambahkan middleware `requireEditableReportContext`; mapping error laporan menyertakan `report_window`.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data permanen yang diubah. Integration fixture menguji laporan harian dan status laporan kemudian dibersihkan.
+- **API:** Menambahkan `PUT /api/presensi/:presensiId/laporan`. Adapter `PUT /api/presensi/laporan` dipertahankan dan memberi header `Deprecation: true`. Operasi terkunci menghasilkan `409 REPORT_DEADLINE_PASSED` atau `409 REPORT_LOCKED_BY_STATUS` beserta `report_window`.
+- **Test otomatis:** RED terverifikasi: route berbasis ID menghasilkan 404, adapter tidak memiliki header deprecation, dan error akhir tidak membawa report window. GREEN lulus 5/5 pada `laporan.edit-window.test.js`; seluruh backend lulus 59/59 tanpa skip; backend lint lulus 81 file.
+- **Verifikasi manual:** Edit tepat pada hari ketujuh berhasil; satu hari setelahnya ditolak; status `dicek_keuangan` menolak edit walau deadline belum lewat; adapter lama tetap bekerja; kirim laporan terkunci mengembalikan deadline dan alasan.
+- **Risiko/catatan:** Guard eksplisit dijalankan sebelum middleware upload sehingga file tidak dikirim ke storage ketika laporan sudah terkunci. Route legacy dipertahankan hanya untuk kompatibilitas mobile sementara.
+- **Rollback:** Lepas route ID baru dan `requireEditableReportContext`, pulihkan lookup `presensi_id` body tanpa report window, serta hapus header deprecation. Tidak ada rollback database.
+- **Commit:** `feat: enforce report editing deadline`.
+
 ### 2026-09-14 — TASK-005 — Endpoint write laporan berdasarkan surat tugas
 
 - **Status:** Selesai

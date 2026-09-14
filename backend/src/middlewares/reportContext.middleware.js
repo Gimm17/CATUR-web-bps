@@ -1,4 +1,5 @@
 const reportContextService = require('../services/reportContext.service');
+const { assertReportEditable } = require('../services/reportWindow.service');
 
 function createLoadOwnedReportContext({
   getOwnedReportContext = reportContextService.getOwnedReportContext,
@@ -31,5 +32,20 @@ function createLoadOwnedReportContext({
 
 const loadOwnedReportContext = createLoadOwnedReportContext();
 
+function requireEditableReportContext(req, res, next) {
+  try {
+    assertReportEditable(req.reportContext?.reportWindow);
+    return next();
+  } catch (error) {
+    return res.status(error.status || 409).json({
+      success: false,
+      code: error.code || 'REPORT_LOCKED_BY_STATUS',
+      message: error.message,
+      report_window: error.reportWindow || req.reportContext?.reportWindow,
+    });
+  }
+}
+
 module.exports = loadOwnedReportContext;
 module.exports.createLoadOwnedReportContext = createLoadOwnedReportContext;
+module.exports.requireEditableReportContext = requireEditableReportContext;

@@ -20,8 +20,18 @@ router.post(
 
 // Route untuk update laporan
 router.put(
+  '/:presensiId/laporan',
+  authMiddleware,
+  presensiController.updateLaporan
+);
+
+router.put(
   '/laporan',
   authMiddleware,
+  (req, res, next) => {
+    res.set('Deprecation', 'true');
+    next();
+  },
   presensiController.updateLaporan
 );
 

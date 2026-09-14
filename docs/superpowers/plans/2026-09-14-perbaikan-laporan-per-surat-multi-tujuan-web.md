@@ -532,39 +532,39 @@ git commit -m "fix: scope report writes to assignment id"
 - Consumes: `getOwnedReportContext`, `buildReportWindow`, dan `presensi.surat_tugas_id`.
 - Produces: `PUT /api/presensi/:presensiId/laporan` dan error `REPORT_DEADLINE_PASSED`/`REPORT_LOCKED_BY_STATUS`.
 
-- [ ] **Step 1: Tulis test edit pada hari terakhir deadline berhasil**
+- [x] **Step 1: Tulis test edit pada hari terakhir deadline berhasil**
 
 ```js
 assert.equal(onDeadlineResponse.status, 200);
 assert.match(onDeadlineResponse.body.data.laporan, /hasil kegiatan/i);
 ```
 
-- [ ] **Step 2: Tulis test edit satu hari setelah deadline ditolak**
+- [x] **Step 2: Tulis test edit satu hari setelah deadline ditolak**
 
 ```js
 assert.equal(afterDeadlineResponse.status, 409);
 assert.equal(afterDeadlineResponse.body.code, 'REPORT_DEADLINE_PASSED');
 ```
 
-- [ ] **Step 3: Tulis test status keuangan mengunci edit**
+- [x] **Step 3: Tulis test status keuangan mengunci edit**
 
 ```js
 assert.equal(financeLockedResponse.status, 409);
 assert.equal(financeLockedResponse.body.code, 'REPORT_LOCKED_BY_STATUS');
 ```
 
-- [ ] **Step 4: Jalankan test dan verifikasi controller lama masih mengizinkan edit**
+- [x] **Step 4: Jalankan test dan verifikasi controller lama masih mengizinkan edit**
 
 Run: `cd backend && node --test tests/integration/laporan.edit-window.test.js`  
 Expected: FAIL untuk deadline dan status lock.
 
-- [ ] **Step 5: Ubah route laporan harian menggunakan ID URL**
+- [x] **Step 5: Ubah route laporan harian menggunakan ID URL**
 
 ```js
 router.put('/:presensiId/laporan', authMiddleware, presensiController.updateLaporan);
 ```
 
-- [ ] **Step 6: Muat presensi milik user lalu validasi report window suratnya**
+- [x] **Step 6: Muat presensi milik user lalu validasi report window suratnya**
 
 ```js
 const presensi = await Presensi.findOne({
@@ -577,20 +577,20 @@ const context = await getOwnedReportContext({
 assertReportEditable(context.reportWindow);
 ```
 
-- [ ] **Step 7: Terapkan guard yang sama sebelum TTD, nota, dan kirim laporan akhir**
+- [x] **Step 7: Terapkan guard yang sama sebelum TTD, nota, dan kirim laporan akhir**
 
 Semua response lock mengembalikan `report_window` agar frontend dapat menunjukkan alasan dan deadline yang benar.
 
-- [ ] **Step 8: Pertahankan route `/presensi/laporan` sebagai adapter legacy**
+- [x] **Step 8: Pertahankan route `/presensi/laporan` sebagai adapter legacy**
 
 Adapter membaca `presensi_id`, lalu memanggil handler yang sama; tandai response header `Deprecation: true` tanpa mengubah kontrak mobile.
 
-- [ ] **Step 9: Jalankan integration test, backend suite, dan lint**
+- [x] **Step 9: Jalankan integration test, backend suite, dan lint**
 
 Run: `cd backend && node --test tests/integration/laporan.edit-window.test.js && npm test && npm run lint`  
 Expected: seluruh test PASS.
 
-- [ ] **Step 10: Update `CHANGELOG.md` dan commit Task 6**
+- [x] **Step 10: Update `CHANGELOG.md` dan commit Task 6**
 
 ```bash
 git add backend/src/controllers/presensi.controller.js backend/src/routes/presensi.routes.js backend/src/controllers/laporan.controller.js backend/tests/integration/laporan.edit-window.test.js CHANGELOG.md

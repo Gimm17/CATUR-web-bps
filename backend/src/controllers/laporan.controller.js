@@ -150,6 +150,7 @@ function sendControllerError(res, error, fallbackMessage) {
     success: false,
     code: isKnownError ? error.code : 'INTERNAL_SERVER_ERROR',
     message: isKnownError ? error.message : fallbackMessage,
+    ...(error.reportWindow ? { report_window: error.reportWindow } : {}),
   });
 }
 
@@ -412,10 +413,7 @@ exports.validateUploadBuktiPembayaran = async (req, res, next) => {
     return next();
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    });
+    return sendControllerError(res, err, 'Gagal memvalidasi upload nota.');
   }
 };
 
@@ -511,10 +509,7 @@ exports.uploadBuktiPembayaran = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    });
+    return sendControllerError(res, err, 'Gagal mengupload bukti pembayaran.');
   }
 };
 
@@ -540,10 +535,7 @@ exports.getBuktiPembayaran = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    });
+    return sendControllerError(res, err, 'Gagal membaca bukti pembayaran.');
   }
 };
 
@@ -581,10 +573,7 @@ exports.resetBuktiPembayaran = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    });
+    return sendControllerError(res, err, 'Gagal mereset bukti pembayaran.');
   }
 };
 
