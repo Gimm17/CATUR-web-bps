@@ -301,7 +301,7 @@ git commit -m "fix: enforce report record integrity"
 - Consumes: `SuratTugas`, association `tujuan`, `buildReportWindow`, `req.user.id`, dan `req.params.suratId`.
 - Produces: `getOwnedReportContext({ suratId, userId, now })` dan middleware `loadOwnedReportContext` yang mengisi `req.reportContext`.
 
-- [ ] **Step 1: Tulis test ID wajib, surat tidak ditemukan, dan surat milik orang lain**
+- [x] **Step 1: Tulis test ID wajib, surat tidak ditemukan, dan surat milik orang lain**
 
 ```js
 await assert.rejects(
@@ -310,19 +310,19 @@ await assert.rejects(
 );
 ```
 
-- [ ] **Step 2: Tulis test context memuat tujuan terurut dan report window**
+- [x] **Step 2: Tulis test context memuat tujuan terurut dan report window**
 
 ```js
 assert.deepEqual(context.surat.tujuan.map((item) => item.urutan), [1, 2]);
 assert.equal(context.reportWindow.deadline_date, '2026-09-26');
 ```
 
-- [ ] **Step 3: Jalankan test dan pastikan gagal karena service belum ada**
+- [x] **Step 3: Jalankan test dan pastikan gagal karena service belum ada**
 
 Run: `cd backend && node --test tests/unit/reportContext.service.test.js`  
 Expected: FAIL dengan module belum ditemukan.
 
-- [ ] **Step 4: Implementasikan query kepemilikan dalam satu operasi**
+- [x] **Step 4: Implementasikan query kepemilikan dalam satu operasi**
 
 ```js
 const surat = await SuratTugas.findOne({
@@ -331,7 +331,7 @@ const surat = await SuratTugas.findOne({
 });
 ```
 
-- [ ] **Step 5: Implementasikan middleware dan mapping error aman**
+- [x] **Step 5: Implementasikan middleware dan mapping error aman**
 
 ```js
 async function loadOwnedReportContext(req, res, next) {
@@ -347,16 +347,16 @@ async function loadOwnedReportContext(req, res, next) {
 }
 ```
 
-- [ ] **Step 6: Jalankan unit test dan lint backend**
+- [x] **Step 6: Jalankan unit test dan lint backend**
 
 Run: `cd backend && node --test tests/unit/reportContext.service.test.js && npm run lint`  
 Expected: PASS dan exit code 0.
 
-- [ ] **Step 7: Catat service, middleware, simbol, dan security rule di `CHANGELOG.md`**
+- [x] **Step 7: Catat service, middleware, simbol, dan security rule di `CHANGELOG.md`**
 
 Catat bahwa akses lintas pegawai menghasilkan `404` dan tidak membocorkan record.
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 ```bash
 git add backend/src/services/reportContext.service.js backend/src/middlewares/reportContext.middleware.js backend/tests/unit/reportContext.service.test.js CHANGELOG.md

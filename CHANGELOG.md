@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-14 — TASK-003 — Report context dan validasi kepemilikan
+
+- **Status:** Selesai
+- **Ringkasan:** Menambahkan service dan middleware bersama untuk memuat satu surat tugas secara eksplisit, memastikan surat tersebut milik pengguna login, mengurutkan tujuan, memuat laporan pasangan surat-pegawai, dan menghitung report window WITA yang sesuai status laporan.
+- **File ditambahkan:** `backend/src/services/reportContext.service.js`, `backend/src/middlewares/reportContext.middleware.js`, dan `backend/tests/unit/reportContext.service.test.js`.
+- **File diubah:** `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `createReportContextService`, `getOwnedReportContext`, `createLoadOwnedReportContext`, dan `loadOwnedReportContext`.
+- **Database:** Tidak ada tabel, kolom, index, enum, atau data yang diubah. Service hanya membaca `surat_tugas`, `surat_tugas_tujuan`, dan `laporan_perjalanan`.
+- **API:** Belum mendaftarkan route baru. Middleware menghasilkan `req.reportContext` berisi `{ surat, laporan, reportWindow }` untuk endpoint eksplisit pada task berikutnya.
+- **Test otomatis:** RED terverifikasi karena module service belum tersedia. GREEN lulus 6/6 pada `reportContext.service.test.js`; backend lint lulus 81 file.
+- **Verifikasi manual:** ID kosong/non-integer ditolak sebelum query; surat tidak ada maupun milik pegawai lain sama-sama menghasilkan `404 SURAT_NOT_FOUND`; tujuan diurutkan; status keuangan mengunci report window; error internal disamarkan.
+- **Risiko/catatan:** Model runtime dimuat secara lazy agar unit test tidak membuka koneksi database. Response 404 yang seragam mencegah enumerasi surat milik pengguna lain.
+- **Rollback:** Hapus service, middleware, dan test Task 3; belum ada route yang perlu dilepas.
+- **Commit:** `feat: add owned report context`.
+
 ### 2026-09-14 — TASK-002 — Integritas schema laporan
 
 - **Status:** Selesai
