@@ -31,16 +31,16 @@
 
 ## Batch 3 — Migrasi Frontend
 
-- [ ] Tulis/pertahankan test service, utility, dan komponen fitur baru.
-- [ ] Port konfigurasi API URL lokal/production.
-- [ ] Port editor jadwal multi-tujuan admin.
-- [ ] Port resolver timeline tujuan/presensi.
-- [ ] Port halaman laporan berbasis route `suratId`.
-- [ ] Port report deadline dan lock state.
-- [ ] Port perbaikan Dashboard dan Presensi Pegawai.
-- [ ] Pastikan asset/script legacy tidak menyebabkan error bootstrap.
-- [ ] Perbarui `CHANGELOG.md`.
-- [ ] Jalankan test, lint terarah, dan build frontend.
+- [x] Tulis/pertahankan test service, utility, dan komponen fitur baru.
+- [x] Port konfigurasi API URL lokal/production.
+- [x] Port editor jadwal multi-tujuan admin.
+- [x] Port resolver timeline tujuan/presensi.
+- [x] Port halaman laporan berbasis route `suratId`.
+- [x] Port report deadline dan lock state.
+- [x] Port perbaikan Dashboard dan Presensi Pegawai.
+- [x] Pastikan asset/script legacy tidak menyebabkan error bootstrap.
+- [x] Perbarui `CHANGELOG.md`.
+- [x] Jalankan test, lint terarah, dan build frontend.
 - [ ] Commit dan push checkpoint Batch 3.
 
 ## Batch 4 — Paket Deploy Aman

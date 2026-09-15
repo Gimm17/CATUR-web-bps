@@ -1,4 +1,5 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "https://catur.bpssulteng.id/api").replace(/\/+$/, "");
+import { API_BASE_URL } from "../config/apiBaseUrl";
+
 const LEGACY_FILE_BASE_URL = (import.meta.env.VITE_LEGACY_FILE_BASE_URL || API_BASE_URL.replace(/\/api$/, "")).replace(/\/+$/, "");
 
 const GOOGLE_DRIVE_ID_REGEX = /^[a-zA-Z0-9_-]{20,}$/;

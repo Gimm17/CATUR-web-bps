@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-019 — Frontend resmi dan API same-origin
+
+- **Status:** Batch 3 selesai; seluruh regression frontend dan build lulus.
+- **Ringkasan:** Memastikan source frontend resmi tetap membawa editor multi-tujuan, timeline, report window, route laporan eksplisit, dan perbaikan dashboard/presensi. Default API diubah menjadi `/api` same-origin agar build yang sama dapat berjalan di domain hosting tanpa hardcoded domain lama.
+- **File ditambahkan:** `frontend/src/config/apiBaseUrl.js` dan `frontend/src/config/apiBaseUrl.test.js`.
+- **File diubah:** `frontend/src/api/axios.js`, `frontend/src/utils/fileUrl.js`, `docs/superpowers/plans/2026-09-15-konsolidasi-codebase-resmi-bps.md`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `resolveApiBaseUrl` dan konstanta `API_BASE_URL`; Axios dan resolver file memakai satu sumber konfigurasi yang sama.
+- **Database:** Tidak ada tabel, kolom, index, enum, migration, atau data yang diubah.
+- **API:** Default production adalah endpoint relatif `/api`; development tetap dapat memakai `VITE_API_BASE_URL=http://127.0.0.1:3000/api` melalui `.env.local` yang tidak masuk Git.
+- **Test otomatis:** Siklus RED module konfigurasi belum tersedia; GREEN test baru 2/2. Seluruh frontend 35/35 lulus, lint file yang disentuh lulus, dan build production lulus 944 module.
+- **Verifikasi manual:** Belum dilakukan pada runtime gabungan; dijadwalkan setelah build disinkronkan ke `backend/public`.
+- **Risiko/catatan:** Build menghasilkan warning ukuran chunk utama sekitar 1,12 MB; bukan blocker fungsi, tetapi code splitting menjadi pekerjaan optimasi berikutnya.
+- **Rollback:** Pulihkan fallback domain absolut lama dan hapus module konfigurasi; database tidak memerlukan rollback.
+- **Commit:** `fix: use deployment-safe frontend API base`.
+
 ### 2026-09-15 — TASK-018 — Backend resmi, migration eksplisit, dan startup aman
 
 - **Status:** Batch 2 selesai; regression backend dengan database lulus tanpa skip.
