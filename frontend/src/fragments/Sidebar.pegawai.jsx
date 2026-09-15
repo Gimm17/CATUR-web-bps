@@ -21,6 +21,10 @@ export default function Sidebar() {
   const location = useLocation();
   const currentYear = new Date().getFullYear();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isLaporanActive = location.pathname === "/laporan"
+    || location.pathname.startsWith("/laporan/")
+    || location.pathname.startsWith("/laporan-surat");
+  const isReportActive = location.pathname === "/laporan-report";
 
   useEffect(() => {
     const handleResize = () => {
@@ -65,14 +69,24 @@ export default function Sidebar() {
               <span className="mobile-nav-badge">NEW</span>
             </Link>
 
-            <Link 
-              to="/laporan-report" 
-              className={`mobile-nav-item ${location.pathname.startsWith("/laporan") ? "active" : ""}`}
+            <Link
+              to="/laporan"
+              className={`mobile-nav-item ${isLaporanActive ? "active" : ""}`}
             >
               <div className="mobile-nav-icon">
                 <FaChartBar />
               </div>
-              <span className="mobile-nav-label">Riwayat Laporan</span>
+              <span className="mobile-nav-label">Laporan</span>
+            </Link>
+
+            <Link
+              to="/laporan-report"
+              className={`mobile-nav-item ${isReportActive ? "active" : ""}`}
+            >
+              <div className="mobile-nav-icon">
+                <FaClipboardList />
+              </div>
+              <span className="mobile-nav-label">Report</span>
             </Link>
 
             <Link 
@@ -182,13 +196,25 @@ export default function Sidebar() {
             {/* Laporan */}
             <li className="nav-item sensus-nav-item">
               <Link
-                to="/laporan-report"
+                to="/laporan"
                 className={`nav-link sensus-nav-link ${
-                  location.pathname.startsWith("/laporan") ? "active" : ""
+                  isLaporanActive ? "active" : ""
                 }`}
               >
                 <i className="nav-icon"><FaChartBar /></i>
-                <p>Riwayat Laporan</p>
+                <p>Laporan &amp; Statistik</p>
+              </Link>
+            </li>
+
+            <li className="nav-item sensus-nav-item">
+              <Link
+                to="/laporan-report"
+                className={`nav-link sensus-nav-link ${
+                  isReportActive ? "active" : ""
+                }`}
+              >
+                <i className="nav-icon"><FaClipboardList /></i>
+                <p>Report</p>
               </Link>
             </li>
 

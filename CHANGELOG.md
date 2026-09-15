@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-025 — Pulihkan menu laporan sesuai frontend resmi BPS
+
+- **Status:** Selesai dan siap dipublikasikan.
+- **Ringkasan:** Memulihkan pemisahan navigasi pegawai yang sebelumnya tergabung menjadi `Riwayat Laporan`. Sidebar desktop kembali menampilkan `Laporan & Statistik` dan `Report`, sedangkan navigasi mobile kembali menyediakan `Laporan` dan `Report` sebagai dua tujuan berbeda. Alur laporan per surat hasil perbaikan tetap dipertahankan.
+- **File ditambahkan:** `frontend/src/fragments/Sidebar.pegawai.test.jsx`.
+- **File diubah:** `frontend/src/fragments/Sidebar.pegawai.jsx` dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Komponen `Sidebar` pegawai; ditambahkan penentuan status aktif terpisah untuk halaman laporan per surat dan halaman report agregat.
+- **Database:** Tidak ada tabel, kolom, index, migration, maupun data yang diubah.
+- **API:** Tidak ada kontrak API yang berubah. `Laporan & Statistik` mengarah ke `/laporan`, detail tetap dapat memakai `/laporan/:suratId` atau `/laporan-surat/:id`, dan `Report` mengarah ke `/laporan-report`.
+- **Test otomatis:** Siklus RED membuktikan sidebar lama hanya menampilkan `Riwayat Laporan`; setelah implementasi, regression test sidebar 1/1 dan seluruh frontend 40/40 lulus. ESLint kedua file perubahan lulus dan build production 940 module berhasil.
+- **Verifikasi manual:** Perlu hard refresh setelah release, kemudian login pegawai dan pastikan kedua menu tampil terpisah serta membuka halaman yang sesuai.
+- **Risiko/catatan:** Navigasi mobile kini memiliki satu item tambahan agar setara dengan struktur menu resmi. Warning ukuran chunk Vite masih ada dan tidak berasal dari perubahan ini.
+- **Rollback:** Pulihkan satu menu `Riwayat Laporan` menuju `/laporan-report` dan hapus regression test sidebar; backend serta database tidak memerlukan rollback.
+- **Commit:** `fix: restore official employee report navigation`.
+
 ### 2026-09-15 — TASK-024 — Deploy production ke hosting PostgreSQL 10
 
 - **Status:** Selesai; release aktif pada `https://caturv2.gimmhost.my.id`.
