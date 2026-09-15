@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-022 — Surat selesai tetap dapat membuka halaman laporan
+
+- **Status:** Selesai dan diterapkan pada runtime lokal.
+- **Ringkasan:** Memperbaiki aksi laporan pada modal detail Dashboard pegawai. Surat selesai tanpa file PDF sekarang menampilkan tombol hijau aktif `Buka Laporan` dan membuka `/laporan/:suratId`; tidak lagi tampil seperti tombol disabled berwarna abu-abu.
+- **File ditambahkan:** `frontend/src/utils/completedReportAction.js` dan `frontend/src/utils/completedReportAction.test.js`.
+- **File diubah:** `frontend/src/pages/pegawai/Dashboard.jsx` dan `CHANGELOG.md`.
+- **File dihapus:** Script diagnosis sementara tidak masuk commit.
+- **Class/fungsi/komponen diubah:** Menambahkan `getCompletedReportAction`; footer modal Dashboard menggunakan target route surat eksplisit serta state disabled hanya bila ID surat benar-benar tidak tersedia.
+- **Database:** Tidak ada tabel, kolom, index, enum, migration, atau data yang diubah.
+- **API:** Tidak ada perubahan kontrak. Diagnosis user 87 membuktikan `GET /api/perjalanan/surat/225`, `/207`, `/189`, dan `/175` seluruhnya HTTP 200, termasuk surat selesai tanpa laporan.
+- **Test otomatis:** Siklus RED module action belum tersedia; GREEN 2/2. Seluruh frontend 37/37 lulus. Lint file perubahan lulus tanpa error dengan satu warning hook legacy Dashboard yang tidak berasal dari perubahan ini.
+- **Verifikasi manual:** Build lokal diperbarui pada `127.0.0.1:3000`; pengguna perlu hard refresh lalu membuka Detail pada surat selesai tanpa PDF.
+- **Risiko/catatan:** Akses halaman dan hak edit dibedakan. Surat selesai selalu dapat dibuka, tetapi aksi edit tetap mengikuti `report_window`; sesudah deadline halaman menjadi read-only.
+- **Rollback:** Pulihkan cabang modal expired sebelumnya dan hapus utility/test baru; backend/database tidak perlu diubah.
+- **Commit:** `fix: keep completed assignment reports accessible`.
+
 ### 2026-09-15 — TASK-021 — Clean install, konsolidasi final, dan pembersihan disk
 
 - **Status:** Batch 5 selesai; codebase final bersih dan seluruh gate lokal lulus.

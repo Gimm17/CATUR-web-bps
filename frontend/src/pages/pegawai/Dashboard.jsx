@@ -8,6 +8,7 @@ import { getDaerah, getDaerahById } from "../../services/daerahService";
 import api from "../../api/axios";
 import { getUser } from "../../utils/auth";
 import { toPublicFileUrl } from "../../utils/fileUrl";
+import { getCompletedReportAction } from "../../utils/completedReportAction";
 import PegawaiLayout from "../../layouts/PegawaiLayout";
 import { 
   FaFileAlt, 
@@ -1739,6 +1740,7 @@ const DashboardPegawai = () => {
   };
 
   const selectedLaporanFile = getLaporanFile(selectedSurat);
+  const completedReportAction = getCompletedReportAction(selectedSurat, selectedLaporanFile);
 
   if (loading) {
     return (
@@ -2963,19 +2965,21 @@ const DashboardPegawai = () => {
                   Lihat Laporan
                 </button>
               ) : selectedSurat.statusInfo?.status === 'expired' ? (
-                /* Jika tidak ada file laporan, arahkan ke halaman laporan */
+                /* Surat selesai tetap dapat membuka halaman laporan, termasuk yang belum memiliki PDF. */
                 <button
-                  onClick={() => handleLaporanClick(selectedSurat)}
+                  type="button"
+                  disabled={!completedReportAction.available}
+                  onClick={() => completedReportAction.href && navigate(completedReportAction.href)}
                   style={{
                     flex: 1,
-                    background: '#6b7280',
+                    background: completedReportAction.available ? '#10b981' : '#9ca3af',
                     border: 'none',
                     padding: '12px',
                     borderRadius: '12px',
                     fontSize: '14px',
                     fontWeight: '500',
                     color: 'white',
-                    cursor: 'pointer',
+                    cursor: completedReportAction.available ? 'pointer' : 'not-allowed',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -2983,7 +2987,7 @@ const DashboardPegawai = () => {
                   }}
                 >
                   <FaFileAlt />
-                  Lihat Laporan
+                  {completedReportAction.label}
                 </button>
               ) : (
                 /* Jika surat BELUM selesai (masih active atau upcoming) */
