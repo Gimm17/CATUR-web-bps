@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { getSuratTugasAktif } from '../../services/surat.service';
+import { getSuratTugasLaporanDefault } from '../../services/surat.service';
 
 export default function LaporanEntry() {
   const [state, setState] = useState({ status: 'loading', suratId: null });
@@ -8,18 +8,17 @@ export default function LaporanEntry() {
 
   useEffect(() => {
     let activeRequest = true;
-    getSuratTugasAktif()
-      .then((active) => {
+    getSuratTugasLaporanDefault()
+      .then((assignment) => {
         if (!activeRequest) return;
-        setState(active?.id
-          ? { status: 'active', suratId: active.id }
-          : { status: 'history', suratId: null });
+        setState(assignment?.id
+          ? { status: 'report', suratId: assignment.id }
+          : { status: 'empty', suratId: null });
       })
       .catch((error) => {
         if (!activeRequest) return;
-        setState(error.response?.status === 404
-          ? { status: 'history', suratId: null }
-          : { status: 'error', suratId: null });
+        console.error('Gagal menentukan surat laporan default:', error);
+        setState({ status: 'error', suratId: null });
       });
     return () => { activeRequest = false; };
   }, [attempt]);
@@ -29,11 +28,15 @@ export default function LaporanEntry() {
     setAttempt((value) => value + 1);
   };
 
-  if (state.status === 'active') {
+  if (state.status === 'report') {
     return <Navigate to={`/laporan/${state.suratId}`} replace />;
   }
-  if (state.status === 'history') {
-    return <Navigate to="/laporan-report" replace />;
+  if (state.status === 'empty') {
+    return (
+      <div role="status">
+        <p>Belum ada laporan perjalanan yang dapat ditampilkan.</p>
+      </div>
+    );
   }
   if (state.status === 'error') {
     return (

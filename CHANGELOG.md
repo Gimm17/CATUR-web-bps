@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-026 — Pertahankan konteks Laporan & Statistik tanpa redirect ke Report
+
+- **Status:** Selesai dan diterapkan pada release/runtime lokal.
+- **Ringkasan:** Memperbaiki regresi ketika menu `Laporan & Statistik` mengalihkan pegawai tanpa surat aktif ke `/laporan-report`. Halaman sekarang membuka surat aktif bila tersedia, atau surat selesai terbaru sebagai konteks laporan; halaman Report agregat hanya dibuka melalui menu `Report`.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `frontend/src/services/surat.service.js`, `frontend/src/services/surat.service.test.js`, `frontend/src/pages/pegawai/LaporanEntry.jsx`, `frontend/src/pages/pegawai/LaporanEntry.test.jsx`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan `getSuratTugasLaporanDefault` dan seleksi deterministik surat selesai terbaru; `LaporanEntry` memakai hasil tersebut untuk route `/laporan/:suratId` serta menyediakan empty state tanpa redirect silang.
+- **Database:** Tidak ada tabel, kolom, index, migration, maupun data yang diubah.
+- **API:** Tetap memakai `GET /api/surat-tugas/aktif`; jika respons 404, frontend membaca `GET /api/surat-tugas/` untuk memilih surat selesai terbaru milik pegawai. Tidak ada endpoint atau format respons yang diubah.
+- **Test otomatis:** Siklus RED mereproduksi hasil salah `/laporan-report` ketika 404; GREEN memastikan surat selesai terbaru ID 225 dipilih, surat mendatang diabaikan, dan kondisi tanpa laporan tetap berada pada halaman laporan. Focused test 12/12 serta seluruh frontend 44/44 lulus; ESLint empat file perubahan lulus.
+- **Verifikasi manual:** Setelah release lokal diperbarui, klik `Laporan & Statistik` pada akun pegawai tanpa surat aktif; URL harus menjadi `/laporan/225` untuk dataset lokal saat ini, bukan `/laporan-report`.
+- **Risiko/catatan:** Surat mendatang sengaja tidak dijadikan laporan default karena belum memiliki progres perjalanan. Error 404 surat aktif tetap merupakan bagian normal dari fallback, bukan kegagalan halaman.
+- **Rollback:** Kembalikan `LaporanEntry` ke `getSuratTugasAktif` dan fallback `/laporan-report`, lalu hapus selector laporan default beserta test terkait; backend/database tidak memerlukan rollback.
+- **Commit:** `fix: keep report statistics on latest assignment`.
+
 ### 2026-09-15 — TASK-025 — Pulihkan menu laporan sesuai frontend resmi BPS
 
 - **Status:** Selesai dan siap dipublikasikan.
