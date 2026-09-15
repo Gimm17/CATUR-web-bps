@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import api from "../api/axios";
+import { SHOW_CHANGELOG_AFTER_LOGIN_KEY } from "../features/changelog/releaseNotes";
+import { redirectBrowser } from "../utils/browserNavigation";
 
 export default function Login() {
   const location = useLocation();
@@ -111,17 +113,18 @@ export default function Login() {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem(SHOW_CHANGELOG_AFTER_LOGIN_KEY, "true");
 
       // REDIRECT ROLE
       if (user.role === "admin") {
-        window.location.href = "/dashboard-admin";
+        redirectBrowser("/dashboard-admin");
       } else if (user.role === "atasan") {
-        window.location.href = "/dashboard-atasan";
+        redirectBrowser("/dashboard-atasan");
       } 
       else if (user.role === "keuangan") {
-        window.location.href = "/dashboard-keuangan";
+        redirectBrowser("/dashboard-keuangan");
       } else {
-        window.location.href = "/dashboard";
+        redirectBrowser("/dashboard");
       }
 
     } catch (err) {

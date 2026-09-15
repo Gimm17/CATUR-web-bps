@@ -21,6 +21,7 @@ import ReportSurat from './pages/pegawai/LaporanBySurat';
 import ReportLaporanPegawai from './pages/pegawai/ReportLaporanPegawai';
 import InformasiKeuangan from './pages/keuangan/informasi';
 import LaporanEntry from './pages/pegawai/LaporanEntry';
+import ChangelogPopup from './features/changelog/ChangelogPopup';
 export default function App() {
   return (
     <BrowserRouter>
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/admin/surat-tugas/create" element={<SuratTugasCreate />}/>
         <Route path="/dashboard" element={<Dashboard />}/>
       </Routes>
+      <ChangelogPopup />
     </BrowserRouter>
   );
 }

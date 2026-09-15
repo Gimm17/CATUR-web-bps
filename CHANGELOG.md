@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-028 — Popup changelog setelah login
+
+- **Status:** Selesai diimplementasikan dan diterapkan pada release/runtime lokal; siap dipush ke GitHub.
+- **Ringkasan:** Menambahkan popup `Yang baru di CATUR` setelah login berhasil untuk seluruh role. Pengguna dapat menutup popup untuk sesi saat ini melalui `Mengerti`, tombol X, atau Escape, maupun memilih `Jangan tampilkan lagi` untuk menyembunyikan versi changelog yang sama pada login berikutnya.
+- **File ditambahkan:** `frontend/src/features/changelog/ChangelogPopup.jsx`, `frontend/src/features/changelog/ChangelogPopup.css`, `frontend/src/features/changelog/releaseNotes.js`, `frontend/src/App.changelog.test.jsx`, `frontend/src/auth/login.changelog.test.jsx`, dan `frontend/src/utils/browserNavigation.js`.
+- **File diubah:** `frontend/src/App.jsx`, `frontend/src/auth/login.jsx`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `App` memasang `ChangelogPopup` secara global; proses login menandai sesi setelah token dan user diterima; `ChangelogPopup` mengelola pemicu per-login, penyembunyian per-versi, keyboard Escape, fokus awal, dan penguncian scroll; redirect browser login dipisahkan melalui `redirectBrowser` agar efek navigasi dapat diisolasi dalam test.
+- **Database:** Tidak ada tabel, kolom, index, migration, maupun data yang diubah.
+- **API:** Tidak ada endpoint atau kontrak respons yang berubah. Popup memakai release note statis frontend dan hanya dipicu setelah respons login berhasil.
+- **Test otomatis:** Siklus RED membuktikan popup, aksi penyimpanan, persistensi setelah logout, keyboard Escape, serta marker login sebelumnya tidak tersedia; GREEN test terarah 6/6 dan seluruh frontend 54/54 lulus. ESLint seluruh file perubahan lulus tanpa error. Build production berhasil memproses 945 module; warning ukuran chunk lama tetap ada.
+- **Verifikasi manual:** Logout lalu login kembali; popup harus muncul di halaman tujuan role. Klik `Mengerti`, kemudian login ulang untuk memastikan popup muncul kembali. Klik `Jangan tampilkan lagi`, logout/login ulang, dan pastikan popup versi ini tidak muncul lagi.
+- **Risiko/catatan:** Versi yang disembunyikan disimpan pada `localStorage` dan cookie preferensi agar tetap bertahan walau mekanisme logout lama membersihkan local storage. Saat `CHANGELOG_VERSION` dinaikkan, popup versi baru akan tampil kembali.
+- **Rollback:** Hapus pemasangan `ChangelogPopup` dari `App`, marker sesi dari login, komponen/config/style/test changelog, serta wrapper redirect; backend/database tidak memerlukan rollback.
+- **Commit:** `feat: show release notes after login` (akan dibuat setelah verifikasi runtime lokal).
+
 ### 2026-09-15 — TASK-027 — Pisahkan editor laporan dari unduhan PDF dan lengkapi timeline
 
 - **Status:** Selesai diimplementasikan dan diterapkan pada release/runtime lokal; siap dipush ke GitHub.

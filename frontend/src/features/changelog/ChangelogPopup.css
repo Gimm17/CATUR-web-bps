@@ -1,0 +1,258 @@
+.catur-changelog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 15, 39, 0.7);
+  backdrop-filter: blur(5px);
+}
+
+.catur-changelog-dialog {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  width: min(760px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: hidden;
+  color: #13213c;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 22px;
+  box-shadow: 0 28px 80px rgba(1, 10, 31, 0.38);
+  animation: catur-changelog-enter 180ms ease-out both;
+}
+
+.catur-changelog-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 28px 20px;
+  color: #ffffff;
+  background: #08275b;
+}
+
+.catur-changelog-rail span {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.catur-changelog-rail strong {
+  font-size: 20px;
+  line-height: 1;
+  color: #4fd1a5;
+}
+
+.catur-changelog-panel {
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.catur-changelog-header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 34px 36px 24px;
+  border-bottom: 1px solid #e7edf5;
+}
+
+.catur-changelog-version {
+  display: inline-block;
+  margin-bottom: 9px;
+  padding: 5px 10px;
+  color: #0b5cad;
+  background: #e8f3ff;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.catur-changelog-header h2 {
+  margin: 0;
+  color: #0b1d3a;
+  font-size: clamp(25px, 4vw, 34px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+.catur-changelog-header p {
+  max-width: 520px;
+  margin: 11px 0 0;
+  color: #5a6980;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.catur-changelog-close {
+  display: grid;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #54647b;
+  background: #f1f5f9;
+  border: 0;
+  border-radius: 10px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.catur-changelog-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 8px 36px 12px;
+}
+
+.catur-changelog-note {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  padding: 20px 20px 20px 0;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.catur-changelog-note:nth-child(even) {
+  padding-right: 0;
+  padding-left: 20px;
+  border-left: 1px solid #edf1f6;
+}
+
+.catur-changelog-note-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.catur-changelog-note-icon.is-blue { color: #1265d7; background: #e8f2ff; }
+.catur-changelog-note-icon.is-green { color: #07865f; background: #e0f7ee; }
+.catur-changelog-note-icon.is-amber { color: #b35c00; background: #fff1d6; }
+.catur-changelog-note-icon.is-violet { color: #7048bf; background: #f0eaff; }
+
+.catur-changelog-note h3 {
+  margin: 1px 0 5px;
+  color: #152442;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.catur-changelog-note p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.catur-changelog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 36px 28px;
+}
+
+.catur-changelog-actions button {
+  min-height: 44px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.catur-changelog-dismiss {
+  color: #526178;
+  background: #ffffff;
+  border: 1px solid #cfd8e5;
+}
+
+.catur-changelog-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 126px;
+  color: #ffffff;
+  background: #0b67c2;
+  border: 1px solid #0b67c2;
+}
+
+.catur-changelog-actions button:hover {
+  filter: brightness(0.96);
+}
+
+.catur-changelog-actions button:focus-visible,
+.catur-changelog-close:focus-visible {
+  outline: 3px solid rgba(14, 116, 219, 0.28);
+  outline-offset: 3px;
+}
+
+@keyframes catur-changelog-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 640px) {
+  .catur-changelog-backdrop {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .catur-changelog-dialog {
+    grid-template-columns: 8px minmax(0, 1fr);
+    max-height: calc(100vh - 24px);
+    border-radius: 18px;
+  }
+
+  .catur-changelog-rail {
+    padding: 0;
+    background: #0b67c2;
+  }
+
+  .catur-changelog-rail > * {
+    display: none;
+  }
+
+  .catur-changelog-header {
+    padding: 26px 22px 20px;
+  }
+
+  .catur-changelog-header p {
+    padding-right: 10px;
+  }
+
+  .catur-changelog-notes {
+    grid-template-columns: 1fr;
+    padding: 6px 22px 8px;
+  }
+
+  .catur-changelog-note,
+  .catur-changelog-note:nth-child(even) {
+    padding: 15px 0;
+    border-left: 0;
+  }
+
+  .catur-changelog-actions {
+    flex-direction: column-reverse;
+    padding: 18px 22px 24px;
+  }
+
+  .catur-changelog-actions button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catur-changelog-dialog {
+    animation: none;
+  }
+}
