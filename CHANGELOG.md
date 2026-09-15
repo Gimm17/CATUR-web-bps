@@ -13,9 +13,25 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-030 — Deploy popup changelog terperinci ke hosting
+
+- **Status:** Selesai dideploy ke `https://caturv2.gimmhost.my.id`.
+- **Ringkasan:** Mempublikasikan build frontend dari commit `53b1722493282254e82b97ed057eddd772ee7410` yang memuat popup changelog pascalogin, delapan kelompok catatan rilis terperinci, penjelasan perubahan logika, area isi yang dapat digulir, serta preferensi `Jangan tampilkan lagi` per versi.
+- **File ditambahkan:** Tidak ada pada source aplikasi; deployment membuat arsip rollback server `public-before-deploy.tgz`.
+- **File diubah:** `CHANGELOG.md` pada repository dan folder runtime `/home/gimmhost/caturv2.gimmhost.my.id/public` pada hosting.
+- **File dihapus:** Tidak ada. Folder `public` sebelumnya dipindahkan secara utuh ke backup rollback.
+- **Class/fungsi/komponen diubah:** Tidak ada perubahan source baru pada task deployment; komponen yang dipublikasikan adalah `ChangelogPopup`, `RELEASE_NOTES`, dan integrasi global pada `App` dari TASK-028–029.
+- **Database:** Tidak ada tabel, kolom, index, migration, credential, maupun data yang diubah. Database PostgreSQL produksi tidak disentuh.
+- **API:** Tidak ada endpoint atau kontrak respons yang diubah. Negative smoke test `POST /api/auth/login` tetap menghasilkan HTTP 401 untuk credential tidak valid.
+- **Test otomatis:** Build yang dideploy sebelumnya lulus seluruh test frontend 55/55, ESLint file perubahan, dan Vite production build 945 module. Verifikasi deployment menghasilkan HTTP 200 untuk halaman utama, JavaScript, dan CSS; TLS terverifikasi tanpa error.
+- **Verifikasi manual:** HTML produksi menunjuk ke `/assets/index-zCixt3bW.js` dan `/assets/index-BYMfY65p.css`; bundle produksi memuat teks `8 pembaruan penting`, `Logika sistem`, dan `Jangan tampilkan lagi`; akses publik ke `.env` ditolak dengan HTTP 403; jumlah file pada `uploads` tetap 274 sebelum dan sesudah deployment.
+- **Risiko/catatan:** Backup rollback tersimpan di `/home/gimmhost/backups/caturv2-20260915-53b1722/`. Pergantian dibatasi pada folder `public`; `.env`, `credential.json`, `credentials.json`, source backend, database, dan `uploads` tidak ditimpa.
+- **Rollback:** Pindahkan build `public` saat ini ke lokasi karantina, lalu pulihkan `/home/gimmhost/backups/caturv2-20260915-53b1722/public-previous` sebagai `/home/gimmhost/caturv2.gimmhost.my.id/public` dan sentuh `tmp/restart.txt`.
+- **Commit:** `docs: record changelog popup deployment`.
+
 ### 2026-09-15 — TASK-029 — Perinci changelog dan tambahkan area scroll
 
-- **Status:** Selesai diimplementasikan dan diterapkan pada release/runtime lokal; siap dipush ke GitHub.
+- **Status:** Selesai diimplementasikan, dipush ke GitHub, dan dideploy ke hosting.
 - **Ringkasan:** Mengubah popup changelog ringkas menjadi catatan rilis panjang yang dapat digulir. Delapan kelompok pembaruan kini menjelaskan kondisi sebelumnya, logika sistem yang diterapkan, serta dampaknya bagi pengguna, termasuk aturan multi-tujuan, tanggal WITA, geofence, batas edit laporan, timeline proses, fallback legacy, dan konteks surat nonaktif.
 - **File ditambahkan:** Tidak ada.
 - **File diubah:** `frontend/src/features/changelog/releaseNotes.js`, `frontend/src/features/changelog/ChangelogPopup.jsx`, `frontend/src/features/changelog/ChangelogPopup.css`, `frontend/src/App.changelog.test.jsx`, dan `CHANGELOG.md`.
@@ -27,7 +43,7 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 - **Verifikasi manual:** Login kembali, pastikan popup versi terbaru tampil, gulir area tengah sampai pembaruan kedelapan, dan pastikan judul serta tombol aksi tetap terlihat. Ulangi pada viewport mobile untuk memastikan tiga panel detail tiap pembaruan tersusun vertikal.
 - **Risiko/catatan:** `CHANGELOG_VERSION` dinaikkan menjadi `2026-09-15-task-029`, sehingga pengguna yang menyembunyikan versi sebelumnya tetap menerima catatan rilis yang lebih lengkap ini satu kali.
 - **Rollback:** Pulihkan empat release note ringkas, struktur dua kolom lama, dan versi `task-028`; backend/database tidak memerlukan rollback.
-- **Commit:** `feat: expand release notes with logic details` (akan dibuat setelah verifikasi runtime lokal).
+- **Commit:** `53b1722493282254e82b97ed057eddd772ee7410` (`feat: expand release notes with logic details`).
 
 ### 2026-09-15 — TASK-028 — Popup changelog setelah login
 
