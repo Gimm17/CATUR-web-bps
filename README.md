@@ -1,6 +1,6 @@
 # CATUR Web BPS
 
-CATUR (Control of Activity and Time Use Record) adalah aplikasi React + Express + PostgreSQL untuk surat tugas, presensi perjalanan dinas, laporan, persetujuan, dan pencairan dana. Frontend React/Vite berada di root, backend Express/Sequelize di `backend/`, dan zona tanggal bisnis adalah `Asia/Makassar` (WITA).
+CATUR (Control of Activity and Time Use Record) adalah aplikasi React + Express + PostgreSQL untuk surat tugas, presensi perjalanan dinas, laporan, persetujuan, dan pencairan dana. Frontend React/Vite berada di `frontend/`, backend Express/Sequelize di `backend/`, dan zona tanggal bisnis adalah `Asia/Makassar` (WITA).
 
 ## Menjalankan aplikasi lokal
 
@@ -13,7 +13,7 @@ npm install
 node server.js
 
 # Terminal frontend
-cd C:\Users\HP\Laravel\CATUR
+cd C:\Users\HP\Laravel\CATUR\frontend
 npm install
 npm run dev
 ```
@@ -71,7 +71,7 @@ cd C:\Users\HP\Laravel\CATUR\backend
 npm test
 npm run lint
 
-cd C:\Users\HP\Laravel\CATUR
+cd C:\Users\HP\Laravel\CATUR\frontend
 npm test
 npm run build
 ```
@@ -110,6 +110,8 @@ npm run build
 3. Jalankan backend test/lint dan frontend test/build.
 4. Smoke test login seluruh role, surat multi-tujuan, route berdasarkan ID, upload file, deadline, dan riwayat.
 5. Setelah staging lulus, ulangi backup, migration, deploy, dan smoke test production dalam maintenance window.
+
+Panduan deployment lengkap dan daftar file production yang tidak boleh ditimpa tersedia di [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Rollback
 

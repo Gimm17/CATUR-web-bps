@@ -50,6 +50,7 @@ backend/public/
 /dump.sql
 /dump.sql.gz
 /deploy/pwsupersecretcpanel.txt
+/release/
 
 # Legacy duplicate clients and packaged artifacts kept locally for recovery.
 backend/Front-end Presensi/

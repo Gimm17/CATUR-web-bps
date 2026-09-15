@@ -45,14 +45,14 @@
 
 ## Batch 4 — Paket Deploy Aman
 
-- [ ] Bangun frontend production.
-- [ ] Sinkronkan hasil build ke `backend/public` secara deterministik.
-- [ ] Buat manifest file deploy dan file yang harus dipertahankan di hosting.
-- [ ] Verifikasi `.env`, credentials, token, uploads, dan dump tidak terlacak Git.
-- [ ] Tambahkan preflight PostgreSQL/version/schema.
-- [ ] Dokumentasikan backup, migration, smoke test, dan rollback.
-- [ ] Perbarui `CHANGELOG.md`.
-- [ ] Jalankan regression suite final.
+- [x] Bangun frontend production.
+- [x] Sinkronkan hasil build ke `backend/public` secara deterministik.
+- [x] Buat manifest file deploy dan file yang harus dipertahankan di hosting.
+- [x] Verifikasi `.env`, credentials, token, uploads, dan dump tidak terlacak Git.
+- [x] Tambahkan preflight PostgreSQL/version/schema.
+- [x] Dokumentasikan backup, migration, smoke test, dan rollback.
+- [x] Perbarui `CHANGELOG.md`.
+- [x] Jalankan regression suite final.
 - [ ] Commit dan push checkpoint Batch 4.
 
 ## Batch 5 — Konsolidasi dan Pembersihan Disk

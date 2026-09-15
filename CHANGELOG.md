@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-020 — Build release dan kontrak deploy tanpa bentrok
+
+- **Status:** Batch 4 selesai; runtime gabungan frontend/backend lulus smoke test lokal.
+- **Ringkasan:** Menambahkan builder release yang hanya menyinkronkan hasil Vite ke `backend/public`, mendokumentasikan urutan backup–migration–restart, dan mengunci daftar file runtime production yang tidak boleh ditimpa.
+- **File ditambahkan:** `scripts/release-layout.js`, `scripts/release-layout.test.js`, `scripts/build-release.js`, dan `docs/DEPLOYMENT.md`.
+- **File diubah:** `.gitignore`, `README.md`, `docs/superpowers/plans/2026-09-15-konsolidasi-codebase-resmi-bps.md`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada file terlacak. `backend/public` dibentuk ulang sebagai artefak lokal yang diabaikan Git.
+- **Class/fungsi/komponen diubah:** Menambahkan `getReleaseLayout`; builder memvalidasi target tepat di `backend/public`, menjalankan build, memastikan `dist/index.html`, lalu menyinkronkan hasilnya.
+- **Database:** Tidak ada perubahan schema/data pada batch ini. Dokumentasi mewajibkan backup dan urutan tiga migration sebelum restart.
+- **API:** Runtime gabungan melayani SPA pada `/` dan `/dashboard-admin`; route API atau upload yang tidak ada tetap 404.
+- **Test otomatis:** Release-layout 2/2 lulus; build 944 module lulus. Smoke HTTP: `/` 200, `/dashboard-admin` 200, `/api/does-not-exist` 404, dan `/uploads/does-not-exist.jpg` 404.
+- **Verifikasi manual:** Verifikasi HTTP dilakukan pada backend port sementara 3010 menggunakan database lokal; proses sementara telah dihentikan setelah test.
+- **Risiko/catatan:** `backend/public` tidak masuk Git. Untuk upload hosting, jalankan `node scripts/build-release.js` lalu sertakan folder hasil tersebut dalam paket deploy.
+- **Rollback:** Gunakan arsip `public` dan commit production sebelumnya; file protected tidak perlu disentuh.
+- **Commit:** `chore: add conflict-safe deployment workflow`.
+
 ### 2026-09-15 — TASK-019 — Frontend resmi dan API same-origin
 
 - **Status:** Batch 3 selesai; seluruh regression frontend dan build lulus.
