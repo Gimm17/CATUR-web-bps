@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-027 — Pisahkan editor laporan dari unduhan PDF dan lengkapi timeline
+
+- **Status:** Selesai diimplementasikan dan diterapkan pada release/runtime lokal; siap dipush ke GitHub.
+- **Ringkasan:** Tombol footer modal Detail Surat Tugas sekarang selalu bernama `Buka Laporan` dan menuju `/laporan/:suratId`, termasuk untuk perjalanan yang telah selesai atau sudah memiliki PDF. Unduhan PDF dipisahkan menjadi tombol `Download Laporan PDF` di bawah `Download Surat Tugas`. Detail progres diperluas menjadi sembilan tahap yang sama dengan alur pada halaman Laporan & Statistik.
+- **File ditambahkan:** `frontend/src/utils/reportProcessTimeline.js` dan `frontend/src/utils/reportProcessTimeline.test.js`.
+- **File diubah:** `frontend/src/pages/pegawai/Dashboard.jsx`, `frontend/src/utils/completedReportAction.js`, `frontend/src/utils/completedReportAction.test.js`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `DashboardPegawai` memuat konteks perjalanan lengkap ketika modal dibuka, memisahkan navigasi editor dan unduhan PDF, serta merender status `Selesai`, `Sedang Berjalan`, `Opsional`, atau `Menunggu`; `getCompletedReportAction` tidak lagi memilih aksi PDF; ditambahkan `mergeAssignmentReportContext` dan `buildReportProcessTimeline`.
+- **Database:** Tidak ada tabel, kolom, index, enum, migration, atau data yang diubah. Kebijakan edit tetap memakai `report_window` backend: maksimal tujuh hari WITA setelah perjalanan berakhir dan terkunci ketika status masuk proses keuangan.
+- **API:** Tidak ada endpoint atau kontrak respons baru. Modal memakai `GET /api/perjalanan/surat/:suratId` yang sudah tersedia untuk memperoleh presensi, laporan akhir, bukti pembayaran, pembayaran, dan `report_window` terbaru.
+- **Test otomatis:** Siklus RED mereproduksi aksi salah yang membuka PDF dan ketiadaan pembentuk timeline; GREEN focused test 6/6 serta seluruh frontend 48/48 lulus. Test terarah backend untuk `report_window` dan konteks laporan menghasilkan 20 lulus, 0 gagal, dan 6 integration test database dilewati karena `CATUR_TEST_DATABASE_URL` tidak tersedia di sesi verifikasi. ESLint file perubahan lulus tanpa error dengan satu warning dependency hook legacy pada Dashboard. Build production berhasil memproses 941 module; warning ukuran chunk tetap ada dan tidak berasal dari task ini.
+- **Verifikasi manual:** Buka Dashboard pegawai, pilih Detail surat selesai, pastikan footer `Buka Laporan` menuju `/laporan/:id`; bila PDF tersedia, pastikan tombol `Download Laporan PDF` muncul terpisah; periksa sembilan tahap timeline dan pastikan halaman laporan hanya editable dalam jendela tujuh hari serta sebelum proses keuangan.
+- **Risiko/catatan:** Membuka halaman laporan tidak identik dengan hak edit. Backend tetap menjadi sumber kebenaran untuk mengunci form setelah deadline atau saat keuangan mulai memproses; laporan lama tetap dapat dibaca.
+- **Rollback:** Pulihkan percabangan footer berdasarkan keberadaan PDF, hapus pemuatan konteks detail dan utility timeline baru; backend/database tidak memerlukan rollback.
+- **Commit:** `fix: separate report editing from PDF download` (akan dibuat setelah verifikasi runtime lokal).
+
 ### 2026-09-15 — TASK-026 — Pertahankan konteks Laporan & Statistik tanpa redirect ke Report
 
 - **Status:** Selesai dan diterapkan pada release/runtime lokal.

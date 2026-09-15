@@ -1,8 +1,4 @@
-export function getCompletedReportAction(surat, laporanFile) {
-  if (laporanFile) {
-    return { available: true, href: null, label: 'Lihat PDF Laporan' };
-  }
-
+export function getCompletedReportAction(surat) {
   if (surat?.id) {
     return {
       available: true,

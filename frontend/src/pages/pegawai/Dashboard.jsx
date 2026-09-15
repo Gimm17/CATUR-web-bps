@@ -9,6 +9,10 @@ import api from "../../api/axios";
 import { getUser } from "../../utils/auth";
 import { toPublicFileUrl } from "../../utils/fileUrl";
 import { getCompletedReportAction } from "../../utils/completedReportAction";
+import {
+  buildReportProcessTimeline,
+  mergeAssignmentReportContext,
+} from "../../utils/reportProcessTimeline";
 import PegawaiLayout from "../../layouts/PegawaiLayout";
 import { 
   FaFileAlt, 
@@ -79,6 +83,8 @@ const DashboardPegawai = () => {
   // State untuk tabel surat tugas
   const [selectedSurat, setSelectedSurat] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("semua");
   const [currentPage, setCurrentPage] = useState(1);
@@ -724,21 +730,36 @@ const DashboardPegawai = () => {
     };
   };
 
-  // Fungsi untuk handle klik tombol laporan
-  const handleLaporanClick = (surat) => {
-    if (surat?.id) navigate(`/laporan/${surat.id}`);
-  };
-
   // Fungsi untuk menampilkan detail surat
-  const handleViewDetail = (surat) => {
+  const handleViewDetail = async (surat) => {
     setSelectedSurat(surat);
     setShowDetailModal(true);
+    setDetailError("");
+
+    if (!surat?.id) return;
+
+    setDetailLoading(true);
+    try {
+      const reportContext = await getLaporanPerjalanan(surat.id);
+      setSelectedSurat((current) => (
+        current?.id === surat.id
+          ? mergeAssignmentReportContext(current, reportContext)
+          : current
+      ));
+    } catch (detailRequestError) {
+      console.warn("Gagal memperbarui detail progres laporan:", detailRequestError);
+      setDetailError("Detail progres terbaru belum dapat dimuat.");
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   // Fungsi untuk menutup modal
   const handleCloseModal = () => {
     setShowDetailModal(false);
     setSelectedSurat(null);
+    setDetailLoading(false);
+    setDetailError("");
   };
 
   // Fungsi untuk mendownload file surat
@@ -1740,7 +1761,8 @@ const DashboardPegawai = () => {
   };
 
   const selectedLaporanFile = getLaporanFile(selectedSurat);
-  const completedReportAction = getCompletedReportAction(selectedSurat, selectedLaporanFile);
+  const completedReportAction = getCompletedReportAction(selectedSurat);
+  const selectedReportTimeline = buildReportProcessTimeline(selectedSurat || {});
 
   if (loading) {
     return (
@@ -2691,24 +2713,13 @@ const DashboardPegawai = () => {
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
                     <span style={{ fontSize: '12px', color: '#6b7280' }}>Laporan PDF (TTD)</span>
-                    {selectedSurat.laporan?.file_pdf_signed ? (
-                      <button
-                        onClick={() => handleViewLaporanPDF(selectedSurat.laporan.file_pdf_signed)}
-                        style={{
-                          background: '#10b981',
-                          color: 'white',
-                          border: 'none',
-                          padding: '6px 10px',
-                          borderRadius: '10px',
-                          fontSize: '12px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Lihat
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>Belum ada</span>
-                    )}
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: selectedLaporanFile ? '#059669' : '#94a3b8'
+                    }}>
+                      {selectedLaporanFile ? 'Tersedia' : 'Belum ada'}
+                    </span>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
@@ -2770,34 +2781,71 @@ const DashboardPegawai = () => {
                   }}>
                     Timeline Proses
                   </h6>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {[
-                      { label: 'Laporan Dikirim', date: selectedSurat.laporan?.tanggal_kirim },
-                      { label: 'Acc Keuangan', date: selectedSurat.laporan?.tanggal_verifikasi_keuangan },
-                      { label: 'Ditandatangani Atasan', date: selectedSurat.laporan?.tanggal_ttd },
-                      { label: 'Pencairan Dana', date: selectedSurat.laporan?.tanggal_transfer },
-                    ].map((item, idx) => (
-                      <div key={`${item.label}-${idx}`} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px'
-                      }}>
-                        <div style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '999px',
-                          background: item.date ? '#10b981' : '#e5e7eb'
-                        }} />
-                        <div style={{ display: 'flex', justifyContent: 'space-between', flex: 1 }}>
-                          <span style={{ fontSize: '12px', color: '#1f2937', fontWeight: 500 }}>
-                            {item.label}
-                          </span>
-                          <span style={{ fontSize: '12px', color: item.date ? '#0f172a' : '#94a3b8', fontWeight: 600 }}>
-                            {item.date ? formatDateFull(item.date) : '-'}
-                          </span>
+                  {detailLoading && (
+                    <div style={{ fontSize: '12px', color: '#2563eb', marginBottom: '10px' }}>
+                      Memuat progres terbaru...
+                    </div>
+                  )}
+                  {detailError && (
+                    <div style={{ fontSize: '12px', color: '#b45309', marginBottom: '10px' }}>
+                      {detailError}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {selectedReportTimeline.map((item, idx) => {
+                      const stateStyles = {
+                        completed: { dot: '#10b981', badgeBg: '#d1fae5', badgeColor: '#047857', label: 'Selesai' },
+                        current: { dot: '#2563eb', badgeBg: '#dbeafe', badgeColor: '#1d4ed8', label: 'Sedang Berjalan' },
+                        optional: { dot: '#f59e0b', badgeBg: '#fef3c7', badgeColor: '#b45309', label: 'Opsional' },
+                        pending: { dot: '#d1d5db', badgeBg: '#f3f4f6', badgeColor: '#6b7280', label: 'Menunggu' },
+                      };
+                      const appearance = stateStyles[item.state] || stateStyles.pending;
+
+                      return (
+                        <div key={`${item.label}-${idx}`} style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '10px',
+                          paddingBottom: '8px',
+                          borderBottom: idx < selectedReportTimeline.length - 1 ? '1px solid #e5e7eb' : 'none'
+                        }}>
+                          <div style={{
+                            width: '9px',
+                            height: '9px',
+                            marginTop: '5px',
+                            flexShrink: 0,
+                            borderRadius: '999px',
+                            background: appearance.dot
+                          }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center' }}>
+                              <span style={{ fontSize: '12px', color: '#1f2937', fontWeight: 600 }}>
+                                {item.label}
+                              </span>
+                              <span style={{
+                                flexShrink: 0,
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                color: appearance.badgeColor,
+                                background: appearance.badgeBg,
+                                borderRadius: '999px',
+                                padding: '3px 7px'
+                              }}>
+                                {appearance.label}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px', lineHeight: 1.4 }}>
+                              {item.description}
+                            </div>
+                            {item.date && (
+                              <div style={{ fontSize: '11px', color: '#334155', marginTop: '3px', fontWeight: 600 }}>
+                                {formatDateFull(item.date)}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -2825,6 +2873,32 @@ const DashboardPegawai = () => {
                 >
                   <FaCloudDownloadAlt style={{ color: '#4f46e5' }} />
                   Download Surat Tugas
+                </button>
+              )}
+
+              {selectedLaporanFile && (
+                <button
+                  type="button"
+                  onClick={() => handleViewLaporanPDF(selectedLaporanFile)}
+                  style={{
+                    width: '100%',
+                    background: '#ecfdf5',
+                    border: '1px solid #a7f3d0',
+                    padding: '14px',
+                    borderRadius: '14px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#047857',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    marginBottom: '16px'
+                  }}
+                >
+                  <FaCloudDownloadAlt />
+                  Download Laporan PDF
                 </button>
               )}
 
@@ -2941,87 +3015,29 @@ const DashboardPegawai = () => {
                 Tutup
               </button>
               
-              {/* Jika ada file laporan, tampilkan tombol Lihat Laporan yang membuka PDF */}
-              {selectedLaporanFile ? (
-                <button
-                  onClick={() => handleViewLaporanPDF(selectedLaporanFile)}
-                  style={{
-                    flex: 1,
-                    background: '#10b981',
-                    border: 'none',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <FaFileAlt />
-                  Lihat Laporan
-                </button>
-              ) : selectedSurat.statusInfo?.status === 'expired' ? (
-                /* Surat selesai tetap dapat membuka halaman laporan, termasuk yang belum memiliki PDF. */
-                <button
-                  type="button"
-                  disabled={!completedReportAction.available}
-                  onClick={() => completedReportAction.href && navigate(completedReportAction.href)}
-                  style={{
-                    flex: 1,
-                    background: completedReportAction.available ? '#10b981' : '#9ca3af',
-                    border: 'none',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: 'white',
-                    cursor: completedReportAction.available ? 'pointer' : 'not-allowed',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <FaFileAlt />
-                  {completedReportAction.label}
-                </button>
-              ) : (
-                /* Jika surat BELUM selesai (masih active atau upcoming) */
-                <button
-                  onClick={() => handleLaporanClick(selectedSurat)}
-                  style={{
-                    flex: 1,
-                    background: !statusHariIni.sudahAbsen ? '#ef4444' : '#f59e0b',
-                    border: 'none',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  {!statusHariIni.sudahAbsen ? (
-                    <>
-                      <FaCamera />
-                      Tagging Lokasi Dulu
-                    </>
-                  ) : (
-                    <>
-                      <FaPen />
-                      Buat Laporan
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                type="button"
+                disabled={!completedReportAction.available}
+                onClick={() => completedReportAction.href && navigate(completedReportAction.href)}
+                style={{
+                  flex: 1,
+                  background: completedReportAction.available ? '#10b981' : '#9ca3af',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'white',
+                  cursor: completedReportAction.available ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FaFileAlt />
+                {completedReportAction.label}
+              </button>
             </div>
           </div>
         </div>
