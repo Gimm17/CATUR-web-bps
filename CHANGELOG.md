@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-024 — Deploy production ke hosting PostgreSQL 10
+
+- **Status:** Selesai; release aktif pada `https://caturv2.gimmhost.my.id`.
+- **Ringkasan:** Men-deploy source backend resmi dan build frontend commit `12f262a` ke hosting baru yang mendukung Node.js dan PostgreSQL 10. Data legacy dipulihkan dari `dump.sql`, dilanjutkan tiga migration multi-tujuan/report secara berurutan, lalu aplikasi diaktifkan melalui CloudLinux Node.js Selector/Passenger.
+- **File ditambahkan:** Tidak ada file source baru. Runtime hosting menerima source backend, build `public`, data peta, template, credential Google yang tersedia, dan uploads legacy.
+- **File diubah:** `CHANGELOG.md`; di hosting dibuat `.env` production dengan permission `0600` serta konfigurasi Passenger pada `.htaccess`.
+- **File dihapus:** Paket transfer sementara remote dihapus setelah verifikasi; arsip lokal dipindahkan ke Recycle Bin agar recoverable. Tidak ada data produksi yang dihapus.
+- **Class/fungsi/komponen diubah:** Tidak ada perubahan source bisnis setelah commit `12f262a`.
+- **Database:** Membuat database PostgreSQL production baru beserta user aplikasi, mengimpor dump PostgreSQL 10.23, lalu menjalankan `20260909-create-surat-tugas-tujuan.sql`, `20260909-backfill-surat-tugas-tujuan.sql`, dan `20260914-enforce-report-integrity.sql`. Hasil akhir: 102 users, 197 daerah, 97 surat tugas, 97 tujuan, 150 presensi, 34 laporan perjalanan, dan 215 notifikasi.
+- **API:** Root dan SPA `/presensi` HTTP 200; asset JS/CSS HTTP 200; login invalid memberi JSON HTTP 401; API tidak dikenal tetap HTTP 404.
+- **Test otomatis:** Gate lokal sebelum deploy: frontend 39/39, ESLint file perubahan lulus, build release 940 module lulus. Verifier schema production menghasilkan `SCHEMA_OK=true`.
+- **Verifikasi manual:** Aplikasi Passenger berstatus `started` pada Node 20.20.2; PostgreSQL server/client 10.23 dapat diakses aplikasi; 274 file uploads legacy tersedia; permintaan publik ke `.env` ditolak HTTP 403 dan tidak membocorkan secret.
+- **Risiko/catatan:** Token OAuth Google belum tersedia pada source lokal/hosting baru; fungsi yang membutuhkan upload baru ke Google Drive memerlukan `token.json` atau `GOOGLE_REFRESH_TOKEN`. Data/file lama dan fungsi non-Drive tetap terpasang. Hosting melaporkan filesystem keseluruhan 98% terpakai tetapi masih sekitar 51 GB tersedia.
+- **Rollback:** Backup pra-deploy berada pada `/home/gimmhost/backups/caturv2-20260915-130328/`, berisi arsip site dan dump database sebelum restore. Stop aplikasi Passenger, pulihkan arsip tersebut, lalu restore dump bila rollback diperlukan.
+- **Commit:** `chore: record caturv2 production deployment`.
+
 ### 2026-09-15 — TASK-023 — Pulihkan status surat berakhir pada halaman presensi
 
 - **Status:** Selesai dan diterapkan pada release/runtime lokal.
