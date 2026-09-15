@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  FiActivity,
+  FiAlertCircle,
   FiCheck,
-  FiCheckCircle,
-  FiFileText,
-  FiMapPin,
-  FiNavigation,
+  FiClock,
+  FiDatabase,
+  FiDownloadCloud,
+  FiEdit3,
+  FiLayers,
+  FiShield,
   FiX,
 } from 'react-icons/fi';
 
@@ -17,7 +21,16 @@ import {
 } from './releaseNotes';
 import './ChangelogPopup.css';
 
-const NOTE_ICONS = [FiNavigation, FiMapPin, FiFileText, FiCheckCircle];
+const NOTE_ICONS = [
+  FiLayers,
+  FiClock,
+  FiShield,
+  FiEdit3,
+  FiDownloadCloud,
+  FiActivity,
+  FiDatabase,
+  FiAlertCircle,
+];
 
 function getDismissedCookieVersion() {
   const cookiePrefix = `${DISMISSED_CHANGELOG_COOKIE}=`;
@@ -96,7 +109,7 @@ export default function ChangelogPopup() {
               <span className="catur-changelog-version">Pembaruan September 2026</span>
               <h2 id="catur-changelog-title">Yang baru di CATUR</h2>
               <p id="catur-changelog-description">
-                Perjalanan dinas kini lebih akurat, mudah dipantau, dan tetap aman untuk data lama.
+                Ringkasan fitur, perubahan logika, dan dampaknya pada alur perjalanan dinas.
               </p>
             </div>
             <button
@@ -109,21 +122,49 @@ export default function ChangelogPopup() {
             </button>
           </header>
 
-          <div className="catur-changelog-notes">
-            {RELEASE_NOTES.map((note, index) => {
-              const NoteIcon = NOTE_ICONS[index] || FiCheckCircle;
-              return (
-                <article className="catur-changelog-note" key={note.title}>
-                  <span className={`catur-changelog-note-icon is-${note.tone}`} aria-hidden="true">
-                    <NoteIcon />
-                  </span>
-                  <div>
-                    <h3>{note.title}</h3>
-                    <p>{note.description}</p>
-                  </div>
-                </article>
-              );
-            })}
+          <div
+            className="catur-changelog-scroll"
+            role="region"
+            aria-label="Detail pembaruan"
+            tabIndex="0"
+          >
+            <div className="catur-changelog-scroll-hint">
+              <strong>8 pembaruan penting</strong>
+              <span>Gulir untuk membaca seluruh detail</span>
+            </div>
+            <div className="catur-changelog-notes">
+              {RELEASE_NOTES.map((note, index) => {
+                const NoteIcon = NOTE_ICONS[index] || FiActivity;
+                return (
+                  <article className="catur-changelog-note" key={note.title}>
+                    <div className="catur-changelog-note-heading">
+                      <span className={`catur-changelog-note-icon is-${note.tone}`} aria-hidden="true">
+                        <NoteIcon />
+                      </span>
+                      <div>
+                        <span className="catur-changelog-category">{note.category}</span>
+                        <h3>{note.title}</h3>
+                        <p className="catur-changelog-summary">{note.summary}</p>
+                      </div>
+                    </div>
+                    <dl className="catur-changelog-detail-grid">
+                      <div>
+                        <dt>Sebelumnya</dt>
+                        <dd>{note.before}</dd>
+                      </div>
+                      <div className="is-logic">
+                        <dt>Logika sistem</dt>
+                        <dd>{note.logic}</dd>
+                      </div>
+                      <div>
+                        <dt>Dampak untuk pengguna</dt>
+                        <dd>{note.impact}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                );
+              })}
+            </div>
           </div>
 
           <footer className="catur-changelog-actions">

@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-029 — Perinci changelog dan tambahkan area scroll
+
+- **Status:** Selesai diimplementasikan dan diterapkan pada release/runtime lokal; siap dipush ke GitHub.
+- **Ringkasan:** Mengubah popup changelog ringkas menjadi catatan rilis panjang yang dapat digulir. Delapan kelompok pembaruan kini menjelaskan kondisi sebelumnya, logika sistem yang diterapkan, serta dampaknya bagi pengguna, termasuk aturan multi-tujuan, tanggal WITA, geofence, batas edit laporan, timeline proses, fallback legacy, dan konteks surat nonaktif.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `frontend/src/features/changelog/releaseNotes.js`, `frontend/src/features/changelog/ChangelogPopup.jsx`, `frontend/src/features/changelog/ChangelogPopup.css`, `frontend/src/App.changelog.test.jsx`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `RELEASE_NOTES` diperluas menjadi delapan record dengan field kategori, ringkasan, kondisi sebelumnya, logika, dan dampak; `ChangelogPopup` merender struktur detail tersebut dalam region scroll yang dapat difokuskan; layout popup memakai header/footer tetap dan body scroll khusus pada desktop maupun mobile.
+- **Database:** Tidak ada tabel, kolom, index, migration, atau data yang diubah. Isi popup hanya menjelaskan migration dan fallback yang sudah ada.
+- **API:** Tidak ada endpoint atau kontrak respons yang berubah. Konten tetap statis di frontend.
+- **Test otomatis:** Siklus RED membuktikan area detail scroll dan penjelasan logika belum tersedia; GREEN regression popup 6/6 dan seluruh frontend 55/55 lulus. ESLint file perubahan lulus tanpa error. Build production berhasil memproses 945 module; warning ukuran chunk lama tetap ada.
+- **Verifikasi manual:** Login kembali, pastikan popup versi terbaru tampil, gulir area tengah sampai pembaruan kedelapan, dan pastikan judul serta tombol aksi tetap terlihat. Ulangi pada viewport mobile untuk memastikan tiga panel detail tiap pembaruan tersusun vertikal.
+- **Risiko/catatan:** `CHANGELOG_VERSION` dinaikkan menjadi `2026-09-15-task-029`, sehingga pengguna yang menyembunyikan versi sebelumnya tetap menerima catatan rilis yang lebih lengkap ini satu kali.
+- **Rollback:** Pulihkan empat release note ringkas, struktur dua kolom lama, dan versi `task-028`; backend/database tidak memerlukan rollback.
+- **Commit:** `feat: expand release notes with logic details` (akan dibuat setelah verifikasi runtime lokal).
+
 ### 2026-09-15 — TASK-028 — Popup changelog setelah login
 
 - **Status:** Selesai diimplementasikan dan diterapkan pada release/runtime lokal; siap dipush ke GitHub.

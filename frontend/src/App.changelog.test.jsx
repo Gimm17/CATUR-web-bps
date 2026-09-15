@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -6,7 +6,7 @@ import App from './App';
 
 const SHOW_AFTER_LOGIN_KEY = 'catur:show-changelog-after-login';
 const DISMISSED_VERSION_KEY = 'catur:changelog:dismissed-version';
-const CURRENT_VERSION = '2026-09-15-task-028';
+const CURRENT_VERSION = '2026-09-15-task-029';
 
 function prepareSuccessfulLoginRedirect() {
   localStorage.setItem('token', 'valid-token');
@@ -31,6 +31,19 @@ describe('popup changelog setelah login', () => {
     render(<App />);
 
     expect(screen.getByRole('dialog', { name: /yang baru di catur/i })).toBeInTheDocument();
+  });
+
+  it('menampilkan rincian perubahan dan logika sistem dalam area yang dapat digulir', () => {
+    prepareSuccessfulLoginRedirect();
+    render(<App />);
+
+    const details = screen.getByRole('region', { name: /detail pembaruan/i });
+    expect(within(details).getAllByText('Logika sistem')).toHaveLength(8);
+    expect(within(details).getByRole('heading', { name: 'Surat tugas multi-tujuan' })).toBeInTheDocument();
+    expect(within(details).getByRole('heading', { name: 'Tujuan aktif mengikuti tanggal WITA' })).toBeInTheDocument();
+    expect(within(details).getByRole('heading', { name: 'Validasi lokasi dan foto presensi' })).toBeInTheDocument();
+    expect(within(details).getByRole('heading', { name: 'Kompatibilitas data lama' })).toBeInTheDocument();
+    expect(within(details).getByText(/status dicek_keuangan/i)).toBeInTheDocument();
   });
 
   it('tombol Mengerti menutup popup hanya untuk sesi login saat ini', async () => {
