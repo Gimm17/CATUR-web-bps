@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-021 — Clean install, konsolidasi final, dan pembersihan disk
+
+- **Status:** Batch 5 selesai; codebase final bersih dan seluruh gate lokal lulus.
+- **Ringkasan:** Menyinkronkan lockfile frontend agar `npm ci` berhasil, menghapus server/asset boilerplate yang tidak dipakai, memisahkan source Flutter, dan membersihkan seluruh duplikasi `vOLD`, `v2`, cache/build, serta runtime comparison.
+- **File ditambahkan:** `docs/MIGRATION_REPORT.md`.
+- **File diubah:** `frontend/package-lock.json`, `docs/superpowers/plans/2026-09-15-konsolidasi-codebase-resmi-bps.md`, dan `CHANGELOG.md`.
+- **File dihapus:** `backend/server_upload.js`, `frontend/public/vite.svg`, dan `frontend/src/assets/react.svg`. Folder untracked `vOLD`, `v2`, build/cache lama, dan temporary comparison juga dihapus setelah diverifikasi.
+- **Class/fungsi/komponen diubah:** Tidak ada fungsi bisnis diubah. Lockfile kini mencatat dependency peer `@popperjs/core` sehingga clean install reproducible.
+- **Database:** Tidak ada schema/data production yang diubah. Regression memakai database `catur_test`.
+- **API:** Login admin dan pegawai lokal berhasil; `/` dan `/dashboard-admin` 200; API yang tidak ada tetap 404.
+- **Test otomatis:** Setelah `npm ci`: frontend 35/35, backend 68/68 tanpa skip, release-layout 2/2, backend lint 81 file, lint frontend terarah lulus, dan build production lulus.
+- **Verifikasi manual:** Runtime gabungan dijalankan pada port sementara 3010, login dua role berhasil, SPA/static berhasil, lalu process dihentikan.
+- **Risiko/catatan:** Audit dependency melaporkan 21 vulnerability frontend dan 18 backend; tidak dilakukan force upgrade. Bundle utama masih memiliki warning lebih dari 500 kB. Source Flutter aman di `C:\Users\HP\Laravel\CATUR-mobile-bps` (sekitar 94,9 MB). Ruang kosong C setelah cleanup sekitar 3,70 GB.
+- **Rollback:** Source web dapat dipulihkan dari checkpoint GitHub. Source mobile berada di folder terpisah. Data runtime dan dump tidak dihapus.
+- **Commit:** `chore: finalize official codebase cleanup`.
+
 ### 2026-09-15 — TASK-020 — Build release dan kontrak deploy tanpa bentrok
 
 - **Status:** Batch 4 selesai; runtime gabungan frontend/backend lulus smoke test lokal.

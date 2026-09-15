@@ -49,7 +49,7 @@ backend/public/
 # Local database exports and deployment credentials.
 /dump.sql
 /dump.sql.gz
-/deploy/pwsupersecretcpanel.txt
+/deploy/
 /release/
 
 # Legacy duplicate clients and packaged artifacts kept locally for recovery.

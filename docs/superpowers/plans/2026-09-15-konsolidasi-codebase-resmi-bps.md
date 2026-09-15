@@ -12,7 +12,7 @@
 - [x] Normalisasi `.gitignore` untuk struktur baru.
 - [x] Perbarui dokumentasi path dan `CHANGELOG.md`.
 - [x] Jalankan install/build smoke test dasar.
-- [ ] Commit dan push checkpoint Batch 1.
+- [x] Commit dan push checkpoint Batch 1.
 
 ## Batch 2 — Migrasi Backend dan Database
 
@@ -27,7 +27,7 @@
 - [x] Verifikasi kompatibilitas migration terhadap dump PostgreSQL lama.
 - [x] Perbarui `CHANGELOG.md`.
 - [x] Jalankan test/lint backend.
-- [ ] Commit dan push checkpoint Batch 2.
+- [x] Commit dan push checkpoint Batch 2.
 
 ## Batch 3 — Migrasi Frontend
 
@@ -41,7 +41,7 @@
 - [x] Pastikan asset/script legacy tidak menyebabkan error bootstrap.
 - [x] Perbarui `CHANGELOG.md`.
 - [x] Jalankan test, lint terarah, dan build frontend.
-- [ ] Commit dan push checkpoint Batch 3.
+- [x] Commit dan push checkpoint Batch 3.
 
 ## Batch 4 — Paket Deploy Aman
 
@@ -53,26 +53,26 @@
 - [x] Dokumentasikan backup, migration, smoke test, dan rollback.
 - [x] Perbarui `CHANGELOG.md`.
 - [x] Jalankan regression suite final.
-- [ ] Commit dan push checkpoint Batch 4.
+- [x] Commit dan push checkpoint Batch 4.
 
 ## Batch 5 — Konsolidasi dan Pembersihan Disk
 
-- [ ] Pastikan seluruh source penting dari `v2` dan `vOLD` sudah terwakili.
-- [ ] Pastikan repository dan remote berisi commit recovery final.
-- [ ] Hentikan runtime comparison lama.
-- [ ] Hapus `v2`, `vOLD`, source duplikat, build lama, dan dependency cache yang dapat dibuat ulang.
-- [ ] Jangan hapus dump, uploads, `.env`, credentials, atau backup tanpa target arsip yang jelas.
-- [ ] Jalankan install bersih, test, build, dan smoke test setelah pembersihan.
-- [ ] Catat ruang disk yang diperoleh dalam `CHANGELOG.md`.
-- [ ] Commit dan push checkpoint Batch 5.
+- [x] Pastikan seluruh source penting dari `v2` dan `vOLD` sudah terwakili.
+- [x] Pastikan repository dan remote berisi commit recovery final.
+- [x] Hentikan runtime comparison lama.
+- [x] Hapus `v2`, `vOLD`, source duplikat, build lama, dan dependency cache yang dapat dibuat ulang.
+- [x] Jangan hapus dump, uploads, `.env`, credentials, atau backup tanpa target arsip yang jelas.
+- [x] Jalankan install bersih, test, build, dan smoke test setelah pembersihan.
+- [x] Catat ruang disk yang diperoleh dalam `CHANGELOG.md`.
+- [x] Commit dan push checkpoint Batch 5.
 
 ## Definition of Done
 
-- [ ] Struktur final hanya memiliki satu FE dan satu BE aktif.
-- [ ] Seluruh perubahan fitur kemarin tersedia pada baseline resmi.
-- [ ] Tidak ada bentrok route/static frontend pada backend deploy.
-- [ ] Migration lulus pada salinan database legacy.
-- [ ] Test FE dan BE serta build production lulus.
-- [ ] Secret dan runtime data tidak masuk Git.
-- [ ] Deploy/rollback guide lengkap.
-- [ ] Folder recovery besar telah dibersihkan secara aman.
+- [x] Struktur final hanya memiliki satu FE dan satu BE aktif.
+- [x] Seluruh perubahan fitur kemarin tersedia pada baseline resmi.
+- [x] Tidak ada bentrok route/static frontend pada backend deploy.
+- [x] Migration lulus pada salinan database legacy.
+- [x] Test FE dan BE serta build production lulus.
+- [x] Secret dan runtime data tidak masuk Git.
+- [x] Deploy/rollback guide lengkap.
+- [x] Folder recovery besar telah dibersihkan secara aman.
