@@ -1,6 +1,6 @@
 # Implementation Plan Konsolidasi Codebase Resmi CATUR BPS
 
-**Spec:** `docs/superpowers/specs/2026-09-15-konsolidasi-codebase-resmi-bps.md`  
+**Spec:** `docs/superpowers/specs/2026-09-15-konsolidasi-codebase-resmi-bps.md`
 **Branch:** `feature/multi-destination-location`
 
 ## Batch 1 — Baseline dan Struktur Repository
@@ -16,17 +16,17 @@
 
 ## Batch 2 — Migrasi Backend dan Database
 
-- [ ] Tulis/pertahankan test untuk tanggal bisnis WITA.
-- [ ] Port domain validasi jadwal tujuan.
-- [ ] Port model dan service `surat_tugas_tujuan`.
-- [ ] Port active assignment resolver.
-- [ ] Port report context dan report window.
-- [ ] Integrasikan controller, route, middleware, dan model ke baseline `v2`.
-- [ ] Pertahankan static hosting, uploads, serta port berbasis environment.
-- [ ] Pindahkan migration multi-tujuan, backfill, dan integritas laporan.
-- [ ] Verifikasi kompatibilitas migration terhadap dump PostgreSQL lama.
-- [ ] Perbarui `CHANGELOG.md`.
-- [ ] Jalankan test/lint backend.
+- [x] Tulis/pertahankan test untuk tanggal bisnis WITA.
+- [x] Port domain validasi jadwal tujuan.
+- [x] Port model dan service `surat_tugas_tujuan`.
+- [x] Port active assignment resolver.
+- [x] Port report context dan report window.
+- [x] Integrasikan controller, route, middleware, dan model ke baseline `v2`.
+- [x] Pertahankan static hosting, uploads, serta port berbasis environment.
+- [x] Pindahkan migration multi-tujuan, backfill, dan integritas laporan.
+- [x] Verifikasi kompatibilitas migration terhadap dump PostgreSQL lama.
+- [x] Perbarui `CHANGELOG.md`.
+- [x] Jalankan test/lint backend.
 - [ ] Commit dan push checkpoint Batch 2.
 
 ## Batch 3 — Migrasi Frontend

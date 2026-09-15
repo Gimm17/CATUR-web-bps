@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-018 — Backend resmi, migration eksplisit, dan startup aman
+
+- **Status:** Batch 2 selesai; regression backend dengan database lulus tanpa skip.
+- **Ringkasan:** Mempertahankan runtime hosting `v2` sambil membawa seluruh domain multi-tujuan/report-context dari perubahan kemarin. Startup backend kini hanya memeriksa kesiapan schema dan tidak lagi menjalankan DDL otomatis.
+- **File ditambahkan:** `backend/tests/unit/ensureSchema.test.js`.
+- **File diubah:** `backend/src/utils/ensureSchema.js`, `docs/superpowers/plans/2026-09-15-konsolidasi-codebase-resmi-bps.md`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `ensureSchema` diubah menjadi verifier read-only dengan fungsi uji `verify(database)`; error `SCHEMA_MIGRATION_REQUIRED` mencantumkan tabel, kolom, enum, atau index yang belum tersedia.
+- **Database:** Tidak ada DDL baru di luar tiga migration yang sudah ditetapkan. Test database menjalankan validasi tabel `surat_tugas_tujuan`, relasi presensi, enum laporan, unique index, dan kompatibilitas dump legacy.
+- **API:** Tidak ada endpoint baru pada batch ini; kontrak aktif WITA, multi-tujuan, presensi, dan laporan eksplisit dipertahankan.
+- **Test otomatis:** Siklus RED membuktikan verifier belum tersedia; GREEN 2/2. Seluruh backend 68/68 lulus tanpa skip menggunakan `catur_test`; lint backend lulus 81 file.
+- **Verifikasi manual:** Belum dilakukan pada browser; API dan static runtime akan diuji setelah hasil build ditempatkan di backend.
+- **Risiko/catatan:** Backend sekarang sengaja gagal start jika migration belum dijalankan. Ini mencegah aplikasi hidup dengan schema setengah jadi, tetapi urutan deploy wajib migration dahulu baru restart process.
+- **Rollback:** Pulihkan `ensureSchema.js` sebelumnya bila perlu; perubahan ini tidak mengubah data sehingga tidak memerlukan restore database.
+- **Commit:** `fix: make production schema startup read only`.
+
 ### 2026-09-15 — TASK-017 — Konsolidasi baseline resmi dan struktur frontend/backend
 
 - **Status:** Batch 1 selesai; baseline terstruktur dan gate tanpa database lulus.
