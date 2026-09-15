@@ -15,7 +15,7 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ### 2026-09-15 — TASK-031 — Perbaiki Network Error login pada perangkat lain
 
-- **Status:** Selesai diimplementasikan dan diverifikasi pada build production; siap dipush dan dideploy.
+- **Status:** Selesai diimplementasikan, dipush ke GitHub, dan dideploy ke hosting.
 - **Ringkasan:** Memperbaiki build hosting yang sebelumnya membawa URL API lokal `http://127.0.0.1:3000/api`. Proses release sekarang selalu menghasilkan URL API same-origin `/api`, sehingga browser pada laptop atau jaringan lain mengirim login ke backend hosting yang benar dan tidak terkena mixed-content HTTP di halaman HTTPS.
 - **File ditambahkan:** Tidak ada.
 - **File diubah:** `scripts/build-release.js`, `scripts/release-layout.js`, `scripts/release-layout.test.js`, dan `CHANGELOG.md`.
@@ -24,8 +24,8 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 - **Database:** Tidak ada tabel, kolom, index, migration, credential, atau data yang diubah.
 - **API:** Tidak ada endpoint atau kontrak respons yang berubah. Perubahan hanya memastikan frontend production memanggil endpoint same-origin `/api`, bukan loopback milik perangkat pengguna.
 - **Test otomatis:** Siklus RED menghasilkan kegagalan `getProductionBuildEnvironment is not a function`; GREEN lulus 3/3 pada `release-layout.test.js`. Seluruh test frontend lulus 55/55. `node --check` lulus untuk kedua script release. Full ESLint masih melaporkan tiga error baseline yang tidak terkait pada `frontend/src/pages/pegawai/RichTextEditor.jsx` dan sembilan warning legacy; file itu tidak disentuh oleh task ini.
-- **Verifikasi manual:** Build production memproses 945 module dan menghasilkan `index-BxlyoavJ.js`. Pemeriksaan bundle membuktikan `HAS_127=False`, `HAS_HTTP_LOCAL_API=False`, dan `HAS_RELATIVE_API=True`.
-- **Risiko/catatan:** Aturan ini sengaja hanya diterapkan melalui `scripts/build-release.js`. Perintah `npm run dev` tetap membaca `.env.local`, sehingga server lokal tidak terganggu. Deployment harus memakai script release, bukan menyalin hasil build manual yang dibuat dengan environment lokal.
+- **Verifikasi manual:** Build production memproses 945 module dan menghasilkan `index-BxlyoavJ.js`. Pemeriksaan lokal membuktikan `HAS_127=False`, `HAS_HTTP_LOCAL_API=False`, dan `HAS_RELATIVE_API=True`. Setelah deployment, halaman dan JavaScript production merespons HTTP 200, bundle server menghasilkan `LOCALHOST_IN_BUNDLE=NO` serta `RELATIVE_API_IN_BUNDLE=YES`, dan request login same-origin mencapai backend dengan HTTP 401 untuk credential uji yang sengaja salah.
+- **Risiko/catatan:** Aturan ini sengaja hanya diterapkan melalui `scripts/build-release.js`. Perintah `npm run dev` tetap membaca `.env.local`, sehingga server lokal tidak terganggu. Deployment harus memakai script release, bukan menyalin hasil build manual yang dibuat dengan environment lokal. Backup rollback hosting tersimpan di `/home/gimmhost/backups/caturv2-20260915-8711857/`; 274 file upload tetap utuh dan database tidak disentuh.
 - **Rollback:** Kembalikan pemanggilan `spawnSync` ke `env: process.env`, hapus helper dan regression test. Rollback tidak direkomendasikan karena akan mengembalikan Network Error pada client produksi.
 - **Commit:** `fix: use same-origin API in production release`.
 
