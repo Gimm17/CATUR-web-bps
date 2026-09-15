@@ -18,4 +18,16 @@ function getReleaseLayout(projectRoot) {
   };
 }
 
-module.exports = { getReleaseLayout, PROTECTED_RUNTIME_PATHS };
+function getProductionBuildEnvironment(environment = process.env) {
+  return {
+    ...environment,
+    VITE_API_BASE_URL: '/api',
+    VITE_LEGACY_FILE_BASE_URL: '',
+  };
+}
+
+module.exports = {
+  getReleaseLayout,
+  getProductionBuildEnvironment,
+  PROTECTED_RUNTIME_PATHS,
+};

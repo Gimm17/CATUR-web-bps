@@ -2,7 +2,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const { getReleaseLayout, PROTECTED_RUNTIME_PATHS } = require('./release-layout');
+const {
+  getReleaseLayout,
+  getProductionBuildEnvironment,
+  PROTECTED_RUNTIME_PATHS,
+} = require('./release-layout');
 
 const layout = getReleaseLayout(path.join(__dirname, '..'));
 const expectedPublic = path.join(layout.projectRoot, 'backend', 'public');
@@ -13,7 +17,7 @@ if (layout.backendPublic !== expectedPublic) {
 
 const build = spawnSync('npm run build', {
   cwd: layout.frontendDirectory,
-  env: process.env,
+  env: getProductionBuildEnvironment(process.env),
   shell: true,
   stdio: 'inherit',
 });

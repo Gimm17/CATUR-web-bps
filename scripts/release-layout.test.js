@@ -2,7 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
-const { getReleaseLayout, PROTECTED_RUNTIME_PATHS } = require('./release-layout');
+const {
+  getReleaseLayout,
+  getProductionBuildEnvironment,
+  PROTECTED_RUNTIME_PATHS,
+} = require('./release-layout');
 
 test('release frontend hanya disinkronkan ke backend/public di dalam project', () => {
   const root = path.resolve('C:/workspace/CATUR');
@@ -22,4 +26,16 @@ test('manifest proteksi mencakup seluruh data runtime production', () => {
     'backend/token.json',
     'backend/uploads',
   ]);
+});
+
+test('build production selalu memakai API same-origin meskipun environment lokal menunjuk localhost', () => {
+  const environment = getProductionBuildEnvironment({
+    PATH: 'test-path',
+    VITE_API_BASE_URL: 'http://127.0.0.1:3000/api',
+    VITE_LEGACY_FILE_BASE_URL: 'http://127.0.0.1:3000',
+  });
+
+  assert.equal(environment.PATH, 'test-path');
+  assert.equal(environment.VITE_API_BASE_URL, '/api');
+  assert.equal(environment.VITE_LEGACY_FILE_BASE_URL, '');
 });
