@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-023 — Pulihkan status surat berakhir pada halaman presensi
+
+- **Status:** Selesai dan diterapkan pada release/runtime lokal.
+- **Ringkasan:** Memulihkan banner `Surat Tugas Berakhir` yang tidak terjangkau setelah endpoint surat aktif diperketat berdasarkan tanggal WITA. Jika `/surat-tugas/aktif` mengembalikan 404, frontend kini mengambil riwayat milik user dan memilih surat mendatang terdekat; bila tidak ada, memilih surat selesai terbaru sebagai konteks read-only. Empty state murni hanya muncul bila user belum pernah memiliki surat.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `frontend/src/services/surat.service.js`, `frontend/src/services/surat.service.test.js`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `getSuratTugasAktifAtauNull` memperoleh fallback kontekstual; ditambahkan `getBusinessDateWita`, normalisasi tanggal, dan pemilihan fallback deterministik. `PresensiPegawai` tidak diubah karena komponen banner expired/upcoming sebelumnya masih tersedia dan kembali menerima data.
+- **Database:** Tidak ada tabel, kolom, index, migration, maupun data yang diubah.
+- **API:** Kontrak `GET /api/surat-tugas/aktif` tetap 404 ketika tidak ada tugas aktif agar logika presensi/lokasi tidak kembali memakai record terakhir. Frontend menggunakan `GET /api/surat-tugas/` hanya sebagai fallback read-only yang oleh backend otomatis dibatasi ke user login untuk role pegawai.
+- **Test otomatis:** Siklus RED membuktikan 404 masih menghasilkan `null`; GREEN test service 4/4 dan seluruh frontend 39/39 lulus. ESLint dua file perubahan lulus; release-layout 2/2 dan build production 940 module lulus.
+- **Verifikasi manual:** Release disinkronkan ke `backend/public`. Smoke API lokal membuktikan endpoint aktif user tanpa tugas tetap 404, login dua akun tes berhasil, dan user 87 memiliki empat surat dengan surat terbaru ID 225 berakhir 12 September 2026.
+- **Risiko/catatan:** Surat fallback hanya mengaktifkan tampilan status expired/upcoming; form tagging tetap tidak dirender karena `suratStatus.isActive` bernilai false. Warning ukuran chunk Vite tetap ada dan tidak berkaitan dengan perubahan ini.
+- **Rollback:** Pulihkan perilaku 404 menjadi `null` pada `getSuratTugasAktifAtauNull` dan hapus tiga test fallback; backend/database tidak memerlukan rollback.
+- **Commit:** `fix: restore expired assignment status on attendance page`.
+
 ### 2026-09-15 — TASK-022 — Surat selesai tetap dapat membuka halaman laporan
 
 - **Status:** Selesai dan diterapkan pada runtime lokal.
