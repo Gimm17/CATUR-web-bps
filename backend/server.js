@@ -1,8 +1,23 @@
 
 require('dotenv').config();
+const express = require('express');
+const path = require('path');
 const ensureSchema = require('./src/utils/ensureSchema');
 const { syncDaerahGeojson } = require('./src/utils/syncDaerahGeojson');
 const app = require('./src/app');
+
+const publicDirectory = path.join(__dirname, 'public');
+const port = Number(process.env.PORT || 3000);
+
+app.use(express.static(publicDirectory));
+
+// SPA fallback hanya untuk halaman web. API yang tidak dikenal harus tetap 404,
+// bukan mengembalikan index.html dengan status sukses.
+app.get(/^(?!\/api(?:\/|$)|\/uploads(?:\/|$)).*/, (req, res, next) => {
+  res.sendFile(path.join(publicDirectory, 'index.html'), (err) => {
+    if (err) next(err);
+  });
+});
 
 (async () => {
   await ensureSchema();
@@ -17,8 +32,8 @@ const app = require('./src/app');
     }
   }
 
-  app.listen(3000, () => {
-    console.log('Server running on port 3000');
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
   });
 })().catch((err) => {
   console.error('Server gagal start:', err);

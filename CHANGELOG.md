@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-15 — TASK-017 — Konsolidasi baseline resmi dan struktur frontend/backend
+
+- **Status:** Batch 1 selesai; baseline terstruktur dan gate tanpa database lulus.
+- **Ringkasan:** Menetapkan source React resmi `vOLD` sebagai frontend, mempertahankan backend berfitur lengkap dengan perilaku runtime hosting `v2`, serta memisahkan source menjadi `frontend/` dan `backend/` agar tidak ada source client duplikat saat deploy.
+- **File ditambahkan:** `frontend/.env.example`, `docs/superpowers/specs/2026-09-15-konsolidasi-codebase-resmi-bps.md`, dan `docs/superpowers/plans/2026-09-15-konsolidasi-codebase-resmi-bps.md`.
+- **File diubah:** `.gitignore`, `backend/package.json`, `backend/server.js`, `backend/src/app.js`, dan seluruh path source/config frontend dipindahkan dari root ke `frontend/` tanpa mengubah isi fiturnya.
+- **File dihapus:** Tidak ada source fungsional yang dihapus pada batch ini. Path frontend lama di root digantikan oleh path `frontend/`.
+- **Class/fungsi/komponen diubah:** Bootstrap server memakai `PORT` dari environment; static frontend dilayani dari `backend/public`; fallback SPA tidak menangkap route `/api` atau `/uploads`; lokasi uploads dibuat absolut terhadap backend.
+- **Database:** Tidak ada tabel, kolom, index, enum, migration, atau data yang diubah.
+- **API:** Kontrak endpoint tidak berubah. Endpoint API yang tidak dikenal tetap menghasilkan 404 dan tidak dikonversi menjadi `index.html`.
+- **Test otomatis:** Frontend 33/33 lulus; build Vite production lulus; backend 39 lulus dan 27 integration test dilewati karena `CATUR_TEST_DATABASE_URL` belum diberikan pada proses ini; backend lint lulus 81 file.
+- **Verifikasi manual:** Belum dilakukan pada browser setelah restrukturisasi; dijadwalkan setelah paket deploy terbentuk.
+- **Risiko/catatan:** Folder recovery `v2`/`vOLD` belum dihapus. Hasil build frontend belum disalin ke `backend/public` sampai Batch 4.
+- **Rollback:** Kembalikan commit Batch 1; source frontend kembali ke root dan server kembali ke listener development sebelumnya. Database tidak memerlukan rollback.
+- **Commit:** `chore: consolidate official web codebase structure`.
+
 ### 2026-09-14 — TASK-016 — Pemulihan halaman tagging dan data dashboard pegawai
 
 - **Status:** Selesai dan aktif pada environment development lokal; verifikasi klik browser oleh pengguna menunggu hard refresh.
