@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-16 — TASK-037 — Hapus dua akun login lokal tambahan
+
+- **Status:** Selesai pada database development lokal; database staging telah diverifikasi dan tidak memuat akun tersebut.
+- **Ringkasan:** Menghapus tepat dua akun tambahan yang sebelumnya dibuat untuk pengujian lokal, masing-masing berperan sebagai admin dan pegawai. Akun resmi hasil `dump.sql` tidak disentuh.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Tidak ada.
+- **Database:** Menghapus user ID 134 dan 135 dari tabel `users` pada `catur_dev`. Pemeriksaan sebelum penghapusan membuktikan keduanya tidak memiliki relasi pada tabel `surat_tugas`, `presensi`, `laporan`, `laporan_perjalanan`, maupun `notifikasi`. Jumlah user lokal berubah dari 104 menjadi 102 dan tidak ada akun domain pengujian lokal yang tersisa. Schema, tabel, kolom, index, dan data operasional lain tidak berubah.
+- **API:** Tidak ada perubahan endpoint atau kontrak respons. Token sesi lama milik dua akun yang dihapus tidak lagi mempunyai user yang valid di database lokal.
+- **Test otomatis:** Tidak ada test source yang diperlukan untuk perubahan data terarah ini.
+- **Verifikasi manual:** Query pascapenghapusan menghasilkan nol akun pengujian lokal. Database staging `caturv2.gimmhost.my.id` juga diperiksa dan sejak awal menghasilkan nol akun yang cocok, sehingga tidak menjalankan operasi hapus di staging.
+- **Risiko/catatan:** Password/hash kedua akun sengaja tidak dibackup agar credential uji benar-benar terhapus. File ZIP build yang sudah ada di workspace tidak diubah.
+- **Rollback:** Akun dapat dibuat ulang melalui manajemen akun dengan email dan password baru; credential lama tidak dapat dipulihkan dari proyek.
+- **Commit:** `docs: record removal of local test accounts`.
+
 ### 2026-09-16 — TASK-036 — Sederhanakan label menu sidebar pegawai
 
 - **Status:** Selesai diimplementasikan, dipush ke GitHub, dan dideploy ke staging.
