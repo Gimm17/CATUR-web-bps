@@ -15,7 +15,7 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ### 2026-09-16 — TASK-036 — Sederhanakan label menu sidebar pegawai
 
-- **Status:** Selesai diimplementasikan; siap dipush dan dideploy ke staging.
+- **Status:** Selesai diimplementasikan, dipush ke GitHub, dan dideploy ke staging.
 - **Ringkasan:** Mengganti label `Dashboard Sensus` menjadi `Dashboard` serta `Report` menjadi `Daftar Laporan` pada sidebar desktop dan navigasi mobile pegawai tanpa mengubah URL maupun fungsi halaman.
 - **File ditambahkan:** Tidak ada.
 - **File diubah:** `frontend/src/fragments/Sidebar.pegawai.jsx`, `frontend/src/fragments/Sidebar.pegawai.test.jsx`, dan `CHANGELOG.md`.
@@ -23,10 +23,10 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 - **Class/fungsi/komponen diubah:** Komponen `Sidebar` pegawai dan regression test label navigasi.
 - **Database:** Tidak ada perubahan.
 - **API:** Tidak ada perubahan endpoint atau kontrak respons.
-- **Test otomatis:** Regression test sidebar dan build production dijalankan sebelum deployment.
-- **Verifikasi manual:** Kedua link tetap menuju `/dashboard` dan `/laporan-report`; hanya teks tampilan yang berubah.
-- **Risiko/catatan:** Badge tahun `2026` pada menu Dashboard tetap dipertahankan.
-- **Rollback:** Kembalikan dua label menjadi `Dashboard Sensus` dan `Report`.
+- **Test otomatis:** Regression test sidebar lulus 2/2, ESLint dua file perubahan lulus, dan build production berhasil memproses 945 module.
+- **Verifikasi manual:** Asset staging `index-DLtNQCDs.js` merespons HTTP 200, memuat `Daftar Laporan`, dan tidak lagi memuat `Dashboard Sensus`. Kedua link tetap menuju `/dashboard` dan `/laporan-report`.
+- **Risiko/catatan:** Badge tahun `2026` pada menu Dashboard tetap dipertahankan. Backup build sebelumnya tersedia di `/home/gimmhost/backups/caturv2-20260916-4a90961/public-previous`.
+- **Rollback:** Pulihkan `public-previous` dari backup staging atau kembalikan dua label menjadi `Dashboard Sensus` dan `Report`, lalu build ulang.
 - **Commit:** `fix: rename employee sidebar labels`.
 
 ### 2026-09-16 — TASK-035 — Deploy pembersihan console dan profil aman
