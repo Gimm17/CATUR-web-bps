@@ -13,9 +13,25 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-16 — TASK-033 — Deploy stabilisasi navigasi laporan
+
+- **Status:** Selesai dideploy ke `https://caturv2.gimmhost.my.id`.
+- **Ringkasan:** Mempublikasikan build frontend dari commit `0b37226635799124023c012a65678ad4e759dc10` yang memperbaiki logo BPS pada route laporan bertingkat, mempertahankan layout ketika laporan default dipilih, dan mengurangi pemilihan laporan menjadi satu request daftar surat.
+- **File ditambahkan:** Tidak ada pada source aplikasi; deployment membuat arsip dan folder rollback build sebelumnya.
+- **File diubah:** `CHANGELOG.md` pada repository dan folder runtime `/home/gimmhost/caturv2.gimmhost.my.id/public` pada hosting.
+- **File dihapus:** Tidak ada. Folder `public` sebelumnya dipindahkan secara utuh ke backup rollback.
+- **Class/fungsi/komponen diubah:** Tidak ada perubahan source baru pada task deployment; komponen yang dipublikasikan adalah `Sidebar`, `LaporanEntry`, dan resolver `getSuratTugasLaporanDefault` dari TASK-032.
+- **Database:** Tidak ada tabel, kolom, index, migration, credential, maupun data yang diubah. Database PostgreSQL produksi tidak disentuh.
+- **API:** Tidak ada endpoint atau kontrak backend yang diubah. Negative smoke test `POST /api/auth/login` tetap mencapai backend dan menghasilkan HTTP 401 untuk credential uji yang sengaja salah.
+- **Test otomatis:** Build yang dideploy sebelumnya lulus seluruh frontend 59/59 dan ESLint file perubahan. Verifikasi deployment menghasilkan HTTP 200 untuk halaman utama, JavaScript `index-CDP6fcJa.js`, CSS, serta `/img/logo.png`; MIME logo terverifikasi `image/png`.
+- **Verifikasi manual:** HTML produksi menunjuk ke asset build baru; bundle server memuat `/img/logo.png` dan teks loading `Menyiapkan laporan perjalanan`; akses publik `.env` ditolak dengan HTTP 403; jumlah file pada `uploads` tetap 274 sebelum dan sesudah deployment.
+- **Risiko/catatan:** Backup rollback tersimpan di `/home/gimmhost/backups/caturv2-20260916-0b37226/`. Deployment hanya mengganti `public`; `.env`, credential, backend, database, dan `uploads` tidak ditimpa.
+- **Rollback:** Pindahkan build `public` saat ini ke lokasi karantina, pulihkan `/home/gimmhost/backups/caturv2-20260916-0b37226/public-previous` sebagai `/home/gimmhost/caturv2.gimmhost.my.id/public`, lalu sentuh `tmp/restart.txt`.
+- **Commit:** `docs: record report navigation deployment`.
+
 ### 2026-09-16 — TASK-032 — Stabilkan navigasi Laporan & Statistik
 
-- **Status:** Selesai diimplementasikan dan diverifikasi pada build production lokal; belum dideploy ke hosting.
+- **Status:** Selesai diimplementasikan, dipush ke GitHub, dan dideploy ke hosting.
 - **Ringkasan:** Memperbaiki logo BPS yang berubah menjadi fallback pada route bertingkat `/laporan/:id`, menghilangkan layar putih polos selama pemilihan laporan default, dan mengurangi resolver laporan dari dua request berurutan menjadi satu request daftar surat.
 - **File ditambahkan:** Tidak ada.
 - **File diubah:** `frontend/src/fragments/Sidebar.pegawai.jsx`, `frontend/src/fragments/Sidebar.pegawai.test.jsx`, `frontend/src/pages/pegawai/LaporanEntry.jsx`, `frontend/src/pages/pegawai/LaporanEntry.test.jsx`, `frontend/src/services/surat.service.js`, `frontend/src/services/surat.service.test.js`, dan `CHANGELOG.md`.
