@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-16 — TASK-036 — Sederhanakan label menu sidebar pegawai
+
+- **Status:** Selesai diimplementasikan; siap dipush dan dideploy ke staging.
+- **Ringkasan:** Mengganti label `Dashboard Sensus` menjadi `Dashboard` serta `Report` menjadi `Daftar Laporan` pada sidebar desktop dan navigasi mobile pegawai tanpa mengubah URL maupun fungsi halaman.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `frontend/src/fragments/Sidebar.pegawai.jsx`, `frontend/src/fragments/Sidebar.pegawai.test.jsx`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Komponen `Sidebar` pegawai dan regression test label navigasi.
+- **Database:** Tidak ada perubahan.
+- **API:** Tidak ada perubahan endpoint atau kontrak respons.
+- **Test otomatis:** Regression test sidebar dan build production dijalankan sebelum deployment.
+- **Verifikasi manual:** Kedua link tetap menuju `/dashboard` dan `/laporan-report`; hanya teks tampilan yang berubah.
+- **Risiko/catatan:** Badge tahun `2026` pada menu Dashboard tetap dipertahankan.
+- **Rollback:** Kembalikan dua label menjadi `Dashboard Sensus` dan `Report`.
+- **Commit:** `fix: rename employee sidebar labels`.
+
 ### 2026-09-16 — TASK-035 — Deploy pembersihan console dan profil aman
 
 - **Status:** Selesai dideploy ke `https://caturv2.gimmhost.my.id`.

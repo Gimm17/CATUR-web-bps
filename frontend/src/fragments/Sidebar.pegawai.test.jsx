@@ -13,7 +13,7 @@ describe('Sidebar pegawai', () => {
     });
   });
 
-  test('menampilkan Laporan & Statistik dan Report sebagai dua menu terpisah', () => {
+  test('menampilkan Dashboard dan Daftar Laporan sebagai label menu pegawai', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Sidebar />
@@ -22,8 +22,14 @@ describe('Sidebar pegawai', () => {
 
     expect(screen.getByRole('link', { name: /Laporan & Statistik/i }))
       .toHaveAttribute('href', '/laporan');
-    expect(screen.getByRole('link', { name: /^Report$/i }))
+    expect(screen.getByRole('link', { name: /^Dashboard 2026$/i }))
+      .toHaveAttribute('href', '/dashboard');
+    expect(screen.getByRole('link', { name: /^Daftar Laporan$/i }))
       .toHaveAttribute('href', '/laporan-report');
+    expect(screen.queryByRole('link', { name: /Dashboard Sensus/i }))
+      .not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^Report$/i }))
+      .not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Riwayat Laporan/i }))
       .not.toBeInTheDocument();
   });

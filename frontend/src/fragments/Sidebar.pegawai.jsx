@@ -86,7 +86,7 @@ export default function Sidebar() {
               <div className="mobile-nav-icon">
                 <FaClipboardList />
               </div>
-              <span className="mobile-nav-label">Report</span>
+              <span className="mobile-nav-label">Daftar Laporan</span>
             </Link>
 
             <Link 
@@ -174,7 +174,7 @@ export default function Sidebar() {
                 }`}
               >
                 <i className="nav-icon"><FaTachometerAlt /></i>
-                <p>Dashboard Sensus</p>
+                <p>Dashboard</p>
                 <span className="sensus-badge">2026</span>
               </Link>
             </li>
@@ -214,7 +214,7 @@ export default function Sidebar() {
                 }`}
               >
                 <i className="nav-icon"><FaClipboardList /></i>
-                <p>Report</p>
+                <p>Daftar Laporan</p>
               </Link>
             </li>
 
