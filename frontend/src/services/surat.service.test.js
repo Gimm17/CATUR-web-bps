@@ -60,38 +60,81 @@ describe('getSuratTugasAktifAtauNull', () => {
 describe('getSuratTugasLaporanDefault', () => {
   beforeEach(() => vi.resetAllMocks());
 
-  it('mengembalikan surat aktif ketika tersedia', async () => {
-    axios.get.mockResolvedValueOnce({ data: { id: 41, status: 'aktif' } });
+  it('mengembalikan surat aktif melalui satu request daftar surat', async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [
+        {
+          id: 41,
+          status: 'AKTIF',
+          tanggal_mulai: '2026-09-14',
+          tanggal_selesai: '2026-09-16',
+          tujuan: [],
+        },
+      ],
+    });
 
     await expect(getSuratTugasLaporanDefault('2026-09-15'))
       .resolves.toMatchObject({ id: 41 });
     expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.get).toHaveBeenCalledWith('/surat-tugas/');
+  });
+
+  it('mengenali surat aktif dari jadwal tujuan multi-lokasi', async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [
+        {
+          id: 42,
+          status: 'AKTIF',
+          tanggal_mulai: '2026-09-10',
+          tanggal_selesai: '2026-09-20',
+          tujuan: [
+            { tanggal_mulai: '2026-09-10', tanggal_selesai: '2026-09-12' },
+            { tanggal_mulai: '2026-09-16', tanggal_selesai: '2026-09-18' },
+          ],
+        },
+      ],
+    });
+
+    await expect(getSuratTugasLaporanDefault('2026-09-17'))
+      .resolves.toMatchObject({ id: 42 });
+  });
+
+  it('menolak kondisi ambigu ketika lebih dari satu surat aktif pada tanggal yang sama', async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [
+        { id: 41, status: 'AKTIF', tanggal_mulai: '2026-09-14', tanggal_selesai: '2026-09-16' },
+        { id: 42, status: 'aktif', tanggal_mulai: '2026-09-15', tanggal_selesai: '2026-09-17' },
+      ],
+    });
+
+    await expect(getSuratTugasLaporanDefault('2026-09-15')).rejects.toMatchObject({
+      code: 'ACTIVE_ASSIGNMENT_CONFLICT',
+      assignmentIds: [41, 42],
+    });
   });
 
   it('memilih surat selesai terbaru dan mengabaikan surat mendatang', async () => {
-    axios.get
-      .mockRejectedValueOnce({ response: { status: 404 } })
-      .mockResolvedValueOnce({
-        data: [
-          { id: 224, tanggal_mulai: '2026-09-01', tanggal_selesai: '2026-09-09' },
-          { id: 225, tanggal_mulai: '2026-09-10', tanggal_selesai: '2026-09-12' },
-          { id: 226, tanggal_mulai: '2026-09-20', tanggal_selesai: '2026-09-22' },
-        ],
-      });
+    axios.get.mockResolvedValueOnce({
+      data: [
+        { id: 224, status: 'AKTIF', tanggal_mulai: '2026-09-01', tanggal_selesai: '2026-09-09' },
+        { id: 225, status: 'AKTIF', tanggal_mulai: '2026-09-10', tanggal_selesai: '2026-09-12' },
+        { id: 226, status: 'AKTIF', tanggal_mulai: '2026-09-20', tanggal_selesai: '2026-09-22' },
+      ],
+    });
 
     await expect(getSuratTugasLaporanDefault('2026-09-15'))
       .resolves.toMatchObject({ id: 225 });
+    expect(axios.get).toHaveBeenCalledTimes(1);
   });
 
   it('mengembalikan null ketika belum ada surat aktif atau selesai', async () => {
-    axios.get
-      .mockRejectedValueOnce({ response: { status: 404 } })
-      .mockResolvedValueOnce({
-        data: [
-          { id: 226, tanggal_mulai: '2026-09-20', tanggal_selesai: '2026-09-22' },
-        ],
-      });
+    axios.get.mockResolvedValueOnce({
+      data: [
+        { id: 226, status: 'AKTIF', tanggal_mulai: '2026-09-20', tanggal_selesai: '2026-09-22' },
+      ],
+    });
 
     await expect(getSuratTugasLaporanDefault('2026-09-15')).resolves.toBeNull();
+    expect(axios.get).toHaveBeenCalledTimes(1);
   });
 });

@@ -126,7 +126,7 @@ export default function Sidebar() {
           <div className="sensus-logo">
             <div className="bps-logo">
               <img 
-                src="img/logo.png" 
+                src="/img/logo.png"
                 alt="Logo BPS" 
                 className="bps-logo-img"
                 onError={(e) => {

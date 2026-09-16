@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-16 — TASK-032 — Stabilkan navigasi Laporan & Statistik
+
+- **Status:** Selesai diimplementasikan dan diverifikasi pada build production lokal; belum dideploy ke hosting.
+- **Ringkasan:** Memperbaiki logo BPS yang berubah menjadi fallback pada route bertingkat `/laporan/:id`, menghilangkan layar putih polos selama pemilihan laporan default, dan mengurangi resolver laporan dari dua request berurutan menjadi satu request daftar surat.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `frontend/src/fragments/Sidebar.pegawai.jsx`, `frontend/src/fragments/Sidebar.pegawai.test.jsx`, `frontend/src/pages/pegawai/LaporanEntry.jsx`, `frontend/src/pages/pegawai/LaporanEntry.test.jsx`, `frontend/src/services/surat.service.js`, `frontend/src/services/surat.service.test.js`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `Sidebar` memakai `/img/logo.png` yang absolut; `LaporanEntry` mempertahankan `PegawaiLayout` pada state loading, kosong, dan error; `getSuratTugasLaporanDefault` memilih surat aktif atau surat selesai terbaru dari satu respons `/surat-tugas/`. Ditambahkan helper jadwal internal untuk tanggal WITA, multi-tujuan, tanggal selesai terakhir, dan deteksi konflik surat aktif.
+- **Database:** Tidak ada tabel, kolom, index, migration, credential, atau data yang diubah.
+- **API:** Tidak ada endpoint atau kontrak backend yang diubah. Frontend tidak lagi memakai respons 404 dari `GET /api/surat-tugas/aktif` sebagai control flow halaman laporan; resolver memakai satu `GET /api/surat-tugas/` yang sudah memfilter data pegawai login.
+- **Test otomatis:** Siklus RED mereproduksi enam kegagalan logo, layout, serta resolver dan satu guard konflik. GREEN focused test lulus 17/17 dan seluruh frontend lulus 59/59. ESLint keenam file perubahan lulus tanpa error. Build production memproses 945 module dan menghasilkan `index-CDP6fcJa.js`; warning ukuran chunk lama tetap ada.
+- **Verifikasi manual:** Bundle production memuat path absolut `/img/logo.png` dan loading state `Menyiapkan laporan perjalanan`. URL akhir tetap kanonik `/laporan/:suratId`; pemilihan surat memprioritaskan jadwal aktif, termasuk tujuan multi-lokasi, kemudian surat selesai terbaru, serta menolak kondisi lebih dari satu surat aktif.
+- **Risiko/catatan:** Endpoint `/surat-tugas/aktif` tetap digunakan oleh Dashboard dan Presensi sehingga string endpoint masih ada di bundle; hanya flow masuk Laporan & Statistik yang tidak lagi memanggilnya. Tidak ada backend yang perlu diganti saat deployment task ini.
+- **Rollback:** Pulihkan path logo relatif, tampilan state polos, dan resolver dua request. Rollback tidak direkomendasikan karena mengembalikan logo rusak, layar putih, serta jeda request 404.
+- **Commit:** `fix: stabilize report navigation loading`.
+
 ### 2026-09-15 — TASK-031 — Perbaiki Network Error login pada perangkat lain
 
 - **Status:** Selesai diimplementasikan, dipush ke GitHub, dan dideploy ke hosting.

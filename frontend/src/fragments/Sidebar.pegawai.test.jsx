@@ -27,4 +27,15 @@ describe('Sidebar pegawai', () => {
     expect(screen.queryByRole('link', { name: /Riwayat Laporan/i }))
       .not.toBeInTheDocument();
   });
+
+  test('menggunakan URL logo absolut agar tetap valid pada route bertingkat', () => {
+    render(
+      <MemoryRouter initialEntries={['/laporan/225']}>
+        <Sidebar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('img', { name: 'Logo BPS' }))
+      .toHaveAttribute('src', '/img/logo.png');
+  });
 });

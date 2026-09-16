@@ -3,12 +3,21 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 
 vi.mock('../../services/surat.service', () => ({
-  getSuratTugasAktif: vi.fn(),
   getSuratTugasLaporanDefault: vi.fn(),
 }));
 
+vi.mock('../../services/akun.service', () => ({
+  getProfil: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../api/axios', () => ({
+  default: {
+    get: vi.fn().mockResolvedValue({ data: [] }),
+    put: vi.fn().mockResolvedValue({ data: {} }),
+  },
+}));
+
 import {
-  getSuratTugasAktif,
   getSuratTugasLaporanDefault,
 } from '../../services/surat.service';
 import LaporanEntry from './LaporanEntry';
@@ -32,10 +41,9 @@ function renderEntry() {
 }
 
 describe('LaporanEntry', () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('mengarahkan satu surat aktif ke halaman progres berdasarkan ID', async () => {
-    getSuratTugasAktif.mockResolvedValueOnce({ id: 41, nomor_surat: 'ST-41' });
     getSuratTugasLaporanDefault.mockResolvedValueOnce({ id: 41, nomor_surat: 'ST-41' });
 
     renderEntry();
@@ -44,7 +52,6 @@ describe('LaporanEntry', () => {
   });
 
   it('mengarahkan pegawai tanpa surat aktif ke laporan surat selesai terbaru', async () => {
-    getSuratTugasAktif.mockRejectedValueOnce({ response: { status: 404 } });
     getSuratTugasLaporanDefault.mockResolvedValueOnce({
       id: 225,
       tanggal_selesai: '2026-09-12',
@@ -56,7 +63,6 @@ describe('LaporanEntry', () => {
   });
 
   it('tetap berada di halaman laporan jika belum ada surat yang dapat ditampilkan', async () => {
-    getSuratTugasAktif.mockRejectedValueOnce({ response: { status: 404 } });
     getSuratTugasLaporanDefault.mockResolvedValueOnce(null);
 
     renderEntry();
@@ -67,13 +73,22 @@ describe('LaporanEntry', () => {
   });
 
   it('menampilkan error dan menyediakan percobaan ulang untuk kegagalan server', async () => {
-    getSuratTugasAktif.mockRejectedValueOnce({ response: { status: 500 } });
     getSuratTugasLaporanDefault.mockRejectedValueOnce({ response: { status: 500 } });
 
     renderEntry();
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Gagal memeriksa surat tugas aktif');
     expect(screen.getByRole('button', { name: 'Coba lagi' })).toBeVisible();
+  });
+
+  it('mempertahankan layout aplikasi selama surat laporan sedang ditentukan', () => {
+    getSuratTugasLaporanDefault.mockReturnValueOnce(new Promise(() => {}));
+
+    const { container } = renderEntry();
+
+    expect(screen.getByRole('status')).toHaveTextContent('Menyiapkan laporan perjalanan');
+    expect(container.querySelector('.content-wrapper')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Logo BPS' })).toBeVisible();
   });
 });
 
