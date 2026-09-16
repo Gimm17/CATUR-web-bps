@@ -15,7 +15,7 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ### 2026-09-16 — TASK-040 — Perpanjang batas edit laporan menjadi sepuluh hari
 
-- **Status:** Selesai diimplementasikan dan diverifikasi secara lokal.
+- **Status:** Selesai diimplementasikan, dipush ke GitHub, dan dideploy ke staging `caturv2.gimmhost.my.id`.
 - **Ringkasan:** Mengubah masa edit laporan perjalanan dari tujuh menjadi sepuluh hari kalender setelah tanggal selesai tujuan terakhir. Hari ke-10 tetap dapat digunakan sampai pukul 23:59:59 WITA; laporan terkunci mulai hari berikutnya atau segera ketika status masuk proses keuangan.
 - **File ditambahkan:** Tidak ada.
 - **File diubah:** `backend/src/services/reportWindow.service.js`, `backend/tests/unit/reportWindow.service.test.js`, `backend/tests/unit/reportContext.service.test.js`, `backend/tests/integration/laporan.edit-window.test.js`, `frontend/src/features/changelog/releaseNotes.js`, `frontend/src/App.changelog.test.jsx`, `frontend/src/pages/pegawai/LaporanPegawai.test.jsx`, `docs/deployment/PANDUAN_UPDATE_SERVER_BPS.md`, `docs/superpowers/specs/2026-09-14-perbaikan-laporan-per-surat-web.md`, `docs/superpowers/plans/2026-09-14-perbaikan-laporan-per-surat-multi-tujuan-web.md`, dan `CHANGELOG.md`.
@@ -24,10 +24,10 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 - **Database:** Tidak ada perubahan tabel, kolom, index, migration, maupun data. Deadline dihitung dinamis oleh backend dari tanggal selesai perjalanan sehingga data laporan lama otomatis mengikuti aturan sepuluh hari.
 - **API:** Struktur endpoint dan kontrak response tidak berubah. Nilai `report_window.deadline_date`, `remaining_days`, dan `editable` sekarang mengikuti jendela sepuluh hari.
 - **Test otomatis:** RED terverifikasi: test aturan sepuluh hari gagal karena backend masih menghasilkan deadline tujuh hari. GREEN: seluruh backend test lulus 69/69 tanpa skip menggunakan `catur_test`, seluruh frontend test lulus 62/62, lint backend lulus 81 file, lint khusus tiga file frontend yang berubah lulus, dan build production berhasil memproses 945 module. Full lint frontend masih melaporkan tiga error lama `react-hooks/set-state-in-effect` pada `RichTextEditor.jsx` yang tidak diubah oleh task ini.
-- **Verifikasi manual:** Untuk perjalanan yang berakhir 19 September 2026, deadline yang diharapkan adalah 29 September 2026 WITA; laporan editable sepanjang 29 September dan terkunci mulai 30 September, selama belum masuk proses keuangan.
-- **Risiko/catatan:** Perubahan memperpanjang akses koreksi tiga hari dan tidak membuka kembali laporan yang sudah masuk proses keuangan. Riwayat changelog lama yang menyebut aturan tujuh hari dipertahankan sebagai catatan kondisi pada task saat itu.
-- **Rollback:** Kembalikan `REPORT_EDIT_WINDOW_DAYS` menjadi `7`, kembalikan versi/teks release note, lalu build ulang frontend.
-- **Commit:** `feat: extend report edit window to ten days`.
+- **Verifikasi manual:** Untuk perjalanan yang berakhir 19 September 2026, deadline yang diharapkan adalah 29 September 2026 WITA; laporan editable sepanjang 29 September dan terkunci mulai 30 September, selama belum masuk proses keuangan. Pascadeploy, `/dashboard` dan asset `index-DxH0_wFt.js` merespons HTTP 200, asset publik memuat teks aturan sepuluh hari, endpoint terlindungi `/api/surat-tugas/aktif` merespons 401 alih-alih 404, dan proses Node berhasil berganti PID setelah restart.
+- **Risiko/catatan:** Perubahan memperpanjang akses koreksi tiga hari dan tidak membuka kembali laporan yang sudah masuk proses keuangan. Riwayat changelog lama yang menyebut aturan tujuh hari dipertahankan sebagai catatan kondisi pada task saat itu. File runtime `.env`, credential Google, uploads, `server.js`, dependencies, dan database hosting tidak ditimpa.
+- **Rollback:** Backup staging tersedia di `/home/gimmhost/backups/caturv2-20260916-10hari-46a4061`; pulihkan folder `public` dan `src` dari backup tersebut lalu sentuh `tmp/restart.txt`.
+- **Commit:** `46a4061` (`feat: extend report edit window to ten days`) dan commit dokumentasi deployment setelahnya.
 
 ### 2026-09-16 — TASK-039 — Paket update penuh untuk server BPS lama
 
