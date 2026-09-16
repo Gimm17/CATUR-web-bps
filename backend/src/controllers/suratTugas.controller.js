@@ -213,7 +213,8 @@ const getAktifByPegawai = async (req, res) => {
   try {
     const result = await resolveActiveAssignment(req.user.id);
     if (!result) {
-      return res.status(404).json({
+      return res.status(200).json({
+        data: null,
         message: 'Tidak ada surat tugas aktif hari ini',
       });
     }

@@ -208,7 +208,7 @@ test('endpoint aktif mengembalikan seluruh tujuan dan tujuan aktif berdasarkan W
   assert.equal(payload.timezone, 'Asia/Makassar');
 });
 
-test('endpoint aktif mengembalikan 404 saat pegawai tidak punya tugas hari ini', {
+test('endpoint aktif mengembalikan 200 dengan data null saat pegawai tidak punya tugas hari ini', {
   skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
 }, async (t) => {
   const server = app.listen(0, '127.0.0.1');
@@ -231,7 +231,12 @@ test('endpoint aktif mengembalikan 404 saat pegawai tidak punya tugas hari ini',
     { headers: { authorization: `Bearer ${token}` } }
   );
 
-  assert.equal(response.status, 404);
+  const payload = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(payload));
+  assert.deepEqual(payload, {
+    data: null,
+    message: 'Tidak ada surat tugas aktif hari ini',
+  });
 });
 
 if (databaseUrl) {

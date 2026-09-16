@@ -102,7 +102,13 @@ const selectPresensiFallback = (assignments, businessDate) => {
 
 export const getSuratTugasAktifAtauNull = async (businessDate = getBusinessDateWita()) => {
   try {
-    return await getSuratTugasAktif();
+    const activeResponse = await getSuratTugasAktif();
+    if (activeResponse?.data !== null) {
+      return activeResponse;
+    }
+
+    const response = await axios.get('/surat-tugas/');
+    return selectPresensiFallback(response.data, businessDate);
   } catch (error) {
     if (error?.response?.status === 404) {
       const response = await axios.get('/surat-tugas/');

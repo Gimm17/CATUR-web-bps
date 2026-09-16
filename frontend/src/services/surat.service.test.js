@@ -13,6 +13,25 @@ import {
 describe('getSuratTugasAktifAtauNull', () => {
   beforeEach(() => vi.resetAllMocks());
 
+  it('menggunakan fallback tanpa error network ketika endpoint aktif mengembalikan data null', async () => {
+    axios.get
+      .mockResolvedValueOnce({
+        data: {
+          data: null,
+          message: 'Tidak ada surat tugas aktif hari ini',
+        },
+      })
+      .mockResolvedValueOnce({
+        data: [
+          { id: 11, tanggal_mulai: '2026-09-01', tanggal_selesai: '2026-09-09' },
+          { id: 12, tanggal_mulai: '2026-09-10', tanggal_selesai: '2026-09-12' },
+        ],
+      });
+
+    await expect(getSuratTugasAktifAtauNull('2026-09-15')).resolves.toMatchObject({ id: 12 });
+    expect(axios.get).toHaveBeenNthCalledWith(2, '/surat-tugas/');
+  });
+
   it('mengembalikan surat selesai terbaru sebagai konteks read-only ketika tidak ada surat aktif', async () => {
     axios.get
       .mockRejectedValueOnce({ response: { status: 404 } })

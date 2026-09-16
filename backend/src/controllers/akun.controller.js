@@ -7,7 +7,7 @@ const User = require('../models/user.model');
 exports.getProfil = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'nama', 'password', 'email', 'role', 'nip', 'alamat', 'telepon', 'unit_kerja'],
+      attributes: ['id', 'nama', 'email', 'role', 'nip', 'alamat', 'telepon', 'unit_kerja'],
     });
 
     res.json(user);

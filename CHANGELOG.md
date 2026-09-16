@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-16 — TASK-034 — Bersihkan console production dan lindungi profil pengguna
+
+- **Status:** Selesai diimplementasikan dan terverifikasi; siap dipush serta dideploy ke staging.
+- **Ringkasan:** Menghilangkan request merah yang sebelumnya muncul saat pegawai tidak memiliki tugas aktif, membuang seluruh pemanggilan `console` dan `debugger` dari bundle production, menghentikan pengiriman hash password melalui endpoint profil, serta membersihkan field sensitif yang mungkin masih tersimpan pada `localStorage` browser dari release lama.
+- **File ditambahkan:** `backend/tests/unit/akun.profile.test.js`, `frontend/src/config/productionBuild.js`, `frontend/src/config/productionBuild.test.js`, dan `frontend/src/utils/auth.test.js`.
+- **File diubah:** `backend/src/controllers/akun.controller.js`, `backend/src/controllers/suratTugas.controller.js`, `backend/tests/integration/suratTugas.active.test.js`, `frontend/src/services/surat.service.js`, `frontend/src/services/surat.service.test.js`, `frontend/src/utils/auth.js`, `frontend/vite.config.js`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** `getProfil` hanya memilih atribut profil publik; `getAktifByPegawai` mengembalikan hasil kosong normal; `getSuratTugasAktifAtauNull` tetap memilih konteks surat mendatang/selesai tanpa bergantung pada HTTP error; `getUser` dan `sanitizeStoredUser` membuang field bernama password, token, atau secret; `productionBuildConfig` menghapus console/debugger hanya pada hasil build.
+- **Database:** Tidak ada tabel, kolom, index, enum, migration, credential, atau data permanen yang diubah. Integration test hanya membuat fixture sementara pada `catur_test` dan membersihkannya kembali.
+- **API:** `GET /api/surat-tugas/aktif` tetap mengembalikan objek surat ketika aktif dan `409 ACTIVE_ASSIGNMENT_CONFLICT` ketika ambigu. Kondisi normal tanpa tugas aktif berubah dari HTTP 404 menjadi HTTP 200 dengan `{ data: null, message }`. `GET /api/user/profil` tidak lagi memilih atau mengirim atribut `password`.
+- **Test otomatis:** Siklus RED mereproduksi kebocoran atribut password, fallback yang gagal memahami respons kosong 200, data sensitif lama pada storage, serta ketiadaan aturan strip console. GREEN: backend 69/69 lulus tanpa skip menggunakan PostgreSQL `catur_test`; frontend 62/62 lulus; lint backend dan ESLint file perubahan lulus; build production memproses 945 module.
+- **Verifikasi manual:** Bundle release `index-DElKOAtc.js` tidak mengandung marker `Memulai load data dashboard`, `Current user`, `Debug Presensi`, maupun pemanggilan `console.*`. Halaman tetap dapat memakai surat selesai sebagai konteks read-only tanpa menjadikannya tugas aktif pada tanggal WITA.
+- **Risiko/catatan:** Kontrak kosong 200 sengaja dipakai karena tidak memiliki tugas aktif bukan kesalahan jaringan. Client lama tetap dapat membaca objek surat aktif; selama rolling deployment singkat, frontend lama akan menerima envelope kosong tanpa crash tetapi banner fallback baru lengkap setelah frontend baru aktif. Error ekstensi Chrome berbentuk `VM... reportAllChanges/startTime` berada di luar bundle aplikasi.
+- **Rollback:** Kembalikan status kosong ke 404, hapus pengenalan envelope kosong dan konfigurasi build production, lalu tambahkan kembali atribut password pada profil hanya bila benar-benar diperlukan (tidak direkomendasikan). Tidak ada rollback database.
+- **Commit:** `fix: sanitize production console and active assignment response`.
+
 ### 2026-09-16 — TASK-033 — Deploy stabilisasi navigasi laporan
 
 - **Status:** Selesai dideploy ke `https://caturv2.gimmhost.my.id`.
