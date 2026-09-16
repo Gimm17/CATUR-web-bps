@@ -52,6 +52,10 @@ backend/public/
 /deploy/
 /release/
 
+# Export database lokal mengandung data aplikasi dan tidak boleh masuk repository.
+/database-export/*.sql
+/database-export/*.zip
+
 # Legacy duplicate clients and packaged artifacts kept locally for recovery.
 backend/Front-end Presensi/
 backend/Front-end Presensi Flutter/

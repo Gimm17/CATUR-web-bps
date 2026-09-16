@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-16 — TASK-038 — Export database untuk handoff deployment
+
+- **Status:** Selesai dibuat secara lokal dan siap dibagikan secara privat kepada atasan/deployer.
+- **Ringkasan:** Membuat export SQL portable dari schema aplikasi `public` pada database lokal terbaru untuk import ke PostgreSQL 10. File dikemas bersama panduan import dan metadata PostgreSQL 17 yang tidak kompatibel dengan PostgreSQL 10 telah dikeluarkan.
+- **File ditambahkan:** `database-export/README_IMPORT_DATABASE.md`. Artefak lokal yang sengaja diabaikan Git: `database-export/catur_dev_2026-09-16.sql` dan `database-export/catur_dev_2026-09-16.zip`.
+- **File diubah:** `.gitignore` dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Tidak ada.
+- **Database:** Tidak ada perubahan data, tabel, kolom, index, maupun migration. Export hanya membaca schema `public`; schema pembanding internal tidak ikut dibagikan.
+- **API:** Tidak ada perubahan endpoint atau kontrak respons.
+- **Test otomatis:** Validasi artefak memastikan file SQL tidak memuat schema pembanding maupun perintah `\\restrict`, `\\unrestrict`, `transaction_timeout`, dan `default_table_access_method` dari PostgreSQL 17. Isi ZIP diverifikasi memuat SQL serta panduan import.
+- **Verifikasi manual:** File ZIP siap pada `database-export/catur_dev_2026-09-16.zip`. Panduan mencantumkan import melalui `psql` dan pgAdmin serta peringatan kerahasiaan data.
+- **Risiko/catatan:** Export memuat data aplikasi dan hash password pengguna, sehingga wajib dibagikan hanya melalui kanal privat. File SQL dan ZIP dilindungi `.gitignore` agar tidak ikut ter-push ke GitHub.
+- **Rollback:** Tidak diperlukan karena export bersifat read-only. Hapus artefak lokal hanya setelah atasan mengonfirmasi salinan tersimpan aman.
+- **Commit:** `docs: add PostgreSQL handoff export guide`.
+
 ### 2026-09-16 — TASK-037 — Hapus dua akun login lokal tambahan
 
 - **Status:** Selesai pada database development lokal; database staging telah diverifikasi dan tidak memuat akun tersebut.
