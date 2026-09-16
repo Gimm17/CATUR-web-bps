@@ -13,9 +13,25 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-16 — TASK-035 — Deploy pembersihan console dan profil aman
+
+- **Status:** Selesai dideploy ke `https://caturv2.gimmhost.my.id`.
+- **Ringkasan:** Mempublikasikan backend dan frontend commit `50f958a` sehingga kondisi tanpa tugas aktif tidak lagi menghasilkan request merah, bundle production tidak mencetak debug console, dan endpoint profil tidak lagi mengekspos hash password.
+- **File ditambahkan:** Tidak ada pada source aplikasi; hosting menerima direktori staging release dan backup rollback baru.
+- **File diubah:** `CHANGELOG.md`; runtime hosting memperbarui `src/controllers/akun.controller.js`, `src/controllers/suratTugas.controller.js`, dan folder `public`.
+- **File dihapus:** Tidak ada. Folder `public` lama dipindahkan secara utuh ke backup rollback.
+- **Class/fungsi/komponen diubah:** Tidak ada perubahan source baru pada task deployment; task mempublikasikan `getProfil`, `getAktifByPegawai`, `getSuratTugasAktifAtauNull`, `sanitizeStoredUser`, dan konfigurasi build dari TASK-034.
+- **Database:** Tidak ada tabel, kolom, index, migration, credential, atau data PostgreSQL yang diubah. Database production tidak disentuh.
+- **API:** Smoke test terautentikasi menghasilkan HTTP 200 pada profil dengan field publik `id`, `nama`, `email`, `role`, `nip`, `alamat`, `telepon`, dan `unit_kerja` tanpa field sensitif. Endpoint aktif menghasilkan HTTP 200 serta `data: null` untuk akun yang tidak mempunyai perjalanan aktif hari ini.
+- **Test otomatis:** Sebelum deployment, backend 69/69 dan frontend 62/62 lulus; lint backend serta ESLint file perubahan lulus; build production berhasil. Setelah deployment, root dan asset `index-DElKOAtc.js` menghasilkan HTTP 200, sedangkan login uji tidak valid tetap HTTP 401.
+- **Verifikasi manual:** Bundle staging tidak mengandung marker `Memulai load data dashboard`, `Current user`, `Debug Presensi`, atau pemanggilan `console.*`. Pemeriksaan respons profil memastikan `hasSensitiveProfileField=false`; pemeriksaan surat aktif memastikan `activeDataIsNull=true` dengan status 200.
+- **Risiko/catatan:** Build production membuang seluruh pemanggilan console dari frontend, sehingga diagnosis production berikutnya sebaiknya memakai Network/API response atau layanan monitoring terstruktur. `.env`, credential Google, uploads, dan database tidak ditimpa.
+- **Rollback:** Backup tersedia di `/home/gimmhost/backups/caturv2-20260916-50f958a/`. Pulihkan dua controller dari subfolder `controllers`, ganti `public` dengan `public-previous`, lalu sentuh `tmp/restart.txt`.
+- **Commit:** `docs: record console cleanup deployment`.
+
 ### 2026-09-16 — TASK-034 — Bersihkan console production dan lindungi profil pengguna
 
-- **Status:** Selesai diimplementasikan dan terverifikasi; siap dipush serta dideploy ke staging.
+- **Status:** Selesai diimplementasikan, dipush ke GitHub, dan dideploy ke staging.
 - **Ringkasan:** Menghilangkan request merah yang sebelumnya muncul saat pegawai tidak memiliki tugas aktif, membuang seluruh pemanggilan `console` dan `debugger` dari bundle production, menghentikan pengiriman hash password melalui endpoint profil, serta membersihkan field sensitif yang mungkin masih tersimpan pada `localStorage` browser dari release lama.
 - **File ditambahkan:** `backend/tests/unit/akun.profile.test.js`, `frontend/src/config/productionBuild.js`, `frontend/src/config/productionBuild.test.js`, dan `frontend/src/utils/auth.test.js`.
 - **File diubah:** `backend/src/controllers/akun.controller.js`, `backend/src/controllers/suratTugas.controller.js`, `backend/tests/integration/suratTugas.active.test.js`, `frontend/src/services/surat.service.js`, `frontend/src/services/surat.service.test.js`, `frontend/src/utils/auth.js`, `frontend/vite.config.js`, dan `CHANGELOG.md`.
