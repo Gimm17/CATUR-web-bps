@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-09-16 — TASK-039 — Paket update penuh untuk server BPS lama
+
+- **Status:** Selesai dibuat dan diverifikasi secara lokal; siap diserahkan untuk deployment server BPS.
+- **Ringkasan:** Membuat paket update in-place berisi hasil build frontend production, source backend lengkap, tiga migration database berurutan, precheck, post-deploy verification, checksum SHA-256, dan panduan deployment/rollback. Strategi database memakai migration agar data produksi lama tetap dipertahankan, bukan menimpa database dengan dump lokal.
+- **File ditambahkan:** `docs/deployment/PANDUAN_UPDATE_SERVER_BPS.md`, `docs/deployment/00_PRECHECK_DATABASE.sql`, dan `docs/deployment/04_VERIFY_DATABASE.sql`. Artefak lokal yang diabaikan Git: `release/CATUR-BPS-UPDATE-20260916-FINAL.zip` beserta folder staging paketnya.
+- **File diubah:** `CHANGELOG.md`; `backend/public` diregenerasi dari build frontend dan tetap diabaikan Git.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Tidak ada perubahan logika aplikasi baru; task ini mengemas hasil seluruh perbaikan dan fitur sebelumnya.
+- **Database:** Tidak ada data yang dihapus atau diganti. Ketiga migration dijalankan ulang secara idempotent pada `catur_dev`; hasil verifikasi menunjukkan 97 surat tugas memiliki 97 tujuan, struktur baru lengkap, tidak ada surat tanpa tujuan, tidak ada laporan duplikat, dan 17 presensi legacy yang tidak dapat dipetakan aman tetap bernilai null.
+- **API:** Tidak ada kontrak endpoint baru pada task packaging.
+- **Test otomatis:** Build production berhasil memproses 945 module. Precheck, ketiga migration, dan post-deploy verification SQL seluruhnya selesai dengan exit code 0. Paket dipindai agar tidak memuat `.env`, credential Google, token, uploads, `node_modules`, startup `index.js`, atau dump penuh database.
+- **Verifikasi manual:** Struktur paket memuat `public`, `src`, `migrations`, `database-tools`, panduan deploy, changelog, versi, dan manifest checksum. Panduan mewajibkan backup, migration berurutan, pergantian folder dengan backup, restart, smoke test, dan prosedur rollback.
+- **Risiko/catatan:** Migration integritas laporan akan berhenti jika database resmi memiliki pasangan `surat_tugas_id`/`pegawai_id` ganda; precheck disediakan untuk mendeteksinya sebelum perubahan. File startup dan secret server resmi sengaja tidak disertakan agar tidak bentrok.
+- **Rollback:** Pulihkan database, `src`, dan `public` dari backup yang diwajibkan panduan deployment.
+- **Commit:** `docs: add BPS in-place update deployment kit`.
+
 ### 2026-09-16 — TASK-038 — Export database untuk handoff deployment
 
 - **Status:** Selesai dibuat secara lokal dan siap dibagikan secara privat kepada atasan/deployer.
