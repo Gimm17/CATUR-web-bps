@@ -117,7 +117,7 @@ Uji minimal:
 3. Tagging Perjadin menampilkan tugas aktif/berakhir dengan benar.
 4. Laporan & Statistik membuka surat yang dipilih.
 5. Daftar Laporan tampil terpisah.
-6. Laporan selesai masih dapat dibuka dan hanya dapat diedit dalam batas tujuh hari serta sebelum diproses keuangan.
+6. Laporan selesai masih dapat dibuka dan hanya dapat diedit dalam batas sepuluh hari kalender WITA serta sebelum diproses keuangan.
 7. Unduhan surat tugas dan PDF laporan bekerja.
 8. Upload foto, nota, tanda tangan, dan file laporan tidak kehilangan file lama.
 
@@ -129,4 +129,3 @@ Jika aplikasi gagal setelah restart:
 2. Pulihkan folder `src` dan `public` dari backup.
 3. Pulihkan database dari backup `catur-before-update.backup` hanya jika migration perlu dibatalkan.
 4. Restart aplikasi dan periksa log Passenger/Node.
-

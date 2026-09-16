@@ -187,14 +187,14 @@ describe('LaporanPegawai route context', () => {
         data: {
           code: 'REPORT_DEADLINE_PASSED',
           message: 'Laporan ditutup',
-          report_window: { reason: 'Batas edit tujuh hari WITA telah lewat' },
+          report_window: { reason: 'Batas edit sepuluh hari WITA telah lewat' },
         },
       },
     });
 
     renderPage();
 
-    expect(await screen.findByText('Batas edit tujuh hari WITA telah lewat')).toBeVisible();
+    expect(await screen.findByText('Batas edit sepuluh hari WITA telah lewat')).toBeVisible();
   });
 
   it('menampilkan detail deadline dan menonaktifkan seluruh aksi edit saat terkunci', async () => {

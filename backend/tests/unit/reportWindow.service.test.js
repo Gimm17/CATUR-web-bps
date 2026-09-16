@@ -15,7 +15,7 @@ test('differenceInBusinessDates menghitung selisih kalender lintas bulan', () =>
   assert.equal(differenceInBusinessDates('2026-10-02', '2026-09-26'), -6);
 });
 
-test('deadline tujuh hari dihitung dari tanggal selesai tujuan paling akhir', () => {
+test('deadline sepuluh hari dihitung dari tanggal selesai tujuan paling akhir', () => {
   const result = buildReportWindow({
     tujuan: [
       { urutan: 2, tanggal_selesai: '2026-09-19' },
@@ -29,9 +29,9 @@ test('deadline tujuh hari dihitung dari tanggal selesai tujuan paling akhir', ()
   assert.deepEqual(result, {
     timezone: 'Asia/Makassar',
     trip_end_date: '2026-09-19',
-    deadline_date: '2026-09-26',
+    deadline_date: '2026-09-29',
     editable: true,
-    remaining_days: 6,
+    remaining_days: 9,
     lock_reason: null,
   });
 });
@@ -47,7 +47,7 @@ test('laporan tetap editable pada seluruh hari terakhir deadline WITA', () => {
   const result = buildReportWindow({
     tujuan: [{ tanggal_selesai: '2026-09-19' }],
     status: 'dikirim',
-    now: new Date('2026-09-26T23:59:59+08:00'),
+    now: new Date('2026-09-29T23:59:59+08:00'),
   });
 
   assert.equal(result.editable, true);
@@ -59,7 +59,7 @@ test('laporan terkunci ketika tanggal WITA melewati deadline', () => {
   const result = buildReportWindow({
     tujuan: [{ tanggal_selesai: '2026-09-19' }],
     status: 'draft',
-    now: new Date('2026-09-27T00:00:00+08:00'),
+    now: new Date('2026-09-30T00:00:00+08:00'),
   });
 
   assert.equal(result.editable, false);
@@ -129,4 +129,3 @@ test('tanggal selesai wajib tersedia dan valid', () => {
     /Invalid business date/
   );
 });
-

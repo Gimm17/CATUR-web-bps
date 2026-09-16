@@ -9,7 +9,7 @@
 
 Sistem saat ini dapat memilih surat tugas atau laporan terakhir secara otomatis ketika pegawai membuka halaman progres. Akibatnya, pegawai tidak selalu dapat membuka kegiatan lama yang belum selesai, dan operasi seperti mengubah laporan harian, mengunggah tanda tangan, mengunggah nota, atau mengirim laporan akhir berisiko diterapkan ke surat tugas yang bukan dipilih pengguna.
 
-Satu perjalanan juga perlu mendukung beberapa tujuan dalam satu surat tugas. Setiap tujuan memiliki tanggal sendiri, tetapi seluruh tujuan tetap menghasilkan satu laporan akhir. Setelah tujuan terakhir selesai, pegawai diberi tujuh hari kalender untuk menyelesaikan atau memperbaiki laporan.
+Satu perjalanan juga perlu mendukung beberapa tujuan dalam satu surat tugas. Setiap tujuan memiliki tanggal sendiri, tetapi seluruh tujuan tetap menghasilkan satu laporan akhir. Setelah tujuan terakhir selesai, pegawai diberi sepuluh hari kalender untuk menyelesaikan atau memperbaiki laporan.
 
 ## 2. Keputusan Bisnis
 
@@ -22,7 +22,7 @@ Satu perjalanan juga perlu mendukung beberapa tujuan dalam satu surat tugas. Set
 7. Satu pegawai hanya mempunyai satu record laporan akhir untuk satu surat tugas.
 8. Riwayat surat tugas tidak dihapus atau digantikan oleh surat tugas baru.
 9. Pengguna harus memilih record berdasarkan `surat_tugas_id`; backend tidak boleh memilih record terbaru sebagai pengganti pilihan pengguna.
-10. Batas penyelesaian laporan adalah tujuh hari kalender setelah tanggal selesai tujuan terakhir.
+10. Batas penyelesaian laporan adalah sepuluh hari kalender setelah tanggal selesai tujuan terakhir.
 11. Jika tujuan terakhir selesai 19 September 2026, laporan dapat diubah sampai 26 September 2026 pukul 23:59:59 WITA.
 12. Laporan masih dapat diubah ketika belum ada laporan, berstatus `draft`, atau berstatus `dikirim`, selama belum melewati deadline.
 13. Laporan berstatus `dikirim` dengan catatan keuangan tetap dapat diperbaiki dan dikirim ulang selama belum melewati deadline.
@@ -84,7 +84,7 @@ Respons progres wajib memuat:
   "report_window": {
     "timezone": "Asia/Makassar",
     "trip_end_date": "2026-09-19",
-    "deadline_date": "2026-09-26",
+    "deadline_date": "2026-09-29",
     "editable": true,
     "remaining_days": 7,
     "lock_reason": null
@@ -119,7 +119,7 @@ Endpoint `/api/perjalanan`, `/api/perjalanan/kirim`, `/api/perjalanan/ttd-pegawa
 8. Tujuan aktif berubah sesuai tanggal WITA.
 9. Satu surat multi-tujuan menghasilkan satu laporan akhir.
 10. Pengiriman ulang tidak menambah record laporan kedua.
-11. Laporan dapat diedit sampai deadline tujuh hari.
+11. Laporan dapat diedit sampai deadline sepuluh hari.
 12. Laporan ditolak setelah deadline.
 13. Laporan ditolak setelah masuk status proses keuangan.
 14. Endpoint lama tidak memilih surat terbaru ketika tidak ada surat aktif.
@@ -132,4 +132,3 @@ Endpoint `/api/perjalanan`, `/api/perjalanan/kirim`, `/api/perjalanan/ttd-pegawa
 - Pemulihan data production lama tanpa full database dump dari hosting.
 - Perubahan alur persetujuan keuangan dan tanda tangan atasan selain aturan penguncian edit.
 - Penghapusan endpoint legacy sebelum mobile dimigrasikan.
-

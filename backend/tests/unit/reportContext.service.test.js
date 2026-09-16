@@ -76,7 +76,7 @@ test('context memuat tujuan terurut, laporan pasangan surat-pegawai, dan report 
 
   assert.deepEqual(context.surat.tujuan.map((item) => item.urutan), [1, 2]);
   assert.equal(context.laporan, laporan);
-  assert.equal(context.reportWindow.deadline_date, '2026-09-26');
+  assert.equal(context.reportWindow.deadline_date, '2026-09-29');
   assert.equal(context.reportWindow.editable, true);
   assert.deepEqual(dependencies.calls.laporan.where, {
     surat_tugas_id: 88,

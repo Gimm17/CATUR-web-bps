@@ -1,4 +1,4 @@
-export const CHANGELOG_VERSION = '2026-09-15-task-029';
+export const CHANGELOG_VERSION = '2026-09-16-task-040';
 export const SHOW_CHANGELOG_AFTER_LOGIN_KEY = 'catur:show-changelog-after-login';
 export const DISMISSED_CHANGELOG_VERSION_KEY = 'catur:changelog:dismissed-version';
 export const DISMISSED_CHANGELOG_COOKIE = 'catur_changelog_dismissed';
@@ -36,7 +36,7 @@ export const RELEASE_NOTES = [
     title: 'Laporan selesai tetap dapat dibuka dan diedit',
     summary: 'Berakhirnya perjalanan tidak langsung menutup akses ke halaman laporan.',
     before: 'Surat selesai dapat terlihat seperti tidak memiliki akses laporan atau langsung diarahkan ke PDF.',
-    logic: 'Batas edit dihitung sampai tujuh hari kalender WITA setelah tanggal selesai tujuan terakhir. Status draft dan dikirim masih dapat diperbaiki; mulai status dicek_keuangan laporan dikunci.',
+    logic: 'Batas edit dihitung sampai sepuluh hari kalender WITA setelah tanggal selesai tujuan terakhir. Status draft dan dikirim masih dapat diperbaiki; mulai status dicek_keuangan laporan dikunci.',
     impact: 'Pegawai memiliki waktu koreksi yang jelas, sementara dokumen yang sedang diproses keuangan tetap konsisten.',
     tone: 'violet',
   },

@@ -6,7 +6,7 @@ import App from './App';
 
 const SHOW_AFTER_LOGIN_KEY = 'catur:show-changelog-after-login';
 const DISMISSED_VERSION_KEY = 'catur:changelog:dismissed-version';
-const CURRENT_VERSION = '2026-09-15-task-029';
+const CURRENT_VERSION = '2026-09-16-task-040';
 
 function prepareSuccessfulLoginRedirect() {
   localStorage.setItem('token', 'valid-token');

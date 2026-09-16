@@ -131,12 +131,12 @@ test('boundary WITA tetap editable satu detik sebelum pergantian hari dan terkun
   const beforeMidnight = buildReportWindow({
     tujuan: [{ tanggal_selesai: '2026-09-19' }],
     status: 'draft',
-    now: new Date('2026-09-26T15:59:59Z'),
+    now: new Date('2026-09-29T15:59:59Z'),
   });
   const afterMidnight = buildReportWindow({
     tujuan: [{ tanggal_selesai: '2026-09-19' }],
     status: 'draft',
-    now: new Date('2026-09-26T16:00:00Z'),
+    now: new Date('2026-09-29T16:00:00Z'),
   });
 
   assert.equal(beforeMidnight.editable, true);
@@ -166,7 +166,7 @@ test('laporan harian dapat diedit tepat pada hari terakhir deadline WITA', {
 }, async (t) => {
   const baseUrl = await startServer(t);
   const fixture = await createFixture(t, {
-    tripEndDate: addBusinessDays(getBusinessDate(), -7),
+    tripEndDate: addBusinessDays(getBusinessDate(), -10),
   });
 
   const response = await updateDailyReport(baseUrl, fixture, 'Hasil kegiatan hari terakhir');
@@ -181,7 +181,7 @@ test('laporan harian ditolak satu hari setelah deadline WITA', {
 }, async (t) => {
   const baseUrl = await startServer(t);
   const fixture = await createFixture(t, {
-    tripEndDate: addBusinessDays(getBusinessDate(), -8),
+    tripEndDate: addBusinessDays(getBusinessDate(), -11),
   });
 
   const response = await updateDailyReport(baseUrl, fixture, 'Tidak boleh tersimpan');
@@ -231,7 +231,7 @@ test('adapter legacy memakai handler yang sama dan menandai deprecation', {
 }, async (t) => {
   const baseUrl = await startServer(t);
   const fixture = await createFixture(t, {
-    tripEndDate: addBusinessDays(getBusinessDate(), -7),
+    tripEndDate: addBusinessDays(getBusinessDate(), -10),
   });
 
   const response = await updateDailyReport(baseUrl, fixture, 'Laporan melalui adapter', true);
@@ -246,7 +246,7 @@ test('kirim laporan akhir yang terkunci mengembalikan report window', {
 }, async (t) => {
   const baseUrl = await startServer(t);
   const fixture = await createFixture(t, {
-    tripEndDate: addBusinessDays(getBusinessDate(), -8),
+    tripEndDate: addBusinessDays(getBusinessDate(), -11),
   });
 
   const response = await fetch(

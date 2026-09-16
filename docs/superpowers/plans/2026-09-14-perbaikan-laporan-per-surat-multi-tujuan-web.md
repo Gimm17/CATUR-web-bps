@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Memastikan seluruh progres dan operasi laporan web terikat pada surat tugas yang dipilih, mendukung satu laporan untuk beberapa tujuan, mempertahankan riwayat, dan menerapkan masa edit tujuh hari berdasarkan WITA.
+**Goal:** Memastikan seluruh progres dan operasi laporan web terikat pada surat tugas yang dipilih, mendukung satu laporan untuk beberapa tujuan, mempertahankan riwayat, dan menerapkan masa edit sepuluh hari berdasarkan WITA.
 
 **Architecture:** Backend menyediakan report context yang memvalidasi kepemilikan `surat_tugas_id`, menghitung deadline secara terpusat, dan digunakan oleh semua endpoint read/write. Frontend memakai rute `/laporan/:suratId` sebagai satu-satunya halaman progres/edit, sedangkan halaman riwayat berfungsi sebagai pemilih record. Endpoint tanpa ID dipertahankan sementara untuk mobile, tetapi tidak boleh fallback ke record terbaru.
 
@@ -16,7 +16,7 @@
 - Gunakan `surat_tugas_id` eksplisit untuk seluruh operasi laporan web.
 - Backend wajib memvalidasi kepemilikan record dan menjadi otoritas izin edit.
 - Tanggal bisnis menggunakan `Asia/Makassar`.
-- Deadline adalah tujuh hari kalender setelah tanggal selesai tujuan terakhir, inklusif sampai pukul 23:59:59 WITA.
+- Deadline adalah sepuluh hari kalender setelah tanggal selesai tujuan terakhir, inklusif sampai pukul 23:59:59 WITA.
 - Satu pasangan `(surat_tugas_id, pegawai_id)` hanya boleh memiliki satu laporan akhir.
 - Endpoint legacy tetap aktif sampai mobile dimigrasikan, tetapi tidak boleh fallback ke surat terbaru.
 - Jangan commit `.env`, credential Google, uploads, dump database, atau token.
@@ -37,7 +37,7 @@
 | `backend/src/services/reportContext.service.js` | Memuat surat milik pengguna beserta tujuan dan report window |
 | `backend/src/middlewares/reportContext.middleware.js` | Memasang report context tervalidasi ke request |
 | `backend/migrations/20260914-enforce-report-integrity.sql` | Menambahkan enum `draft` dan unique index laporan |
-| `backend/tests/unit/reportWindow.service.test.js` | Unit test aturan tujuh hari dan status lock |
+| `backend/tests/unit/reportWindow.service.test.js` | Unit test aturan sepuluh hari dan status lock |
 | `backend/tests/integration/laporan.explicit-assignment.test.js` | Integration test isolasi Surat A dan Surat B |
 | `backend/tests/integration/laporan.edit-window.test.js` | Integration test deadline dan status lock |
 | `backend/tests/integration/laporan.schema.test.js` | Integration test enum dan unique index |
@@ -91,7 +91,7 @@
 | Semua write terikat pada surat terpilih | 3, 5, 7, 10, 13 |
 | Kepemilikan dan isolasi antarpegawai | 3, 4, 5, 6, 13 |
 | Satu laporan akhir per surat dan pegawai | 2, 5, 13 |
-| Deadline tujuh hari kalender WITA | 1, 6, 11, 13 |
+| Deadline sepuluh hari kalender WITA | 1, 6, 11, 13 |
 | Edit `draft`/`dikirim` dan lock proses keuangan | 1, 6, 11, 13 |
 | Satu surat memiliki beberapa tujuan | 12, 13 |
 | Tujuan aktif mengikuti tanggal WITA | 1, 4, 12, 13 |
@@ -114,10 +114,10 @@
 - Consumes: `getBusinessDate(now)`, `addBusinessDays(date, days)`, dan array tujuan terurut.
 - Produces: `getLastDestinationEndDate({ tujuan, fallbackEndDate })`, `buildReportWindow({ tujuan, fallbackEndDate, status, now })`, `assertReportEditable(reportWindow)`, dan object `{ timezone, trip_end_date, deadline_date, editable, remaining_days, lock_reason }`.
 
-- [x] **Step 1: Tulis test tanggal akhir dan deadline tujuh hari**
+- [x] **Step 1: Tulis test tanggal akhir dan deadline sepuluh hari**
 
 ```js
-test('deadline tujuh hari dihitung dari tujuan terakhir', () => {
+test('deadline sepuluh hari dihitung dari tujuan terakhir', () => {
   const result = buildReportWindow({
     tujuan: [
       { tanggal_selesai: '2026-09-16' },
@@ -127,7 +127,7 @@ test('deadline tujuh hari dihitung dari tujuan terakhir', () => {
     now: new Date('2026-09-20T00:00:00+08:00'),
   });
   assert.equal(result.trip_end_date, '2026-09-19');
-  assert.equal(result.deadline_date, '2026-09-26');
+  assert.equal(result.deadline_date, '2026-09-29');
   assert.equal(result.editable, true);
 });
 ```
@@ -314,7 +314,7 @@ await assert.rejects(
 
 ```js
 assert.deepEqual(context.surat.tujuan.map((item) => item.urutan), [1, 2]);
-assert.equal(context.reportWindow.deadline_date, '2026-09-26');
+assert.equal(context.reportWindow.deadline_date, '2026-09-29');
 ```
 
 - [x] **Step 3: Jalankan test dan pastikan gagal karena service belum ada**
@@ -1021,7 +1021,7 @@ git commit -m "feat: show multi-destination report timeline"
 
 Fixture membuat Surat A dan B, presensi berbeda, laporan berbeda, serta memastikan semua GET/POST/PUT tetap terisolasi berdasarkan ID.
 
-- [x] **Step 2: Tambahkan regression scenario tujuh hari WITA**
+- [x] **Step 2: Tambahkan regression scenario sepuluh hari WITA**
 
 Gunakan clock tetap untuk hari selesai, deadline, satu detik sebelum pergantian tanggal WITA, dan satu detik setelah deadline.
 
@@ -1104,7 +1104,7 @@ git commit -m "test: verify report selection and deadline flow"
 - [x] Satu surat hanya mempunyai satu laporan akhir per pegawai.
 - [x] Semua tujuan tampil dan tujuan aktif sesuai tanggal WITA.
 - [x] Riwayat lama dapat dibuka kembali melalui ID.
-- [x] Deadline tujuh hari tampil dan ditegakkan backend.
+- [x] Deadline sepuluh hari tampil dan ditegakkan backend.
 - [x] Backend test dan lint lulus.
 - [ ] Frontend test, lint, dan build lulus.
 - [ ] QA manual admin dan pegawai lulus.

@@ -6,6 +6,7 @@ const {
 } = require('../utils/businessDate');
 
 const EDITABLE_STATUSES = new Set(['', 'draft', 'dikirim']);
+const REPORT_EDIT_WINDOW_DAYS = 10;
 
 function normalizeDate(value) {
   return addBusinessDays(value, 0);
@@ -37,7 +38,7 @@ function buildReportWindow({
   now = new Date(),
 } = {}) {
   const tripEndDate = getLastDestinationEndDate({ tujuan, fallbackEndDate });
-  const deadlineDate = addBusinessDays(tripEndDate, 7);
+  const deadlineDate = addBusinessDays(tripEndDate, REPORT_EDIT_WINDOW_DAYS);
   const currentDate = getBusinessDate(now);
   const normalizedStatus = String(status || '').toLowerCase();
   const statusLocked = !EDITABLE_STATUSES.has(normalizedStatus);
@@ -81,4 +82,3 @@ module.exports = {
   buildReportWindow,
   assertReportEditable,
 };
-
