@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom";
 import { 
   FaTachometerAlt, 
   FaFileAlt,
@@ -7,16 +7,19 @@ import {
   FaUsers,
   FaSignOutAlt,
   FaInfoCircle,
-  FaUser,
-  FaChartBar
+  FaTimes
 } from "react-icons/fa";
 import { useState, useEffect } from "react";
+import { useSidebar } from "../contexts/SidebarContext";
 import '../css/sidebar.css';
 
 export default function SidebarAdmin() {
   const location = useLocation();
   const currentYear = new Date().getFullYear();
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const { isSidebarCollapsed, isMobileOpen, closeMobileSidebar } = useSidebar();
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -29,15 +32,204 @@ export default function SidebarAdmin() {
 
   // Handle logout
   const handleLogout = () => {
+    closeMobileSidebar();
     localStorage.clear();
     window.location.href = "/";
   };
 
-  // Jika mobile, render bottom navigation
-  if (isMobile) {
-    return (
-      <>
-        {/* Bottom Navigation Bar untuk Mobile */}
+  return (
+    <>
+      {/* Sidebar Panel / Off-Canvas Drawer */}
+      <aside
+        className={`main-sidebar sidebar-dark-primary elevation-4 sensus-sidebar ${
+          isSidebarCollapsed ? 'collapsed' : ''
+        } ${isMobileOpen ? 'mobile-open' : ''}`}
+      >
+        {/* Brand dengan logo BPS */}
+        <div className="sensus-brand">
+          {/* Tombol close drawer untuk layar tablet/mobile */}
+          <button
+            type="button"
+            className="sensus-sidebar-close-btn"
+            onClick={closeMobileSidebar}
+            aria-label="Tutup Menu"
+            title="Tutup Menu"
+          >
+            <FaTimes />
+          </button>
+
+          <div className="brand-logo-container">
+            <div className="sensus-logo">
+              <div className="bps-logo">
+                <img 
+                  src="/img/logo.png" 
+                  alt="Logo BPS" 
+                  className="bps-logo-img"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    if (e.target.nextElementSibling) {
+                      e.target.nextElementSibling.style.display = 'flex';
+                    }
+                  }}
+                />
+                <div className="bps-logo-fallback">
+                  <span>BPS</span>
+                </div>
+              </div>
+              <div className="logo-text">
+                <h3 className="brand-title">CATUR</h3>
+                <span className="brand-subtitle">Control Activity And Time Use Record</span>
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/dashboard-admin"
+            className="brand-link text-decoration-none"
+            onClick={closeMobileSidebar}
+          >
+            <div className="brand-text-container">
+              <span className="brand-text fw-bold sensus-brand-text">
+                BADAN PUSAT STATISTIK
+              </span>
+              <span className="brand-text fw-bold sensus-brand-text">
+                PROVINSI SULAWESI TENGAH
+              </span>
+              <small className="brand-slogan">Mudah, Transparan dan Berkah</small>
+            </div>
+          </Link>
+        </div>
+
+        {/* Sidebar Navigation */}
+        <div className="sidebar">
+          <nav className="mt-3">
+            <ul
+              className="nav nav-pills nav-sidebar flex-column sensus-nav"
+              data-lte-toggle="treeview"
+              role="menu"
+            >
+              {/* Dashboard Admin */}
+              <li className="nav-item sensus-nav-item">
+                <Link
+                  to="/dashboard-admin"
+                  className={`nav-link sensus-nav-link ${
+                    location.pathname === "/dashboard-admin" ? "active" : ""
+                  }`}
+                  onClick={closeMobileSidebar}
+                >
+                  <i className="nav-icon"><FaTachometerAlt /></i>
+                  <p>Dashboard Admin</p>
+                </Link>
+              </li>
+
+              {/* Buat Surat Tugas */}
+              <li className="nav-item sensus-nav-item">
+                <Link
+                  to="/admin/surat-tugas/create"
+                  className={`nav-link sensus-nav-link ${
+                    location.pathname === "/admin/surat-tugas/create" ? "active" : ""
+                  }`}
+                  onClick={closeMobileSidebar}
+                >
+                  <i className="nav-icon"><FaFileAlt /></i>
+                  <p>Buat Surat Tugas</p>
+                  <span className="new-badge">NEW</span>
+                </Link>
+              </li>
+
+              {/* Kelola Daerah Presensi */}
+              <li className="nav-item sensus-nav-item">
+                <Link
+                  to="/admin-daerah"
+                  className={`nav-link sensus-nav-link ${
+                    location.pathname === "/admin-daerah" ? "active" : ""
+                  }`}
+                  onClick={closeMobileSidebar}
+                >
+                  <i className="nav-icon"><FaMapMarkerAlt /></i>
+                  <p>Kelola Daerah Presensi</p>
+                  <span className="sensus-badge">NEW</span>
+                </Link>
+              </li>
+
+              {/* Peta Sulawesi Tengah */}
+              <li className="nav-item sensus-nav-item">
+                <Link
+                  to="/admin/peta-sulteng"
+                  className={`nav-link sensus-nav-link ${
+                    location.pathname === "/admin/peta-sulteng" ? "active" : ""
+                  }`}
+                  onClick={closeMobileSidebar}
+                >
+                  <i className="nav-icon"><FaMap /></i>
+                  <p>Peta Sulawesi Tengah</p>
+                </Link>
+              </li>
+
+              {/* Manajemen Akun */}
+              <li className="nav-item sensus-nav-item">
+                <Link
+                  to="/pengaturan-akun"
+                  className={`nav-link sensus-nav-link ${
+                    location.pathname === "/pengaturan-akun" ? "active" : ""
+                  }`}
+                  onClick={closeMobileSidebar}
+                >
+                  <i className="nav-icon"><FaUsers /></i>
+                  <p>Manajemen Akun</p>
+                </Link>
+              </li>
+
+              {/* Informasi Aplikasi */}
+              <li className="nav-item sensus-nav-item">
+                <Link
+                  to="/informasi-catur"
+                  className={`nav-link sensus-nav-link ${
+                    location.pathname === "/informasi-catur" ? "active" : ""
+                  }`}
+                  onClick={closeMobileSidebar}
+                >
+                  <i className="nav-icon"><FaInfoCircle /></i>
+                  <p>Informasi Aplikasi</p>
+                </Link>
+              </li>
+
+              {/* Divider */}
+              <li className="nav-divider">
+                <hr className="sensus-divider" />
+              </li>
+
+              {/* Logout */}
+              <li className="nav-item sensus-nav-item">
+                <Link
+                  to="/logout"
+                  className="nav-link sensus-nav-link logout-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLogout();
+                  }}
+                >
+                  <i className="nav-icon"><FaSignOutAlt /></i>
+                  <p>Keluar Sistem</p>
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          {/* Footer Sidebar */}
+          <div className="sidebar-footer sensus-footer">
+            <div className="sensus-tagline">
+              <p className="mb-1">"Presensi Akurat, Data Berkualitas"</p>
+              <small>© {currentYear} BPS PROVINSI SULAWESI TENGAH</small>
+            </div>
+            <div className="sensus-watermark">
+              <span>CATUR - PELAPORAN PERJALANAN DINAS</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Bottom Navigation Bar untuk Mobile Phone (<= 768px) */}
+      {isMobile && (
         <nav className="mobile-bottom-nav">
           <div className="mobile-nav-container">
             <Link 
@@ -102,180 +294,7 @@ export default function SidebarAdmin() {
             </Link>
           </div>
         </nav>
-
-        {/* Tombol Logout Floating untuk Mobile */}
-        <button 
-          className="mobile-logout-btn" 
-          onClick={handleLogout}
-          title="Keluar Sistem"
-        >
-          <FaSignOutAlt />
-        </button>
-      </>
-    );
-  }
-
-  // Jika desktop, render sidebar normal
-  return (
-    <aside className="main-sidebar sidebar-dark-primary elevation-4 sensus-sidebar">
-      {/* Brand dengan logo BPS */}
-     <div className="sensus-brand">
-        <div className="brand-logo-container">
-          <div className="sensus-logo">
-            <div className="bps-logo">
-              <img 
-                src="/img/logo.png" 
-                alt="Logo BPS" 
-                className="bps-logo-img"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextElementSibling.style.display = 'flex';
-                }}
-              />
-              <div className="bps-logo-fallback">
-                <span>BPS</span>
-              </div>
-            </div>
-            <div className="logo-text">
-              <h3 className="brand-title">CATUR</h3>
-              <span className="brand-subtitle">Control Activity And Time Use Record</span>
-            </div>
-          </div>
-          
-        </div>
-        <Link to="/dashboard-admin" className="brand-link text-decoration-none">
-          <div className="brand-text-container">
-            <span className="brand-text fw-bold sensus-brand-text">
-              BADAN PUSAT STATISTIK
-            </span>
-            <span className="brand-text fw-bold sensus-brand-text">
-              PROVINSI SULAWESI TENGAH
-            </span>
-            <small className="brand-slogan">Mudah, Transparan dan Berkah</small>
-          </div>
-        </Link>
-      </div>
-
-      {/* Sidebar Navigation */}
-      <div className="sidebar">
-        <nav className="mt-3">
-          <ul
-            className="nav nav-pills nav-sidebar flex-column sensus-nav"
-            data-lte-toggle="treeview"
-            role="menu"
-          >
-            {/* Dashboard Admin */}
-            <li className="nav-item sensus-nav-item">
-              <Link
-                to="/dashboard-admin"
-                className={`nav-link sensus-nav-link ${
-                  location.pathname === "/dashboard-admin" ? "active" : ""
-                }`}
-              >
-                <i className="nav-icon"><FaTachometerAlt /></i>
-                <p>Dashboard Admin</p>
-              </Link>
-            </li>
-
-            {/* Buat Surat Tugas */}
-            <li className="nav-item sensus-nav-item">
-              <Link
-                to="/admin/surat-tugas/create"
-                className={`nav-link sensus-nav-link ${
-                  location.pathname === "/admin/surat-tugas/create" ? "active" : ""
-                }`}
-              >
-                <i className="nav-icon"><FaFileAlt /></i>
-                <p>Buat Surat Tugas</p>
-                <span className="new-badge">NEW</span>
-              </Link>
-            </li>
-
-            {/* Kelola Daerah Presensi */}
-            <li className="nav-item sensus-nav-item">
-              <Link
-                to="/admin-daerah"
-                className={`nav-link sensus-nav-link ${
-                  location.pathname === "/admin-daerah" ? "active" : ""
-                }`}
-              >
-                <i className="nav-icon"><FaMapMarkerAlt /></i>
-                <p>Kelola Daerah Presensi</p>
-                <span className="sensus-badge">NEW</span>
-              </Link>
-            </li>
-
-            <li className="nav-item sensus-nav-item">
-              <Link
-                to="/admin/peta-sulteng"
-                className={`nav-link sensus-nav-link ${
-                  location.pathname === "/admin/peta-sulteng" ? "active" : ""
-                }`}
-              >
-                <i className="nav-icon"><FaMap /></i>
-                <p>Peta Sulawesi Tengah</p>
-              </Link>
-            </li>
-
-            {/* Manajemen Akun */}
-            <li className="nav-item sensus-nav-item">
-              <Link
-                to="/pengaturan-akun"
-                className={`nav-link sensus-nav-link ${
-                  location.pathname === "/pengaturan-akun" ? "active" : ""
-                }`}
-              >
-                <i className="nav-icon"><FaUsers /></i>
-                <p>Manajemen Akun</p>
-              </Link>
-            </li>
-
-            {/* Informasi Aplikasi */}
-            <li className="nav-item sensus-nav-item">
-              <Link
-                to="/informasi-catur"
-                className={`nav-link sensus-nav-link ${
-                  location.pathname === "/informasi-catur" ? "active" : ""
-                }`}
-              >
-                <i className="nav-icon"><FaInfoCircle /></i>
-                <p>Informasi Aplikasi</p>
-              </Link>
-            </li>
-
-            {/* Divider */}
-            <li className="nav-divider">
-              <hr className="sensus-divider" />
-            </li>
-
-            {/* Logout */}
-            <li className="nav-item sensus-nav-item">
-              <Link
-                to="/logout"
-                className="nav-link sensus-nav-link logout-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleLogout();
-                }}
-              >
-                <i className="nav-icon"><FaSignOutAlt /></i>
-                <p>Keluar Sistem</p>
-              </Link>
-            </li>
-          </ul>
-        </nav>
-
-        {/* Footer Sidebar */}
-        <div className="sidebar-footer sensus-footer">
-          <div className="sensus-tagline">
-            <p className="mb-1">"Presensi Akurat, Data Berkualitas"</p>
-            <small>© {currentYear} BPS PROVINSI SULAWESI TENGAH</small>
-          </div>
-          <div className="sensus-watermark">
-            <span>CATUR - PELAPORAN PERJALANAN DINAS</span>
-          </div>
-        </div>
-      </div>
-    </aside>
+      )}
+    </>
   );
 }

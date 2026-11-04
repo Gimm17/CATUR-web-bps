@@ -21,6 +21,29 @@
   position: sticky;
   top: 0;
   z-index: 1030;
+  margin-left: var(--sidebar-width, 270px) !important;
+  width: calc(100% - var(--sidebar-width, 270px)) !important;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 992px) {
+  body.sidebar-collapse .sensus-navbar,
+  body.sidebar-collapsed .sensus-navbar,
+  .sensus-navbar.collapsed {
+    margin-left: var(--sidebar-collapsed-width, 70px) !important;
+    width: calc(100% - var(--sidebar-collapsed-width, 70px)) !important;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .sensus-navbar {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 0 14px;
+  }
+  .sensus-menu-toggle {
+    display: flex !important;
+  }
 }
 
 /* ===== LEFT SIDEBAR ===== */
@@ -46,7 +69,7 @@
 
 .sensus-menu-toggle:hover {
   background: var(--secondary-blue) !important;
-  transform: rotate(90deg);
+  opacity: 0.95;
 }
 
 .sensus-menu-toggle i {
@@ -691,9 +714,9 @@
     display: none !important;
   }
   
-  /* Sembunyikan menu toggle */
+  /* Tampilkan menu toggle pada mobile untuk akses full menu drawer */
   .sensus-menu-toggle {
-    display: none !important;
+    display: flex !important;
   }
   
   /* Sembunyikan fullscreen */

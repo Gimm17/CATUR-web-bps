@@ -449,24 +449,75 @@ const SuratTugasCreate = () => {
           color: #1565c0;
           border: 1px solid #bbdefb;
         }
+
+        /* Grid layout for form and cards */
+        .se-row {
+          display: flex;
+          flex-wrap: wrap;
+          margin-left: -10px;
+          margin-right: -10px;
+        }
+
+        .se-col-12 {
+          flex: 0 0 100%;
+          max-width: 100%;
+          padding-left: 10px;
+          padding-right: 10px;
+          box-sizing: border-box;
+        }
+
+        .se-col-md-6 {
+          flex: 0 0 50%;
+          max-width: 50%;
+          padding-left: 10px;
+          padding-right: 10px;
+          box-sizing: border-box;
+        }
+
+        .se-header h1 {
+          font-size: clamp(1.2rem, 2.2vw, 1.75rem);
+          font-weight: 700;
+          margin-bottom: 10px;
+          line-height: 1.3;
+          word-break: break-word;
+        }
         
         /* Responsive adjustments */
-        @media (max-width: 768px) {
+        @media (max-width: 991.98px) {
+          .se-container {
+            padding: 16px;
+          }
+
+          .se-header {
+            padding: 20px 22px;
+          }
+
           .se-card-body {
             padding: 20px;
           }
-          
-          .se-header {
-            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+          .se-container {
+            padding: 12px;
+          }
+
+          .se-card-body {
+            padding: 16px;
           }
           
-          .se-row {
-            flex-direction: column;
+          .se-card-header {
+            padding: 14px 16px;
+          }
+
+          .se-header {
+            padding: 16px 14px;
+            border-radius: 8px;
           }
           
           .se-col-md-6 {
-            flex: 0 0 100%;
-            max-width: 100%;
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
           }
         }
       `}</style>
@@ -476,7 +527,7 @@ const SuratTugasCreate = () => {
         <div className="se-header">
           <div className="se-row">
             <div className="se-col-12">
-              <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '10px' }}>
+              <h1>
                 <i className="bi bi-file-earmark-text-fill me-2"></i>
                 SURAT TUGAS PEGAWAI BPS PROVINSI SULAWESI TENGAH
                 <span className="se-badge">SE2026</span>

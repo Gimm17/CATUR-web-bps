@@ -2,6 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'admin-lte/dist/css/adminlte.min.css';
 import "leaflet/dist/leaflet.css";
 import "./css/sweetalert.css";
+import "./App.css";
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';

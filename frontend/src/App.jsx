@@ -22,52 +22,56 @@ import ReportLaporanPegawai from './pages/pegawai/ReportLaporanPegawai';
 import InformasiKeuangan from './pages/keuangan/informasi';
 import LaporanEntry from './pages/pegawai/LaporanEntry';
 import ChangelogPopup from './features/changelog/ChangelogPopup';
+import { SidebarProvider } from './contexts/SidebarContext';
+
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard-admin" element={<ProtectedRoute allowedRoles={["admin"]}>
-              <DashboardAdmin />
-            </ProtectedRoute>} />
-        <Route path="/progres-pegawai" element={<ProtectedRoute allowedRoles={["atasan"]}>
-              <ProgresPegawai />
-            </ProtectedRoute>} />
-            <Route path="/dashboard-atasan" element={<ProtectedRoute allowedRoles={["atasan"]}>
-              <DashboardAtasan />
-            </ProtectedRoute>} />
-             <Route path="/dashboard-keuangan" element={<ProtectedRoute allowedRoles={["keuangan"]}>
-              <DashboardKeuangan />
-            </ProtectedRoute>} />
-        <Route path="/laporan-surat/:id" element={<ProtectedRoute allowedRoles={["pegawai"]}>
-              <ReportSurat />
-            </ProtectedRoute>} />
-        <Route path="/laporan-surat" element={<ProtectedRoute allowedRoles={["pegawai"]}>
-              <ReportSurat />
-            </ProtectedRoute>} />
-        <Route path="/informasi-keuangan" element={<InformasiKeuangan />} />
-        <Route path="/informasi-aplikasi" element={<InformasiAplikasi />} />
-        <Route path="/informasi-catur" element={<Informasicatur />} />
-        <Route path="/informasi-atasan" element={<Informasiatasan />} />
-        <Route path="/surat-tugas" element={<SuratTugas />} />
-        <Route path="/presensi" element={<Presensi />} />
-        <Route path="/laporan" element={<ProtectedRoute allowedRoles={["pegawai"]}>
-              <LaporanEntry />
-            </ProtectedRoute>} />
-        <Route path="/laporan/:suratId" element={<ProtectedRoute allowedRoles={["pegawai"]}>
-              <LaporanPegawai />
-            </ProtectedRoute>} />
-        <Route path="/laporan-report" element={<ProtectedRoute allowedRoles={["pegawai"]}>
-              <ReportLaporanPegawai />
-            </ProtectedRoute>} />
-        <Route path="/profil" element={<Profile />} />
-        <Route path="/admin-daerah" element={<AdminDaerah/>} />
-        <Route path="/pengaturan-akun" element={<PengaturanAkun/>} />
-        <Route path="/admin/peta-sulteng" element={<PetaSulteng />} />
-        <Route path="/admin/surat-tugas/create" element={<SuratTugasCreate />}/>
-        <Route path="/dashboard" element={<Dashboard />}/>
-      </Routes>
-      <ChangelogPopup />
+      <SidebarProvider>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/dashboard-admin" element={<ProtectedRoute allowedRoles={["admin"]}>
+                <DashboardAdmin />
+              </ProtectedRoute>} />
+          <Route path="/progres-pegawai" element={<ProtectedRoute allowedRoles={["atasan"]}>
+                <ProgresPegawai />
+              </ProtectedRoute>} />
+          <Route path="/dashboard-atasan" element={<ProtectedRoute allowedRoles={["atasan"]}>
+                <DashboardAtasan />
+              </ProtectedRoute>} />
+          <Route path="/dashboard-keuangan" element={<ProtectedRoute allowedRoles={["keuangan"]}>
+                <DashboardKeuangan />
+              </ProtectedRoute>} />
+          <Route path="/laporan-surat/:id" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+                <ReportSurat />
+              </ProtectedRoute>} />
+          <Route path="/laporan-surat" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+                <ReportSurat />
+              </ProtectedRoute>} />
+          <Route path="/informasi-keuangan" element={<InformasiKeuangan />} />
+          <Route path="/informasi-aplikasi" element={<InformasiAplikasi />} />
+          <Route path="/informasi-catur" element={<Informasicatur />} />
+          <Route path="/informasi-atasan" element={<Informasiatasan />} />
+          <Route path="/surat-tugas" element={<SuratTugas />} />
+          <Route path="/presensi" element={<Presensi />} />
+          <Route path="/laporan" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+                <LaporanEntry />
+              </ProtectedRoute>} />
+          <Route path="/laporan/:suratId" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+                <LaporanPegawai />
+              </ProtectedRoute>} />
+          <Route path="/laporan-report" element={<ProtectedRoute allowedRoles={["pegawai"]}>
+                <ReportLaporanPegawai />
+              </ProtectedRoute>} />
+          <Route path="/profil" element={<Profile />} />
+          <Route path="/admin-daerah" element={<AdminDaerah/>} />
+          <Route path="/pengaturan-akun" element={<PengaturanAkun/>} />
+          <Route path="/admin/peta-sulteng" element={<PetaSulteng />} />
+          <Route path="/admin/surat-tugas/create" element={<SuratTugasCreate />}/>
+          <Route path="/dashboard" element={<Dashboard />}/>
+        </Routes>
+        <ChangelogPopup />
+      </SidebarProvider>
     </BrowserRouter>
   );
 }

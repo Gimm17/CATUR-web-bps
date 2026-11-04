@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-11-04 — TASK-043 — Perbaikan Tuntas Tata Letak Responsif Multi-Device (Desktop, Tablet, Mobile) & Sidebar Collision
+
+- **Status:** Selesai diimplementasikan, diverifikasi melalui 75 frontend unit test dan 11 backend test, dibuild, dan dideploy ke staging `caturv2.gimmhost.my.id`.
+- **Ringkasan:** Memperbaiki masalah tata letak responsif dan tabrakan elemen (*layout collision*) parah di mana sidebar menimpa konten form pada rentang resolusi tablet dan jendela diperkecil (768px - 992px), tombol menu toggle tertutup atau tersembunyi, serta layout form tidak reflow dengan baik. Mengintegrasikan sistem state sidebar terpusat (`SidebarContext`), menyamakan breakpoint navigasi (`< 992px` sebagai off-canvas drawer slide-over dan `>= 992px` sebagai sidebar tetap), menambahkan tombol tutup drawer `[X]` pada header sidebar, mempertahankan bottom navigation bar pada smartphone (`<= 768px`), serta menerapkan fluid grid system dan responsive font clamping pada form surat tugas.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `frontend/src/contexts/SidebarContext.jsx`, `frontend/src/App.css`, `frontend/src/main.jsx`, `frontend/src/App.jsx`, `frontend/src/css/sidebar.css`, `frontend/src/css/navbar.css`, `frontend/src/fragments/Navbar.jsx`, `frontend/src/fragments/Navbar.pegawai.jsx`, `frontend/src/fragments/navbar.atasan.jsx`, `frontend/src/fragments/Navbar.keuangan.jsx`, `frontend/src/fragments/Sidebar.jsx`, `frontend/src/fragments/Sidebar.pegawai.jsx`, `frontend/src/fragments/sidebar.atasan.jsx`, `frontend/src/fragments/Sidebar.keuangan.jsx`, `frontend/src/layouts/AdminLayout.jsx`, `frontend/src/layouts/PegawaiLayout.jsx`, `frontend/src/layouts/AtasanLayout.jsx`, `frontend/src/layouts/KeuanganLayout.jsx`, `frontend/src/pages/admin/suratTugasCreate.jsx`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Menambahkan state `isMobileOpen`, `closeMobileSidebar`, dan fungsi adaptif `toggleSidebar` pada `SidebarContext`; menghubungkan `useSidebar()` ke seluruh navbar (`Navbar`, `Navbar.pegawai`, `navbar.atasan`, `Navbar.keuangan`) dan sidebar (`Sidebar`, `Sidebar.pegawai`, `sidebar.atasan`, `Sidebar.keuangan`); menghapus kode manipulasi DOM langsung di navbar dan layout; menambahkan backdrop overlay dengan `backdrop-filter: blur(4px)`; menerapkan breakpoint off-canvas drawer seragam pada `@media (max-width: 991.98px)` dan margin desktop `270px` (atau `70px` saat collapse) pada `@media (min-width: 992px)`; menambahkan grid modern `.se-row`, `.se-col-12`, `.se-col-md-6`, dan fluid typography `clamp(1.2rem, 2.2vw, 1.75rem)` pada form `suratTugasCreate.jsx`.
+- **Database:** Tidak ada perubahan skema, kolom, maupun data.
+- **API:** Tidak ada perubahan endpoint atau kontrak API.
+- **Test otomatis:** Seluruh unit test frontend lulus 75/75 lintas 19 file test. Seluruh unit test backend tanggal & jadwal lulus 11/11. Build frontend production sukses dalam 16 detik menghasilkan bundle `index-BysW2WMr.js` dan stylesheet `index-DBOUVVVD.css`.
+- **Verifikasi manual:** Pada Desktop (`>= 992px`): sidebar fixed di kiri (lebar 270px), konten dan navbar berjarak rapi tanpa tabrakan. Saat collapsed: sidebar menyusut rapi ke 70px dan konten mengikutinya. Pada Tablet (`768px - 991.98px`): sidebar tersembunyi secara default (off-canvas), konten mengambil lebar penuh 100%, hamburger button di navbar dapat diklik untuk membuka drawer slide-over mulus dengan backdrop overlay blur, serta dapat ditutup melalui tombol `[X]` atau klik backdrop. Pada Mobile Phone (`<= 768px`): konten memiliki padding bawah yang cukup sehingga tidak tertutup floating/bottom bar, bottom navigation bar tetap aktif untuk akses 1-tap, dan drawer menu lengkap dapat dibuka via hamburger button.
+- **Risiko/catatan:** Struktur modular berbasis Context menjamin seluruh role pengguna (admin, pegawai, atasan, keuangan) mendapatkan pengalaman navigasi responsif yang konsisten tanpa tabrakan DOM.
+- **Rollback:** Pulihkan bundle aset dan komponen dari commit sebelumnya atau backup remote di `/home/gimmhost/backups/caturv2-20261104-3350b95`.
+- **Commit:** Menyusul setelah push.
+
 ### 2026-11-04 — TASK-042 — Redesain UI/UX dropdown searchable dengan layout ala daftar isi
 
 - **Status:** Selesai diimplementasikan, diverifikasi melalui 75 frontend unit test, dan dideploy ke staging `caturv2.gimmhost.my.id`.

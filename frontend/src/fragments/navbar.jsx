@@ -18,9 +18,11 @@ import {
 } from "react-icons/fa";
 import api from "../api/axios";
 import { getProfil } from "../services/akun.service";
+import { useSidebar } from "../contexts/SidebarContext";
 import '../css/navbar.css';
 
 export default function Navbar() {
+  const { isSidebarCollapsed, isMobileOpen, toggleSidebar } = useSidebar();
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -29,7 +31,6 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   const searchRef = useRef(null);
   const currentDate = new Date().toLocaleDateString('id-ID', {
@@ -38,55 +39,6 @@ export default function Navbar() {
     month: 'long',
     day: 'numeric'
   });
-
-  // Fungsi untuk toggle sidebar
-  const toggleSidebar = () => {
-    const sidebar = document.querySelector('.sensus-sidebar');
-    const contentWrapper = document.querySelector('.content-wrapper');
-    
-    if (sidebar) {
-      sidebar.classList.toggle('collapsed');
-      setIsSidebarCollapsed(!isSidebarCollapsed);
-      
-      // Update layout body jika diperlukan
-      if (document.body.classList.contains('sidebar-collapse')) {
-        document.body.classList.remove('sidebar-collapse');
-        document.body.classList.add('sidebar-open');
-      } else {
-        document.body.classList.add('sidebar-collapse');
-        document.body.classList.remove('sidebar-open');
-      }
-      
-      // Simpan state di localStorage
-      localStorage.setItem('sidebarCollapsed', !isSidebarCollapsed);
-      
-      // Dispatch event untuk komponen lain
-      window.dispatchEvent(new Event('sidebarToggle'));
-    }
-    
-    // Adjust content wrapper
-    if (contentWrapper) {
-      contentWrapper.classList.toggle('expanded');
-    }
-  };
-
-  // Initialize sidebar state from localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem('sidebarCollapsed');
-    if (savedState === 'true') {
-      setIsSidebarCollapsed(true);
-      const sidebar = document.querySelector('.sensus-sidebar');
-      const contentWrapper = document.querySelector('.content-wrapper');
-      
-      if (sidebar) {
-        sidebar.classList.add('collapsed');
-      }
-      if (contentWrapper) {
-        contentWrapper.classList.add('expanded');
-      }
-      document.body.classList.add('sidebar-collapse');
-    }
-  }, []);
 
   // Fetch user profile dari backend
   const fetchUserProfile = async () => {
@@ -298,10 +250,11 @@ export default function Navbar() {
           <button
             className="nav-link btn sensus-menu-toggle"
             type="button"
-            title="Toggle Sidebar"
+            title="Toggle Menu"
+            aria-label="Toggle Menu"
             onClick={toggleSidebar}
           >
-            {isSidebarCollapsed ? <FaBars /> : <FaTimes />}
+            {isMobileOpen ? <FaTimes /> : <FaBars />}
           </button>
         </li>
         
