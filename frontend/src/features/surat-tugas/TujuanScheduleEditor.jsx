@@ -4,6 +4,7 @@ import {
   getDaerahType,
   formatDaerahOptionLabel,
 } from './tujuanSchedule';
+import SearchableSelect from './SearchableSelect';
 
 export default function TujuanScheduleEditor({
   value,
@@ -56,18 +57,21 @@ export default function TujuanScheduleEditor({
             Urutkan tujuan sesuai perjalanan dan pastikan tidak ada tanggal kosong.
           </small>
         </div>
-        <label style={{ minWidth: '190px', margin: 0 }}>
-          <span className="se-form-label">Filter wilayah</span>
-          <select
-            className="se-form-control"
+        <div style={{ minWidth: '200px' }}>
+          <label className="se-form-label" style={{ marginBottom: '6px' }}>Filter wilayah</label>
+          <SearchableSelect
             value={daerahFilter}
             onChange={(event) => setDaerahFilter(event.target.value)}
-          >
-            <option value="all">Semua Wilayah</option>
-            <option value="kabupaten">Kabupaten/Kota</option>
-            <option value="kecamatan">Kecamatan</option>
-          </select>
-        </label>
+            options={[
+              { value: 'all', label: 'Semua Wilayah' },
+              { value: 'kabupaten', label: 'Kabupaten/Kota' },
+              { value: 'kecamatan', label: 'Kecamatan' },
+            ]}
+            showSearch={false}
+            showDottedLeader={false}
+            placeholder="Semua Wilayah"
+          />
+        </div>
       </div>
 
       <div style={{ display: 'grid', gap: '14px' }}>
@@ -156,24 +160,32 @@ export default function TujuanScheduleEditor({
                         </span>
                       )}
                     </div>
-                    <select
+                    <SearchableSelect
                       id={`daerah-${row.key}`}
-                      className="se-form-control"
+                      name={`daerah-${row.key}`}
                       value={row.daerah_id}
                       onChange={(event) => updateRow(
                         row.key,
                         'daerah_id',
                         event.target.value
                       )}
+                      placeholder="-- Pilih Wilayah --"
+                      searchPlaceholder="Cari kabupaten, kota, kecamatan..."
                       required
-                    >
-                      <option value="">-- Pilih Wilayah --</option>
-                      {availableDaerah.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {formatDaerahOptionLabel(item)}
-                        </option>
-                      ))}
-                    </select>
+                      hasError={!!rowErrors.daerah_id}
+                      options={availableDaerah.map((item) => {
+                        const type = getDaerahType(item);
+                        return {
+                          value: item.id,
+                          label: item.nama_daerah,
+                          badge: type,
+                          badgeType: type === 'Poligon' ? 'polygon' : 'radius',
+                          secondaryText: item.titik_lokasi === 'kabupaten' ? 'Kab/Kota' : item.titik_lokasi === 'kecamatan' ? 'Kec' : null,
+                          searchTerms: `${item.nama_daerah} ${item.titik_lokasi || ''} ${type}`,
+                          rawOptionLabel: formatDaerahOptionLabel(item),
+                        };
+                      })}
+                    />
                     {rowErrors.daerah_id && (
                       <div className="se-alert se-alert-error" role="alert">
                         {rowErrors.daerah_id}

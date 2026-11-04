@@ -10,6 +10,7 @@ import {
 } from '../../services/suratTugas.service';
 import AdminLayout from '../../layouts/AdminLayout';
 import TujuanScheduleEditor from '../../features/surat-tugas/TujuanScheduleEditor';
+import SearchableSelect from '../../features/surat-tugas/SearchableSelect';
 import {
   createEmptyTujuan,
   getTujuanScheduleErrors,
@@ -642,24 +643,27 @@ Ground Check Pra-prelist SBR SE2026"
                 {/* Pegawai */}
                 <div className="se-col-md-6">
                   <div className="se-form-group">
-                    <label className="se-form-label">
+                    <label className="se-form-label" htmlFor="user_id">
                       <i className="bi bi-person-badge"></i>
                       PEGAWAI BPS
                     </label>
-                    <select
+                    <SearchableSelect
+                      id="user_id"
                       name="user_id"
-                      className="se-form-control"
                       value={form.user_id}
                       onChange={handleChange}
+                      placeholder="-- Pilih Pegawai --"
+                      searchPlaceholder="Cari nama pegawai atau NIP..."
                       required
-                    >
-                      <option value="">-- Pilih Pegawai --</option>
-                      {pegawai.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.nama} - {p.nip || 'Tanpa NIP'}
-                        </option>
-                      ))}
-                    </select>
+                      options={pegawai.map((p) => ({
+                        value: p.id,
+                        label: p.nama,
+                        badge: p.nip ? `NIP: ${p.nip}` : 'Tanpa NIP',
+                        badgeType: 'neutral',
+                        searchTerms: `${p.nama} ${p.nip || ''}`,
+                        rawOptionLabel: `${p.nama} - ${p.nip || 'Tanpa NIP'}`,
+                      }))}
+                    />
                   </div>
                 </div>
                 

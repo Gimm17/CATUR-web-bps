@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-11-04 — TASK-042 — Redesain UI/UX dropdown searchable dengan layout ala daftar isi
+
+- **Status:** Selesai diimplementasikan, diverifikasi melalui 75 frontend unit test, dan dideploy ke staging `caturv2.gimmhost.my.id`.
+- **Ringkasan:** Mengganti elemen dropdown `<select>` native yang kaku pada form pembuatan surat tugas dengan komponen `SearchableSelect` modern yang dilengkapi input pencarian real-time dan tata letak ala Daftar Isi (Table of Contents). Pada daftar opsi, nama entitas (wilayah/pegawai) berada di sisi kiri dan label/badge tipe wilayah (`[Poligon]`, `[Radius]`) atau NIP pegawai diposisikan di sisi paling kanan dengan pemisah garis titik-titik (*dot leader*).
+- **File ditambahkan:** `frontend/src/features/surat-tugas/SearchableSelect.jsx`, `frontend/src/features/surat-tugas/SearchableSelect.css`, dan `frontend/src/features/surat-tugas/SearchableSelect.test.jsx`.
+- **File diubah:** `frontend/src/features/surat-tugas/TujuanScheduleEditor.jsx`, `frontend/src/pages/admin/suratTugasCreate.jsx`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Membuat komponen `SearchableSelect` dengan dukungan pencarian interaktif, keyboard navigation (Escape, Arrow, Enter), clear button, dan integrasi native select tersembunyi yang tetap menjamin kompatibilitas form submission dan test testing-library. Mengintegrasikan komponen ke dropdown Pegawai BPS, Filter Wilayah, dan Wilayah Tujuan.
+- **Database:** Tidak ada perubahan skema, kolom, maupun data.
+- **API:** Tidak ada perubahan kontrak endpoint atau format respons API.
+- **Test otomatis:** Seluruh unit test frontend lulus 75/75 (termasuk 8 unit test baru `SearchableSelect.test.jsx` dan 9 unit test `TujuanScheduleEditor.test.jsx`). Build frontend production berhasil memproses 947 modul dan menghasilkan bundle `index-BdpVPFLn.js`.
+- **Verifikasi manual:** Dropdown menampilkan trigger modern dengan border halus dan chevron yang berputar saat dibuka; menu popover dilengkapi search bar di bagian atas; setiap opsi tersusun rapi dengan nama di kiri, dot leader di tengah, dan badge tipe (`Poligon`/`Radius`/NIP) di sisi paling kanan; opsi dapat difilter secara instan dengan mengetik pada search bar.
+- **Risiko/catatan:** Komponen tetap menyertakan elemen native select di balik layar secara transparan untuk kompatibilitas screen reader, accessibility, dan browser form event handling.
+- **Rollback:** Pulihkan bundle aset dan komponen dari commit sebelumnya atau backup remote di `/home/gimmhost/backups/caturv2-20261104-3350b95`.
+- **Commit:** Commit pada branch `feature/multi-destination-location`.
+
 ### 2026-11-04 — TASK-041 — Label pembeda tipe wilayah tujuan dan perbaikan form surat tugas
 
 - **Status:** Selesai diimplementasikan, diverifikasi melalui unit test, dan dideploy ke staging `caturv2.gimmhost.my.id`.
