@@ -85,7 +85,7 @@ const createSuratTugas = async (req, res) => {
         tujuan_kegiatan,
         status: 'AKTIF',
         file_surat: req.file
-          ? (req.file.drive?.webContentLink || req.file.drive?.webViewLink || null)
+          ? ((req.file.drive?.webContentLink || req.file.drive?.webViewLink || (req.file.filename ? 'uploads/surat-tugas/' + req.file.filename : null)))
           : null,
       }, { transaction });
 

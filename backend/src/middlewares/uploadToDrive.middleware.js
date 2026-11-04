@@ -32,18 +32,24 @@ module.exports = async function uploadToDrive(req, res, next) {
     }
 
     if (req.file) {
-      const driveFile = await uploadFileToDrive({
-        filePath: req.file.path,
-        fileName: req.file.filename,
-        mimeType: req.file.mimetype,
-        subfolderPath: detectSubfolderPath(req.file),
-      });
+      try {
+        const driveFile = await uploadFileToDrive({
+          filePath: req.file.path,
+          fileName: req.file.filename,
+          mimeType: req.file.mimetype,
+          subfolderPath: detectSubfolderPath(req.file),
+        });
 
-      req.file.drive = driveFile;
-      // Hapus file lokal setelah berhasil mirror ke Drive
-      if (req.file.path && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-        req.file.localDeleted = true;
+        req.file.drive = driveFile;
+        // Hapus file lokal setelah berhasil mirror ke Drive
+        if (req.file.path && fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+          req.file.localDeleted = true;
+        }
+      } catch (driveError) {
+        console.warn('⚠️ Google Drive upload gagal/tidak tersedia. Menggunakan penyimpanan lokal:', driveError.message);
+        req.file.drive = null;
+        req.file.driveError = driveError.message;
       }
 
       return next();
@@ -52,17 +58,23 @@ module.exports = async function uploadToDrive(req, res, next) {
     if (Array.isArray(req.files) && req.files.length > 0) {
       const filesWithDrive = [];
       for (const file of req.files) {
-        const driveFile = await uploadFileToDrive({
-          filePath: file.path,
-          fileName: file.filename,
-          mimeType: file.mimetype,
-          subfolderPath: detectSubfolderPath(file),
-        });
+        try {
+          const driveFile = await uploadFileToDrive({
+            filePath: file.path,
+            fileName: file.filename,
+            mimeType: file.mimetype,
+            subfolderPath: detectSubfolderPath(file),
+          });
 
-        file.drive = driveFile;
-        if (file.path && fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-          file.localDeleted = true;
+          file.drive = driveFile;
+          if (file.path && fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+            file.localDeleted = true;
+          }
+        } catch (driveError) {
+          console.warn('⚠️ Google Drive upload gagal/tidak tersedia. Menggunakan penyimpanan lokal:', driveError.message);
+          file.drive = null;
+          file.driveError = driveError.message;
         }
         filesWithDrive.push(file);
       }
@@ -71,11 +83,7 @@ module.exports = async function uploadToDrive(req, res, next) {
 
     return next();
   } catch (error) {
-    console.error('Error upload ke Google Drive:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Gagal upload file ke Google Drive',
-      error: error.message,
-    });
+    console.error('Error pada uploadToDrive middleware:', error);
+    return next();
   }
 };

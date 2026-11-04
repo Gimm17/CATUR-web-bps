@@ -68,3 +68,36 @@ export function serializeTujuan(rows) {
     tanggal_selesai,
   })));
 }
+
+export function getDaerahType(item) {
+  if (!item || !item.geojson) return 'Radius';
+
+  if (typeof item.geojson === 'object') {
+    if (Array.isArray(item.geojson.features)) {
+      return item.geojson.features.length > 0 ? 'Poligon' : 'Radius';
+    }
+    return item.geojson.type ? 'Poligon' : 'Radius';
+  }
+
+  if (typeof item.geojson === 'string') {
+    const trimmed = item.geojson.trim();
+    if (!trimmed || trimmed === 'null' || trimmed === '{}') return 'Radius';
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed?.features)) {
+        return parsed.features.length > 0 ? 'Poligon' : 'Radius';
+      }
+      return parsed?.type ? 'Poligon' : 'Radius';
+    } catch {
+      return 'Radius';
+    }
+  }
+
+  return 'Radius';
+}
+
+export function formatDaerahOptionLabel(item) {
+  if (!item?.nama_daerah) return '';
+  const type = getDaerahType(item);
+  return `${item.nama_daerah} — [${type}]`;
+}

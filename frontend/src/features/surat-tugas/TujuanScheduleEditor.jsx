@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
-import { createNextTujuan } from './tujuanSchedule';
+import {
+  createNextTujuan,
+  getDaerahType,
+  formatDaerahOptionLabel,
+} from './tujuanSchedule';
 
 export default function TujuanScheduleEditor({
   value,
@@ -80,6 +84,11 @@ export default function TujuanScheduleEditor({
                 ),
               ];
 
+          const selectedDaerah = availableDaerah.find(
+            (item) => String(item.id) === String(row.daerah_id)
+          );
+          const selectedType = selectedDaerah ? getDaerahType(selectedDaerah) : null;
+
           return (
             <article
               key={row.key}
@@ -118,9 +127,35 @@ export default function TujuanScheduleEditor({
               <div className="se-row">
                 <div className="se-col-12">
                   <div className="se-form-group">
-                    <label className="se-form-label" htmlFor={`daerah-${row.key}`}>
-                      Wilayah tujuan
-                    </label>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '6px',
+                    }}>
+                      <label
+                        className="se-form-label"
+                        htmlFor={`daerah-${row.key}`}
+                        style={{ marginBottom: 0 }}
+                      >
+                        Wilayah tujuan
+                      </label>
+                      {selectedType && (
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          letterSpacing: '0.5px',
+                          textTransform: 'uppercase',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          color: selectedType === 'Poligon' ? '#0d6efd' : '#495057',
+                          backgroundColor: selectedType === 'Poligon' ? '#e7f1ff' : '#f1f3f5',
+                          border: `1px solid ${selectedType === 'Poligon' ? '#b6d4fe' : '#ced4da'}`,
+                        }}>
+                          {selectedType}
+                        </span>
+                      )}
+                    </div>
                     <select
                       id={`daerah-${row.key}`}
                       className="se-form-control"
@@ -135,7 +170,7 @@ export default function TujuanScheduleEditor({
                       <option value="">-- Pilih Wilayah --</option>
                       {availableDaerah.map((item) => (
                         <option key={item.id} value={item.id}>
-                          {item.nama_daerah}
+                          {formatDaerahOptionLabel(item)}
                         </option>
                       ))}
                     </select>

@@ -701,7 +701,6 @@ Ground Check Pra-prelist SBR SE2026"
                           accept="application/pdf"
                           className="d-none"
                           onChange={(e) => setFile(e.target.files[0])}
-                          required={!import.meta.env.DEV}
                         />
                         {file && (
                           <div style={{ marginTop: '15px' }}>
