@@ -1,6 +1,10 @@
 import { API_BASE_URL } from "../config/apiBaseUrl";
 
-const LEGACY_FILE_BASE_URL = (import.meta.env.VITE_LEGACY_FILE_BASE_URL || API_BASE_URL.replace(/\/api$/, "")).replace(/\/+$/, "");
+const rawLegacyUrl = import.meta.env.VITE_LEGACY_FILE_BASE_URL;
+const safeLegacyUrl = (import.meta.env?.PROD && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(rawLegacyUrl || ""))
+  ? ""
+  : rawLegacyUrl;
+const LEGACY_FILE_BASE_URL = (safeLegacyUrl || API_BASE_URL.replace(/\/api$/, "")).replace(/\/+$/, "");
 
 const GOOGLE_DRIVE_ID_REGEX = /^[a-zA-Z0-9_-]{20,}$/;
 
