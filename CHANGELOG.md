@@ -27,7 +27,7 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 - **Verifikasi manual:** Dropdown menampilkan trigger modern dengan border halus dan chevron yang berputar saat dibuka; menu popover dilengkapi search bar di bagian atas; setiap opsi tersusun rapi dengan nama di kiri, dot leader di tengah, dan badge tipe (`Poligon`/`Radius`/NIP) di sisi paling kanan; opsi dapat difilter secara instan dengan mengetik pada search bar.
 - **Risiko/catatan:** Komponen tetap menyertakan elemen native select di balik layar secara transparan untuk kompatibilitas screen reader, accessibility, dan browser form event handling.
 - **Rollback:** Pulihkan bundle aset dan komponen dari commit sebelumnya atau backup remote di `/home/gimmhost/backups/caturv2-20261104-3350b95`.
-- **Commit:** Commit pada branch `feature/multi-destination-location`.
+- **Commit:** `ea67934` (`feat: redesign dropdown with searchable combobox and table of contents layout`).
 
 ### 2026-11-04 — TASK-041 — Label pembeda tipe wilayah tujuan dan perbaikan form surat tugas
 
