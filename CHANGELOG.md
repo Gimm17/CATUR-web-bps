@@ -27,7 +27,7 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 - **Verifikasi manual:** Dropdown wilayah menampilkan pembeda `— [Poligon]` dan `— [Radius]` di sisi kanan nama wilayah tanpa emoji. Badge indikator di atas dropdown menampilkan badge tipe wilayah yang dipilih. Form create surat tugas dapat disubmit tanpa hambatan browser validation pada elemen hidden file.
 - **Risiko/catatan:** Label pembeda mempermudah admin membedakan wilayah berbasis batas polygon utuh dengan lokasi titik radius. Upload file tetap memprioritaskan Google Drive jika token valid, dan otomatis fallback ke direktori lokal `uploads/surat-tugas/` jika terjadi kendala token.
 - **Rollback:** Backup staging tersedia di `/home/gimmhost/backups/caturv2-20261104-TASK041`; pulihkan folder `public` dan `src` dari backup tersebut lalu sentuh `tmp/restart.txt`.
-- **Commit:** Commit pada branch `feature/multi-destination-location`.
+- **Commit:** `56cb5e2` (`feat: add destination type label and fix surat tugas creation`).
 
 ### 2026-09-16 — TASK-040 — Perpanjang batas edit laporan menjadi sepuluh hari
 
