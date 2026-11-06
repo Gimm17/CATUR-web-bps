@@ -27,7 +27,7 @@ export default function TujuanScheduleEditor({
   const isLockedKabupaten =
     effectiveWilayah?.scope === 'kabupaten' && !!effectiveWilayah?.kabupaten_nama;
 
-  const [daerahFilter, setDaerahFilter] = useState('all');
+  const [daerahFilter, setDaerahFilter] = useState('');
   const [selectedKabByRow, setSelectedKabByRow] = useState({});
 
   // Deteksi apakah dataset daerah memiliki data Kecamatan ber-poligon (kondisi produksi)
@@ -64,9 +64,11 @@ export default function TujuanScheduleEditor({
       return kecOnly.length > 0 ? kecOnly : inLockedKab;
     }
 
-    if (daerahFilter === 'all') return baseList;
+    if (!daerahFilter || daerahFilter === 'all') return baseList;
     return baseList.filter(
-      (item) => String(item.titik_lokasi || '').toLowerCase() === daerahFilter
+      (item) =>
+        String(item.titik_lokasi || '').toLowerCase() === daerahFilter ||
+        getLevelWilayah(item) === daerahFilter
     );
   }, [daerah, daerahFilter, hasPolygonKecamatanDataset, isLockedKabupaten, effectiveWilayah]);
 
@@ -154,10 +156,16 @@ export default function TujuanScheduleEditor({
 
         {!isLockedKabupaten && (
           <div style={{ minWidth: '200px' }}>
-            <label className="se-form-label" style={{ marginBottom: '6px' }}>
+            <label
+              htmlFor="filter-wilayah"
+              className="se-form-label"
+              style={{ marginBottom: '6px' }}
+            >
               Filter wilayah
             </label>
             <SearchableSelect
+              id="filter-wilayah"
+              name="filter-wilayah"
               value={daerahFilter}
               onChange={(event) => setDaerahFilter(event.target.value)}
               options={[

@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-11-06 — TASK-047 — Perbaikan Bug Opsi Dropdown Wilayah Kosong Saat Filter Wilayah Tidak Aktif
+
+- **Status:** Selesai diinvestigasi, direproduksi, diperbaiki, diverifikasi melalui unit test, dibuild, dan dideploy ke staging `caturv2.gimmhost.my.id`.
+- **Ringkasan:** Memperbaiki bug pada `TujuanScheduleEditor.jsx` di mana ketika **Filter Wilayah** tidak aktif (dikosongkan / ditekan tombol hapus `X` sehingga nilai `daerahFilter` menjadi string kosong `''`), fungsi `filteredDaerah` melewati pengecekan `daerahFilter === 'all'` dan menyaring `item.titik_lokasi === ''`, yang menyebabkan hasil penyaringan menjadi 0 opsi (`[]`). Dengan perbaikan ini, kondisi `!daerahFilter || daerahFilter === 'all'` menampilkan seluruh wilayah secara default (baik saat Kabupaten/Kota belum dipilih maupun saat Kabupaten/Kota dipilih).
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `frontend/src/features/surat-tugas/TujuanScheduleEditor.jsx`, `frontend/src/features/surat-tugas/TujuanScheduleEditor.test.jsx`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Mengubah inisialisasi `daerahFilter` menjadi `''` dan memperbarui memo `filteredDaerah` di `TujuanScheduleEditor` agar kondisi `!daerahFilter || daerahFilter === 'all'` mengembalikan seluruh `baseList` secara default.
+- **Database:** Tidak ada.
+- **API:** Tidak ada.
+- **Test otomatis:** Menambahkan unit test regresi di `TujuanScheduleEditor.test.jsx` (`tetap menampilkan semua opsi secara default saat Filter Wilayah tidak aktif (kosong) baik dengan maupun tanpa pilihan Kabupaten`) — 12/12 test di `TujuanScheduleEditor.test.jsx` lulus.
+- **Verifikasi manual:** Saat membuka halaman Buat Surat Tugas dengan Filter Wilayah tidak aktif (`Semua Wilayah`), dropdown Wilayah Tujuan menampilkan seluruh opsi poligon secara default, dan saat Kabupaten/Kota (misal *Kabupaten/Kota Donggala*) dipilih, seluruh 16 Kecamatan ber-poligon di Kabupaten Donggala langsung muncul.
+- **Risiko/catatan:** Tidak ada risiko regresi.
+- **Rollback:** Kembalikan commit terkait pada branch `feature/multi-destination-location`.
+- **Commit:** Menyusul setelah push.
+
 ### 2026-11-06 — TASK-045 — Implementasi Login & Pembatasan Hak Akses Kabupaten/Kota serta Cascading Dropdown Kecamatan (Poligon)
 
 - **Status:** Selesai diimplementasikan, diverifikasi melalui 79 frontend unit test dan backend unit test, dibuild, dan dideploy ke staging `caturv2.gimmhost.my.id`.

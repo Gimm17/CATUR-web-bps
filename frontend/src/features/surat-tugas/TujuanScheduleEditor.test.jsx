@@ -200,6 +200,57 @@ describe('TujuanScheduleEditor', () => {
       'Kecamatan Banawa — [Poligon]',
     ]);
   });
+
+  it('tetap menampilkan semua opsi secara default saat Filter Wilayah tidak aktif (kosong) baik dengan maupun tanpa pilihan Kabupaten', async () => {
+    const user = userEvent.setup();
+    const polygonDataset = [
+      { id: 10, nama_daerah: 'Kabupaten/Kota Donggala', titik_lokasi: 'kabupaten', geojson: { type: 'Polygon', coordinates: [[[119.7, -0.6], [119.8, -0.6], [119.8, -0.7], [119.7, -0.6]]] } },
+      { id: 11, nama_daerah: 'Kecamatan Banawa', titik_lokasi: 'kecamatan', geojson: { type: 'Polygon', coordinates: [[[119.7, -0.6], [119.8, -0.6], [119.8, -0.7], [119.7, -0.6]]] } },
+      { id: 12, nama_daerah: 'Kecamatan Sindue', titik_lokasi: 'kecamatan', geojson: { type: 'Polygon', coordinates: [[[119.8, -0.5], [119.9, -0.5], [119.9, -0.6], [119.8, -0.5]]] } },
+      { id: 21, nama_daerah: 'Kecamatan Lage', titik_lokasi: 'kecamatan', geojson: { type: 'Polygon', coordinates: [[[120.7, -1.4], [120.8, -1.4], [120.8, -1.5], [120.7, -1.4]]] } },
+    ];
+
+    function FilterTestHarness() {
+      const [val, setVal] = useState([createEmptyTujuan('row-filter')]);
+      return <TujuanScheduleEditor value={val} daerah={polygonDataset} onChange={setVal} />;
+    }
+
+    render(<FilterTestHarness />);
+
+    // 1. Saat pertama kali dibuka (Filter Wilayah tidak aktif = ''), semua opsi harus muncul
+    const kecSelect = screen.getByLabelText(/Wilayah tujuan/);
+    expect(within(kecSelect).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      '-- Pilih Wilayah --',
+      'Kabupaten/Kota Donggala — [Poligon]',
+      'Kecamatan Banawa — [Poligon]',
+      'Kecamatan Sindue — [Poligon]',
+      'Kecamatan Lage — [Poligon]',
+    ]);
+
+    // 2. Pilih filter 'kecamatan', lalu hapus/nonaktifkan kembali Filter Wilayah ('')
+    const filterSelect = screen.getByLabelText('Filter wilayah');
+    await user.selectOptions(filterSelect, 'kecamatan');
+    await user.selectOptions(filterSelect, '');
+
+    // Semua opsi tetap muncul meskipun Filter Wilayah dinonaktifkan ('')
+    expect(within(kecSelect).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      '-- Pilih Wilayah --',
+      'Kabupaten/Kota Donggala — [Poligon]',
+      'Kecamatan Banawa — [Poligon]',
+      'Kecamatan Sindue — [Poligon]',
+      'Kecamatan Lage — [Poligon]',
+    ]);
+
+    // 3. Saat Kabupaten Donggala dipilih dalam kondisi Filter Wilayah tidak aktif (''), opsi Kecamatan Donggala tetap muncul
+    const kabSelect = screen.getByLabelText('Kabupaten/Kota');
+    await user.selectOptions(kabSelect, 'DONGGALA');
+
+    expect(within(kecSelect).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      '-- Pilih Kecamatan (Poligon) --',
+      'Kecamatan Banawa — [Poligon]',
+      'Kecamatan Sindue — [Poligon]',
+    ]);
+  });
 });
 
 describe('getDaerahType & formatDaerahOptionLabel', () => {
