@@ -115,6 +115,7 @@ const RichTextEditor = ({ value, onChange, placeholder, readOnly }) => {
 
     if (editorRef.current && Quill && !quillRef.current) {
       try {
+        editorRef.current.parentElement?.querySelectorAll('.ql-toolbar').forEach((el) => el.remove());
         quillRef.current = new Quill(editorRef.current, {
           theme: 'snow',
           placeholder: placeholder || 'Tulis laporan Anda di sini...',
@@ -171,7 +172,7 @@ const RichTextEditor = ({ value, onChange, placeholder, readOnly }) => {
         quillRef.current = null;
       }
     };
-  }, [Quill, placeholder, readOnly, isMobileViewport]);
+  }, [Quill, isMobileViewport]);
 
   // Update content when value changes externally
   useEffect(() => {

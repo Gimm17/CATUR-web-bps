@@ -1284,7 +1284,8 @@ const PresensiPegawai = () => {
       if (response.data?.message || response.data?.data) {
         if (response.data?.data) {
           setDataPresensiHariIni(response.data.data);
-          setStep(3);
+          setSudahLaporan(true);
+          setCurrentStep(3);
         }
         setSuccess("✅ Laporan berhasil disimpan!");
         
