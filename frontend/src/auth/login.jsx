@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import api from "../api/axios";
 import { SHOW_CHANGELOG_AFTER_LOGIN_KEY } from "../features/changelog/releaseNotes";
 import { redirectBrowser } from "../utils/browserNavigation";
+import { SATKER_UNIT_KERJA_OPTIONS, resolveWilayahAccess } from "../features/surat-tugas/wilayahHierarki";
 
 export default function Login() {
   const location = useLocation();
@@ -39,6 +40,7 @@ export default function Login() {
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loginWilayah, setLoginWilayah] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -111,8 +113,14 @@ export default function Login() {
         throw new Error("Format response login tidak sesuai backend");
       }
 
+      const effectiveUnitKerja = loginWilayah || user.unit_kerja || "";
+      const enrichedUser = {
+        ...user,
+        unit_kerja: effectiveUnitKerja || user.unit_kerja,
+        wilayah_akses: resolveWilayahAccess(effectiveUnitKerja || user),
+      };
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("user", JSON.stringify(enrichedUser));
       sessionStorage.setItem(SHOW_CHANGELOG_AFTER_LOGIN_KEY, "true");
 
       // REDIRECT ROLE
@@ -217,6 +225,32 @@ export default function Login() {
                     >
                       {showPassword ? "👁️" : "👁️‍🗨️"}
                     </button>
+                  </div>
+
+                  <div className="input-group" style={{ marginBottom: '12px' }}>
+                    <span className="input-icon">🏛️</span>
+                    <select
+                      name="loginWilayah"
+                      aria-label="Wilayah Satker Kabupaten/Kota"
+                      value={loginWilayah}
+                      onChange={(e) => setLoginWilayah(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '14px 14px 14px 44px',
+                        borderRadius: '12px',
+                        border: '1.5px solid #e2e8f0',
+                        backgroundColor: '#f8fafc',
+                        fontSize: '14px',
+                        color: '#1e293b',
+                      }}
+                    >
+                      <option value="">Wilayah: Otomatis Sesuai Akun</option>
+                      {SATKER_UNIT_KERJA_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="form-options">
@@ -485,6 +519,32 @@ export default function Login() {
                   >
                     {showPassword ? "🙈" : "👁️"}
                   </button>
+                </div>
+
+                <div style={{ width: '100%', margin: '8px 0 4px' }}>
+                  <select
+                    name="loginWilayah"
+                    aria-label="Wilayah Satker Kabupaten/Kota"
+                    value={loginWilayah}
+                    onChange={(e) => setLoginWilayah(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 15px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      backgroundColor: '#f8fafc',
+                      fontSize: '13px',
+                      color: '#1e293b',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="">Wilayah: Otomatis Sesuai Akun</option>
+                    {SATKER_UNIT_KERJA_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="content">

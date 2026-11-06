@@ -132,6 +132,74 @@ describe('TujuanScheduleEditor', () => {
       { daerah_id: '1', tanggal_mulai: '2026-09-07', tanggal_selesai: '2026-09-08' },
     ]);
   });
+
+  it('memfilter hanya Kecamatan ber-poligon di dalam Kabupaten saat Kabupaten dipilih', async () => {
+    const user = userEvent.setup();
+    const polygonDataset = [
+      { id: 10, nama_daerah: 'Kabupaten Donggala', titik_lokasi: 'kabupaten', geojson: null },
+      { id: 11, nama_daerah: 'Kecamatan Banawa', titik_lokasi: 'kecamatan', geojson: { type: 'Polygon', coordinates: [[[119.7, -0.6], [119.8, -0.6], [119.8, -0.7], [119.7, -0.6]]] } },
+      { id: 12, nama_daerah: 'Kecamatan Sindue', titik_lokasi: 'kecamatan', geojson: { type: 'Polygon', coordinates: [[[119.8, -0.5], [119.9, -0.5], [119.9, -0.6], [119.8, -0.5]]] } },
+      { id: 13, nama_daerah: 'Kecamatan Banawa Tanpa Poligon', titik_lokasi: 'kecamatan', geojson: null },
+      { id: 21, nama_daerah: 'Kecamatan Lage', titik_lokasi: 'kecamatan', geojson: { type: 'Polygon', coordinates: [[[120.7, -1.4], [120.8, -1.4], [120.8, -1.5], [120.7, -1.4]]] } },
+    ];
+
+    function PolygonHarness() {
+      const [val, setVal] = useState([createEmptyTujuan('row-poly')]);
+      return <TujuanScheduleEditor value={val} daerah={polygonDataset} onChange={setVal} />;
+    }
+
+    render(<PolygonHarness />);
+
+    const kabSelect = screen.getByLabelText('Kabupaten/Kota');
+    await user.selectOptions(kabSelect, 'DONGGALA');
+
+    const kecSelect = screen.getByLabelText(/Wilayah tujuan/);
+    const optionTexts = within(kecSelect).getAllByRole('option').map((o) => o.textContent);
+
+    expect(optionTexts).toEqual([
+      '-- Pilih Kecamatan (Poligon) --',
+      'Kecamatan Banawa — [Poligon]',
+      'Kecamatan Sindue — [Poligon]',
+    ]);
+  });
+
+  it('mengunci Kabupaten otomatis dan hanya menampilkan Kecamatan di Kabupaten tersebut jika user login sebagai akun Kabupaten', () => {
+    const polygonDataset = [
+      { id: 11, nama_daerah: 'Kecamatan Banawa', titik_lokasi: 'kecamatan', geojson: { type: 'Polygon', coordinates: [[[119.7, -0.6], [119.8, -0.6], [119.8, -0.7], [119.7, -0.6]]] } },
+      { id: 21, nama_daerah: 'Kecamatan Lage', titik_lokasi: 'kecamatan', geojson: { type: 'Polygon', coordinates: [[[120.7, -1.4], [120.8, -1.4], [120.8, -1.5], [120.7, -1.4]]] } },
+    ];
+
+    render(
+      <TujuanScheduleEditor
+        value={[createEmptyTujuan('row-locked')]}
+        daerah={polygonDataset}
+        onChange={() => {}}
+        wilayahAkses={{
+          scope: 'kabupaten',
+          is_locked: true,
+          kdkab: '05',
+          kode_bps: '7205',
+          kabupaten_nama: 'DONGGALA',
+          kabupaten_label: 'Kabupaten/Kota Donggala',
+          satker_label: 'BPS Kabupaten Donggala',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('locked-kabupaten-badge')).toHaveTextContent('BPS Kabupaten Donggala');
+
+    const kabSelect = screen.getByLabelText('Kabupaten/Kota');
+    expect(kabSelect).toBeDisabled();
+    expect(kabSelect).toHaveValue('DONGGALA');
+
+    const kecSelect = screen.getByLabelText(/Wilayah tujuan/);
+    const optionTexts = within(kecSelect).getAllByRole('option').map((o) => o.textContent);
+
+    expect(optionTexts).toEqual([
+      '-- Pilih Kecamatan (Poligon) --',
+      'Kecamatan Banawa — [Poligon]',
+    ]);
+  });
 });
 
 describe('getDaerahType & formatDaerahOptionLabel', () => {

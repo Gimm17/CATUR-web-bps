@@ -1,4 +1,5 @@
 const authService = require('../services/auth.service');
+const { resolveWilayahAccess } = require('../utils/wilayahHierarki');
 
 exports.login = async (req, res) => {
   try {
@@ -18,6 +19,7 @@ exports.login = async (req, res) => {
     }
 
     const { token, user } = result;
+    const wilayahAkses = resolveWilayahAccess(user.unit_kerja);
 
     res.json({
       message: 'Login berhasil',
@@ -30,7 +32,8 @@ exports.login = async (req, res) => {
         nip: user.nip,
         alamat: user.alamat,
         telepon: user.telepon,
-        unit_kerja: user.unit_kerja
+        unit_kerja: user.unit_kerja,
+        wilayah_akses: wilayahAkses,
       }
     });
   } catch (err) {
@@ -42,20 +45,21 @@ exports.login = async (req, res) => {
 // REGISTER USER BARU
 exports.register = async (req, res) => {
   try {
-    const { nama, email, password, role, nip, alamat, telepon, unit_kerja,  created_by } = req.body;
-
+    const { nama, email, password, role, nip, alamat, telepon, unit_kerja, created_by } = req.body;
 
     const user = await authService.register({
       nama,
       email,
       password,
       role,
-      nip, 
-      alamat, 
-      telepon, 
-      unit_kerja,  
+      nip,
+      alamat,
+      telepon,
+      unit_kerja,
       created_by
     });
+
+    const wilayahAkses = resolveWilayahAccess(user.unit_kerja);
 
     res.status(201).json({
       message: 'User berhasil dibuat',
@@ -67,7 +71,8 @@ exports.register = async (req, res) => {
         nip: user.nip,
         alamat: user.alamat,
         telepon: user.telepon,
-        unit_kerja: user.unit_kerja
+        unit_kerja: user.unit_kerja,
+        wilayah_akses: wilayahAkses,
       }
     });
   } catch (err) {

@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-11-06 — TASK-045 — Implementasi Login & Pembatasan Hak Akses Kabupaten/Kota serta Cascading Dropdown Kecamatan (Poligon)
+
+- **Status:** Selesai diimplementasikan, diverifikasi melalui 79 frontend unit test dan backend unit test, dibuild, dan dideploy ke staging `caturv2.gimmhost.my.id`.
+- **Ringkasan:** Menambahkan fitur identifikasi dan pembatasan hak akses wilayah berdasarkan Kabupaten/Kota yang melekat otomatis pada akun user (`unit_kerja` / `wilayah_akses`) maupun melalui opsi pilih wilayah satker saat Login dan di Manajemen Akun. Pada section **Jadwal Tujuan** (`TujuanScheduleEditor.jsx`), menambahkan pemilihan berjenjang (*cascading*) **Kabupaten/Kota $\rightarrow$ Kecamatan (Poligon)** yang memetakan seluruh 13 Kabupaten/Kota dan 179 Kecamatan di Sulawesi Tengah beserta filter otomatis wilayah ber-poligon. Jika user login sebagai akun Kabupaten/Kota (misal: *BPS Kabupaten Donggala*), pilihan Kabupaten otomatis terkunci dan dropdown wilayah tujuan hanya memunculkan Kecamatan ber-poligon di dalam Kabupaten tersebut.
+- **File ditambahkan:** `backend/src/utils/wilayahHierarki.js`, `backend/tests/unit/wilayahHierarki.test.js`, dan `frontend/src/features/surat-tugas/wilayahHierarki.js`.
+- **File diubah:** `backend/src/utils/geojsonImporter.js`, `backend/src/controllers/daerah.controller.js`, `backend/src/controllers/auth.controller.js`, `backend/src/controllers/akun.controller.js`, `frontend/src/features/surat-tugas/TujuanScheduleEditor.jsx`, `frontend/src/features/surat-tugas/TujuanScheduleEditor.test.jsx`, `frontend/src/auth/Login.jsx`, `frontend/src/pages/admin/PengaturanAkun.jsx`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Membuat modul `wilayahHierarki` (`KABUPATEN_LIST`, `KECAMATAN_BY_KABUPATEN`, `KECAMATAN_TO_KABUPATEN`, `resolveWilayahAccess`, `resolveDaerahKabupaten`, `enrichDaerah`, `hasPolygonGeometry`); memperkaya respons `GET /api/daerah` dengan atribut `has_polygon`, `level_wilayah`, `kabupaten_nama`, dan `kabupaten_label`; memperkaya respons `POST /api/auth/login` dan `GET /api/user/profil` dengan objek `wilayah_akses`; memperbarui `TujuanScheduleEditor` dengan dropdown berjenjang Kabupaten/Kota $\rightarrow$ Kecamatan (Poligon) serta penguncian otomatis untuk akun Kabupaten/Kota; memperbarui `Login.jsx` dan `PengaturanAkun.jsx` dengan pilihan Satker BPS Provinsi & 13 Kabupaten/Kota.
+- **Database:** Tidak ada perubahan skema tabel destruktif; memanfaatkan kolom `unit_kerja` pada tabel `users` dan `geojson`/`titik_lokasi` pada tabel `daerah`.
+- **API:** Respons `GET /api/daerah`, `POST /api/auth/login`, dan `GET /api/user/profil` kini menyertakan metadata hierarki wilayah (`wilayah_akses`, `kabupaten_nama`, `kabupaten_label`, `has_polygon`).
+- **Test otomatis:** Menambahkan 2 unit test baru di `TujuanScheduleEditor.test.jsx` (79/79 frontend test lulus) dan 3 unit test baru di `backend/tests/unit/wilayahHierarki.test.js` (3/3 lulus).
+- **Verifikasi manual:** Saat login menggunakan akun Kabupaten (atau memilih wilayah Kabupaten seperti *BPS Kabupaten Donggala*), section Jadwal Tujuan menampilkan badge akses wilayah Kabupaten tersebut, mengunci dropdown Kabupaten/Kota ke *Kabupaten/Kota Donggala*, dan hanya menampilkan 16 Kecamatan ber-poligon di Kabupaten Donggala. Saat login menggunakan akun Provinsi, Admin dapat memilih Kabupaten/Kota mana pun lalu memilih Kecamatan ber-poligon di dalamnya.
+- **Risiko/catatan:** Struktur komponen `TujuanScheduleEditor` sudah siap ditambahkan dropdown ke-3 (Desa/SLS) begitu sumber data Desa/SLS disepakati bersama atasan.
+- **Rollback:** Kembalikan commit terkait pada branch `feature/multi-destination-location` dan deploy ulang bundle sebelumnya.
+- **Commit:** Menyusul setelah push.
+
 ### 2026-11-06 — TASK-044 — Perbaikan Bug Simpan Laporan Harian Terbaca Kosong pada Halaman Tagging Perjadin
 
 - **Status:** Selesai diinvestigasi, direproduksi dengan unit test (RED -> GREEN), diperbaiki, diverifikasi melalui 77 frontend unit test, dibuild, dan dideploy ke staging `caturv2.gimmhost.my.id`.

@@ -24,6 +24,7 @@ import {
   FaBuilding
 } from "react-icons/fa";
 import { confirmAction, showToast } from "../../utils/alerts";
+import { SATKER_UNIT_KERJA_OPTIONS, resolveWilayahAccess } from "../../features/surat-tugas/wilayahHierarki";
 
 const PengaturanAkun = () => {
   const [users, setUsers] = useState([]);
@@ -379,7 +380,24 @@ const PengaturanAkun = () => {
                 </div>
 
                 <div className="col-md-3">
-                  <label className="form-label">Unit Kerja</label>
+                  <label className="form-label">Unit Kerja / Wilayah Satker</label>
+                  <select
+                    className="form-select mb-2"
+                    value={SATKER_UNIT_KERJA_OPTIONS.some((o) => o.value === unitKerja) ? unitKerja : ""}
+                    onChange={(e) => setUnitKerja(e.target.value)}
+                    style={{
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                    }}
+                  >
+                    <option value="">-- Pilih Satker BPS (Provinsi / Kab / Kota) --</option>
+                    {SATKER_UNIT_KERJA_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label} ({opt.badge})
+                      </option>
+                    ))}
+                  </select>
                   <input
                     type="text"
                     className="form-control"
@@ -491,7 +509,14 @@ const PengaturanAkun = () => {
                           {getRoleName(u.role)}
                         </span>
                       </td>
-                      <td style={{ padding: '15px' }}>{u.unit_kerja || '-'}</td>
+                      <td style={{ padding: '15px' }}>
+                        <div>{u.unit_kerja || 'BPS Provinsi Sulawesi Tengah'}</div>
+                        <small style={{ color: resolveWilayahAccess(u).scope === 'kabupaten' ? '#0284c7' : '#64748b', fontWeight: 600 }}>
+                          {resolveWilayahAccess(u).scope === 'kabupaten'
+                            ? `Akses: ${resolveWilayahAccess(u).kabupaten_label}`
+                            : 'Akses: Provinsi (Semua Wilayah)'}
+                        </small>
+                      </td>
                       <td style={{ padding: '15px' }}>{u.telepon || '-'}</td>
                       <td style={{ padding: '15px' }}>
                         <button

@@ -1,5 +1,15 @@
 const bcrypt = require('bcryptjs'); // Ganti bcrypt dengan bcryptjs
 const User = require('../models/user.model');
+const { resolveWilayahAccess } = require('../utils/wilayahHierarki');
+
+function serializeUserWithWilayah(user) {
+  if (!user) return user;
+  const plain = typeof user.toJSON === 'function' ? user.toJSON() : { ...user };
+  return {
+    ...plain,
+    wilayah_akses: resolveWilayahAccess(plain.unit_kerja),
+  };
+}
 
 /**
  * GET PROFIL USER LOGIN
@@ -10,7 +20,7 @@ exports.getProfil = async (req, res) => {
       attributes: ['id', 'nama', 'email', 'role', 'nip', 'alamat', 'telepon', 'unit_kerja'],
     });
 
-    res.json(user);
+    res.json(serializeUserWithWilayah(user));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -73,7 +83,7 @@ exports.getAllUsers = async (req, res) => {
       order: [['id', 'ASC']],
     });
 
-    res.json(users);
+    res.json(users.map((u) => serializeUserWithWilayah(u)));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -110,7 +120,7 @@ exports.createUser = async (req, res) => {
 
     res.json({
       message: 'User berhasil ditambahkan',
-      user: {
+      user: serializeUserWithWilayah({
         id: user.id,
         nama: user.nama,
         email: user.email,
@@ -119,16 +129,13 @@ exports.createUser = async (req, res) => {
         alamat: user.alamat,
         telepon: user.telepon,
         unit_kerja: user.unit_kerja,
-      },
+      }),
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-/**
- * UPDATE USER (ADMIN)
- */
 /**
  * UPDATE USER (ADMIN) - YANG SUDAH DIPERBAIKI
  */

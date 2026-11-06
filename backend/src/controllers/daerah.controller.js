@@ -1,6 +1,7 @@
 const DaerahPresensi = require("../models/daerah.model");
 const { syncDaerahGeojson } = require("../utils/syncDaerahGeojson");
 const { getGeojsonCenter } = require("../utils/geojsonCenter");
+const { enrichDaerah } = require("../utils/wilayahHierarki");
 
 exports.createDaerah = async (req, res) => {
   try {
@@ -24,7 +25,7 @@ exports.createDaerah = async (req, res) => {
 
     res.status(201).json({
       message: "Daerah berhasil ditambahkan",
-      daerah,
+      daerah: enrichDaerah(daerah),
     });
   } catch (err) {
     console.error("Error createDaerah:", err);
@@ -38,8 +39,9 @@ exports.getDaerah = async (req, res) => {
     const data = await DaerahPresensi.findAll({
       order: [['nama_daerah', 'ASC']]
     });
-    console.log(`Data ditemukan: ${data.length} records`);
-    res.json(data);
+    const enriched = data.map((item) => enrichDaerah(item));
+    console.log(`Data ditemukan: ${enriched.length} records`);
+    res.json(enriched);
   } catch (err) {
     console.error("Error getDaerah:", err);
     res.status(500).json({ message: err.message });
@@ -55,7 +57,7 @@ exports.getDaerahById = async (req, res) => {
       return res.status(404).json({ message: "Daerah tidak ditemukan" });
     }
     
-    res.json(daerah);
+    res.json(enrichDaerah(daerah));
   } catch (err) {
     console.error("Error getDaerahById:", err);
     res.status(500).json({ message: err.message });
@@ -89,7 +91,7 @@ exports.updateDaerah = async (req, res) => {
 
     res.json({
       message: "Daerah berhasil diupdate",
-      daerah
+      daerah: enrichDaerah(daerah),
     });
   } catch (err) {
     console.error("Error updateDaerah:", err);

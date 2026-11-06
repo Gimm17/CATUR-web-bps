@@ -61,6 +61,12 @@ function loadFeaturesFromDir(dirPath, levelKey, nameProp) {
       records.push({
         level: levelKey,
         name: normalizeName(rawName),
+        properties: {
+          kdkab: props.kdkab || null,
+          nmkab: normalizeName(props.nmkab) || null,
+          kdkec: props.kdkec || null,
+          nmkec: normalizeName(props.nmkec) || null,
+        },
         geometry: feature.geometry,
       });
     }
@@ -76,7 +82,11 @@ function groupRegions(levelFilter = 'all') {
     for (const record of kabRecords) {
       const key = `${record.level}|${record.name}`;
       if (!map.has(key)) map.set(key, []);
-      map.get(key).push({ type: 'Feature', properties: {}, geometry: record.geometry });
+      map.get(key).push({
+        type: 'Feature',
+        properties: record.properties || {},
+        geometry: record.geometry,
+      });
     }
   }
 
@@ -85,7 +95,11 @@ function groupRegions(levelFilter = 'all') {
     for (const record of kecRecords) {
       const key = `${record.level}|${record.name}`;
       if (!map.has(key)) map.set(key, []);
-      map.get(key).push({ type: 'Feature', properties: {}, geometry: record.geometry });
+      map.get(key).push({
+        type: 'Feature',
+        properties: record.properties || {},
+        geometry: record.geometry,
+      });
     }
   }
 
