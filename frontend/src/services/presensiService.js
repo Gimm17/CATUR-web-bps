@@ -9,8 +9,32 @@ export const submitPresensi = async (formData) => {
   });
 };
 
-export const submitLaporan = async (presensiId, laporan) => {
-  return axios.put(`/presensi/${presensiId}/laporan`, { laporan }, {
+export const submitLaporan = async (presensiIdOrPayload, laporanArg) => {
+  const isObjectPayload =
+    presensiIdOrPayload !== null &&
+    typeof presensiIdOrPayload === 'object';
+
+  const presensiId = isObjectPayload
+    ? (presensiIdOrPayload.presensi_id ?? presensiIdOrPayload.presensiId ?? presensiIdOrPayload.id)
+    : presensiIdOrPayload;
+
+  const laporan = isObjectPayload
+    ? presensiIdOrPayload.laporan
+    : laporanArg;
+
+  const body = isObjectPayload
+    ? {
+        laporan,
+        ...(presensiId ? { presensi_id: presensiId } : {}),
+        ...(presensiIdOrPayload.surat_tugas_id ? { surat_tugas_id: presensiIdOrPayload.surat_tugas_id } : {}),
+      }
+    : { laporan };
+
+  const endpoint = presensiId
+    ? `/presensi/${presensiId}/laporan`
+    : '/presensi/laporan';
+
+  return axios.put(endpoint, body, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
       'Content-Type': 'application/json',

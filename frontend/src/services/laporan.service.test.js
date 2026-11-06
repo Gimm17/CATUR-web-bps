@@ -86,4 +86,43 @@ describe('kontrak service laporan berbasis surat tugas', () => {
       })
     );
   });
+
+  it('mendukung pemanggilan objek dari PresensiPegawai (Tagging Perjadin) tanpa membuat laporan undefined', async () => {
+    await submitLaporan({
+      laporan: '<p>Koordinasi lapangan di Kabupaten Donggala</p>',
+      presensi_id: 73,
+      surat_tugas_id: 19,
+    });
+
+    expect(axios.put).toHaveBeenCalledWith(
+      '/presensi/73/laporan',
+      {
+        laporan: '<p>Koordinasi lapangan di Kabupaten Donggala</p>',
+        presensi_id: 73,
+        surat_tugas_id: 19,
+      },
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+      })
+    );
+  });
+
+  it('menggunakan fallback endpoint /presensi/laporan jika presensi_id belum terisi pada objek payload', async () => {
+    await submitLaporan({
+      laporan: '<p>Monitoring kegiatan harian</p>',
+      presensi_id: undefined,
+      surat_tugas_id: 19,
+    });
+
+    expect(axios.put).toHaveBeenCalledWith(
+      '/presensi/laporan',
+      {
+        laporan: '<p>Monitoring kegiatan harian</p>',
+        surat_tugas_id: 19,
+      },
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+      })
+    );
+  });
 });

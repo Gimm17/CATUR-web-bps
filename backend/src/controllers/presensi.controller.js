@@ -438,7 +438,7 @@ exports.presensiDinas = async (req, res) => {
 // Method untuk update laporan
 exports.updateLaporan = async (req, res) => {
   try {
-    const { laporan, presensi_id } = req.body;
+    const { laporan, presensi_id, surat_tugas_id } = req.body;
     const userId = req.user.id;
     const presensiId = req.params.presensiId || presensi_id;
 
@@ -450,10 +450,17 @@ exports.updateLaporan = async (req, res) => {
 
     // Cari presensi milik user
     const presensi = await Presensi.findOne({
-      where: {
-        id: presensiId,
-        user_id: userId
-      }
+      where: presensiId
+        ? {
+            id: presensiId,
+            user_id: userId,
+          }
+        : {
+            user_id: userId,
+            ...(surat_tugas_id ? { surat_tugas_id } : {}),
+            tanggal_presensi: getTodayDate(),
+          },
+      order: [['id', 'DESC']],
     });
 
     if (!presensi) {

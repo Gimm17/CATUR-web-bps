@@ -13,6 +13,22 @@ Semua perubahan penting pada CATUR Web dicatat dalam file ini. Format mengikuti 
 
 ## [Unreleased]
 
+### 2026-11-06 — TASK-044 — Perbaikan Bug Simpan Laporan Harian Terbaca Kosong pada Halaman Tagging Perjadin
+
+- **Status:** Selesai diinvestigasi, direproduksi dengan unit test (RED -> GREEN), diperbaiki, diverifikasi melalui 77 frontend unit test, dibuild, dan dideploy ke staging `caturv2.gimmhost.my.id`.
+- **Ringkasan:** Memperbaiki bug kritis yang ditemukan oleh atasan di mana saat pegawai mengisi laporan kegiatan harian pada Step 2 halaman Tagging Perjadin (`PresensiPegawai.jsx`) lalu menekan tombol simpan, sistem justru menolak penyimpanan dengan pesan *"Laporan tidak boleh kosong"* dan isi laporan tetap kosong. Akar masalahnya adalah ketidakcocokan tanda tangan fungsi (*function signature mismatch*) antara `PresensiPegawai.jsx` yang memanggil `submitLaporan({ laporan, presensi_id, surat_tugas_id })` (1 argumen objek) dan `presensiService.js` yang mengharapkan `submitLaporan(presensiId, laporan)` (2 argumen terpisah), sehingga request terkirim ke `/presensi/[object Object]/laporan` dengan body `{ laporan: undefined }`.
+- **File ditambahkan:** Tidak ada.
+- **File diubah:** `frontend/src/services/presensiService.js`, `frontend/src/pages/pegawai/PresensiPegawai.jsx`, `frontend/src/services/laporan.service.test.js`, `backend/src/controllers/presensi.controller.js`, dan `CHANGELOG.md`.
+- **File dihapus:** Tidak ada.
+- **Class/fungsi/komponen diubah:** Memperbarui `submitLaporan` di `frontend/src/services/presensiService.js` agar mendukung kedua pola pemanggilan secara kompatibel: `(presensiId, laporan)` (digunakan oleh `LaporanPegawai.jsx`) maupun objek `{ laporan, presensi_id, presensiId, id, surat_tugas_id }` (digunakan oleh `PresensiPegawai.jsx`); memperbarui `handleLaporan` di `frontend/src/pages/pegawai/PresensiPegawai.jsx` agar langsung menyinkronkan `dataPresensiHariIni` dan `step(3)` saat respons sukses diterima; memperkuat `exports.updateLaporan` di `backend/src/controllers/presensi.controller.js` dengan fallback pencarian presensi hari ini berdasarkan `user_id`, `surat_tugas_id`, dan `tanggal_presensi` apabila `presensiId` tidak disertakan di URL/body.
+- **Database:** Tidak ada perubahan skema, kolom, maupun migrasi database.
+- **API:** Endpoint `PUT /api/presensi/:presensiId/laporan` dan `PUT /api/presensi/laporan` kini menerima payload laporan baik melalui parameter URL maupun body `{ laporan, presensi_id, surat_tugas_id }` dengan fallback otomatis ke presensi aktif hari ini.
+- **Test otomatis:** Menambahkan 2 unit test regresi baru pada `frontend/src/services/laporan.service.test.js` (termasuk reproduksi pemanggilan objek dari `PresensiPegawai`). Seluruh unit test frontend lulus 77/77 lintas 19 file test. Build production sukses menghasilkan bundle `index-DZuLEKa0.js`.
+- **Verifikasi manual:** Simulasi alur Step 1 (Absen + 2 Foto) dilanjutkan Step 2 (Simpan Laporan Kegiatan Harian) pada halaman Tagging Perjadin mengirim `PUT /api/presensi/:id/laporan` dengan payload HTML laporan yang utuh, tidak lagi menghasilkan `laporan: undefined`, dan langsung berpindah ke Step 3 (Selesai).
+- **Risiko/catatan:** Kompatibilitas penuh tetap terjaga untuk fitur edit laporan harian dari halaman Detail Laporan Perjalanan (`LaporanPegawai.jsx`).
+- **Rollback:** Kembalikan commit terkait pada branch `feature/multi-destination-location` dan deploy ulang bundle sebelumnya.
+- **Commit:** Menyusul setelah push.
+
 ### 2026-11-04 — TASK-043 — Perbaikan Tuntas Tata Letak Responsif Multi-Device (Desktop, Tablet, Mobile) & Sidebar Collision
 
 - **Status:** Selesai diimplementasikan, diverifikasi melalui 75 frontend unit test dan 11 backend test, dibuild, dan dideploy ke staging `caturv2.gimmhost.my.id`.

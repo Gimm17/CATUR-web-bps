@@ -1282,6 +1282,10 @@ const PresensiPegawai = () => {
       console.log("📥 Response laporan:", response.data);
 
       if (response.data?.message || response.data?.data) {
+        if (response.data?.data) {
+          setDataPresensiHariIni(response.data.data);
+          setStep(3);
+        }
         setSuccess("✅ Laporan berhasil disimpan!");
         
         showToast("Laporan harian berhasil disimpan.", { icon: "success" });
