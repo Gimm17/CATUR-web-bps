@@ -1,0 +1,125 @@
+================================================================================
+CATUR BPS SULTENG - DAFTAR FILE PERUBAHAN UPDATE CODE
+Target Server : https://catur.bpssulteng.id/
+Branch Git    : feature/multi-destination-location
+Tanggal Rilis : 10 November 2026
+================================================================================
+
+CATATAN TEKNIS PENTING:
+- DATABASE SCHEMA : TIDAK ADA PERUBAHAN TABEL (Tidak perlu migrasi / DDL database).
+- FILE RUNTIME    : Folder 'uploads/', file '.env', dan 'node_modules/' di server 
+                    JANGAN DIHAPUS / JANGAN DITIMPA.
+- GOOGLE DRIVE    : Kredensial dan modul sinkronisasi Google Drive tidak tersentuh.
+- RESTART SERVICE : Setelah file diperbarui, restart Node.js app (Passenger) 
+                    via cPanel atau sentuh file 'tmp/restart.txt'.
+
+================================================================================
+1. DAFTAR FILE RUNTIME SERVER (DALAM PAKET UPDATE INI)
+================================================================================
+
+A. BACKEND LOGIC (Folder: src/)
+--------------------------------------------------------------------------------
+1. src/controllers/auth.controller.js
+   - Penambahan resolusi unit_kerja dan pembatasan wilayah_akses pada session login.
+2. src/controllers/daerah.controller.js
+   - Filter kecamatan berdasarkan kabupaten_nama dan ketersediaan poligon.
+3. src/controllers/akun.controller.js
+   - Validasi unit kerja satker tingkat Kabupaten/Kota vs Provinsi.
+4. src/controllers/presensi.controller.js
+   - Fix parsing payload submitLaporan (support object payload & string).
+5. src/utils/wilayahHierarki.js  [FILE BARU]
+   - Master data 13 Kab/Kota + 179 Kecamatan se-Sulawesi Tengah dan logic hierarki.
+6. src/utils/geojsonImporter.js
+   - Validasi path dan pengecekan file poligon geojson.
+
+B. FRONTEND PRODUCTION BUILD (Folder: public/)
+--------------------------------------------------------------------------------
+1. public/index.html
+   - Entry point SPA, mengarah ke bundle production terbaru.
+2. public/assets/index-Bv204jHK.js
+   - Bundle utama JavaScript (React logic, routing, state, komponen baru).
+3. public/assets/index-D4OjGpJl.css
+   - Bundle stylesheet CSS utama.
+4. public/assets/quill-Csc65GZT.js
+   - Vendor bundle rich text editor Quill untuk laporan harian presensi.
+5. public/img/ & public/logo.*
+   - Aset statis logo dan cover aplikasi.
+
+================================================================================
+2. DAFTAR FILE SOURCE CODE (REPOSITORY GIT) YANG MENGALAMI PERUBAHAN
+================================================================================
+
+A. FRONTEND SOURCE CODE (frontend/src/)
+--------------------------------------------------------------------------------
+[KOMPONEN BARU]
+1. frontend/src/auth/WilayahLoginSelect.jsx
+   - Komponen dropdown kustom pemilihan satker BPS di halaman login.
+   - Menggunakan ReactDOM.createPortal untuk mencegah clipping overflow.
+   - Mode desktop: floating popover card compact dengan search box.
+   - Mode mobile: bottom-sheet drawer ergonomis tanpa emoji slop.
+2. frontend/src/auth/WilayahLoginSelect.css
+   - Styling spesifik komponen WilayahLoginSelect (antislop, zero emoji).
+3. frontend/src/auth/WilayahLoginSelect.test.jsx
+   - 8 automated unit test untuk validasi behavior WilayahLoginSelect.
+4. frontend/src/features/surat-tugas/SearchableSelect.jsx
+   - Komponen combobox pencarian berformat Table of Contents (dotted leader).
+5. frontend/src/features/surat-tugas/SearchableSelect.css
+   - Styling visual SearchableSelect.
+6. frontend/src/features/surat-tugas/SearchableSelect.test.jsx
+   - Automated unit test komponen SearchableSelect.
+7. frontend/src/features/surat-tugas/wilayahHierarki.js
+   - Master data 14 Satker BPS, 13 Kabupaten/Kota, dan 179 Kecamatan.
+
+[MODIFIKASI FILE EKSISTING]
+8. frontend/src/auth/login.jsx
+   - Integrasi WilayahLoginSelect pada form login mobile dan desktop.
+   - Perbaikan scoping selector CSS '.overlay-panel span' untuk mengatasi bug margin.
+9. frontend/src/features/surat-tugas/TujuanScheduleEditor.jsx
+   - Implementasi cascading dropdown: Kabupaten/Kota -> Kecamatan ber-poligon.
+   - Perbaikan default fallback: opsi dropdown tetap muncul lengkap saat filter wilayah kosong/reset.
+10. frontend/src/features/surat-tugas/TujuanScheduleEditor.test.jsx
+   - Unit test pengujian cascading dan filter wilayah.
+11. frontend/src/pages/pegawai/PresensiPegawai.jsx
+   - Perbaikan handling simpan laporan harian (Step 2 langsung lanjut ke Step 3).
+   - Penggunaan setCurrentStep(3) yang stabil pasca-submit presensi.
+12. frontend/src/pages/pegawai/RichTextEditor.jsx
+   - Pencegahan inisialisasi toolbar ganda pada editor Quill.
+13. frontend/src/services/presensiService.js
+   - Support pengiriman payload laporan dalam bentuk object maupun raw text.
+14. frontend/src/contexts/SidebarContext.jsx
+   - State management drawer sidebar mobile (open/close).
+15. frontend/src/css/sidebar.css & frontend/src/css/navbar.css
+   - Implementasi off-canvas mobile drawer agar sidebar tidak menabrak header di layar kecil.
+16. frontend/src/fragments/Sidebar*.jsx & Navbar*.jsx (Admin, Atasan, Keuangan, Pegawai)
+   - Sinkronisasi toggle drawer dan layout responsif multi-device.
+17. frontend/src/layouts/*Layout.jsx (Admin, Atasan, Keuangan, Pegawai)
+   - Backdrop overlay klik luar untuk menutup drawer pada mobile.
+18. frontend/src/config/apiBaseUrl.js
+   - Pengamanan base URL API agar selalu memakai same-origin pada production.
+
+B. BACKEND SOURCE CODE (backend/)
+--------------------------------------------------------------------------------
+1. backend/src/controllers/auth.controller.js
+2. backend/src/controllers/daerah.controller.js
+3. backend/src/controllers/akun.controller.js
+4. backend/src/controllers/presensi.controller.js
+5. backend/src/utils/wilayahHierarki.js [BARU]
+6. backend/src/utils/geojsonImporter.js
+7. backend/tests/unit/wilayahHierarki.test.js [BARU]
+
+================================================================================
+3. RINGKASAN PERBAIKAN BUG & PENAMBAHAN FITUR
+================================================================================
+1. [SOLVED] Laporan Harian Terbaca Kosong pada Presensi Pegawai:
+   - Payload tersimpan utuh dan transisi ke Step Selesai (Step 3) berjalan otomatis.
+2. [SOLVED] Dropdown Wilayah Kosong saat Filter Non-Aktif / Di-reset:
+   - Dropdown tujuan kini otomatis menampilkan seluruh opsi secara default.
+3. [SOLVED] Collision / Tabrakan Tampilan Sidebar di Layar Mobile:
+   - Diganti dengan sistem off-canvas drawer modern dengan backdrop klik luar.
+4. [SOLVED] Desain & Layout Dropdown Satker Login (Antislop & Compact):
+   - Menghapus ketergantungan pada native select browser yang kaku.
+   - Tampilan bersih tanpa emoji/icon berlebihan, compact, dan responsif.
+5. [FEATURE] Pembatasan Akses Satker Kabupaten/Kota & Cascading Kecamatan:
+   - Akun BPS daerah otomatis terkunci ke kabupatennya masing-masing.
+   - Pilihan kecamatan tujuan langsung terfilter otomatis sesuai kabupaten ber-poligon.
+================================================================================

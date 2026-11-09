@@ -81,3 +81,6 @@ docs/deployment/CATUR_UPDATE_BPS_RESMI/
 /PANDUAN_UPDATE_SERVER_BPS_RESMI.md
 /PANDUAN_UPDATE_CPANEL_BPS.txt
 /implementation_plan_perbaikan_bug.md
+
+docs/deployment/CATUR_UPDATE_BPS_NEW/public/
+docs/deployment/CATUR_UPDATE_BPS_NEW/src/
