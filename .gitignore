@@ -65,3 +65,19 @@ backend/*.aab
 
 # Isolated feature worktrees.
 .worktrees/
+
+# Release packages
+*.zip
+/CATUR_UPDATE_BPS_RESMI.zip
+docs/deployment/*.zip
+docs/deployment/CATUR_UPDATE_BPS_RESMI/
+
+# Root duplicate generated reports (canonical versions are in docs/)
+/BLUEPRINT_FITUR_DROPDOWN_DESA_DAN_SLS.docx
+/LAPORAN_REKAPITULASI_PENGEMBANGAN_DAN_PERBAIKAN.docx
+/LAPORAN_REKAPITULASI_PENGEMBANGAN_DAN_PERBAIKAN.md
+/audit_comprehensive_report.docx
+/audit_comprehensive_report.md
+/PANDUAN_UPDATE_SERVER_BPS_RESMI.md
+/PANDUAN_UPDATE_CPANEL_BPS.txt
+/implementation_plan_perbaikan_bug.md
