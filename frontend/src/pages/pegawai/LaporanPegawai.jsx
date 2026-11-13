@@ -70,6 +70,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
   // State untuk tanda tangan
   const [ttdFile, setTtdFile] = useState(null);
   const [ttdPreview, setTtdPreview] = useState(null);
+  const [ttdDraftPreview, setTtdDraftPreview] = useState(null);
+  const [ttdClearedInModal, setTtdClearedInModal] = useState(false);
   const [ttdLoading, setTtdLoading] = useState(false);
   const [showTTDModal, setShowTTDModal] = useState(false);
   const [ttdError, setTtdError] = useState("");
@@ -163,10 +165,10 @@ const LaporanPerjalananContent = ({ suratId }) => {
   };
 
   /* ================= FUNGSI UNTUK TANDA TANGAN ================= */
-  // Handle upload file tanda tangan
+  // Handle upload file tanda tangan (bisa langsung pilih/replace tanpa harus klik X dulu)
   const handleTTDChange = (e) => {
     if (!guardReportEditable()) return;
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     // Validasi ukuran file (max 2MB)
@@ -184,22 +186,29 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
     setTtdError("");
     setTtdFile(file);
+    setTtdClearedInModal(false);
 
-    // Buat preview
+    // Buat preview khusus draft file baru di modal
     const reader = new FileReader();
     reader.onloadend = () => {
-      setTtdPreview(reader.result);
+      setTtdDraftPreview(reader.result);
     };
     reader.readAsDataURL(file);
   };
 
-  // Handle hapus tanda tangan yang dipilih
-  const handleClearTTD = () => {
+  // Handle hapus/reset pilihan tanda tangan di dalam modal
+  const handleClearTTD = (clearExistingViewInModal = false) => {
+    if (clearExistingViewInModal && !ttdDraftPreview && ttdPreview) {
+      setTtdClearedInModal(true);
+    } else {
+      setTtdClearedInModal(false);
+    }
     setTtdFile(null);
-    setTtdPreview(null);
+    setTtdDraftPreview(null);
     setTtdError("");
-    if (document.getElementById("ttdUpload")) {
-      document.getElementById("ttdUpload").value = "";
+    const inputEl = document.getElementById("ttdUpload");
+    if (inputEl) {
+      inputEl.value = "";
     }
   };
 
@@ -207,7 +216,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
   const handleUploadTTD = async () => {
     if (!guardReportEditable()) return;
     if (!ttdFile) {
-      setTtdError("Pilih file tanda tangan terlebih dahulu");
+      setTtdError("Pilih file tanda tangan baru terlebih dahulu");
       return;
     }
 
@@ -216,16 +225,25 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
     try {
       setTtdLoading(true);
-      await uploadTTD(suratId, formData);
-      
-      // Refresh data setelah upload berhasil
-      await fetchData(suratId);
-      
-      // Reset state
-      handleClearTTD();
+      const uploadedPreviewSnapshot = ttdDraftPreview;
+      const uploadRes = await uploadTTD(suratId, formData);
+
+      // Langsung tampilkan TTD baru secara instan tanpa glitch kembali ke TTD lama
+      if (uploadedPreviewSnapshot) {
+        setTtdPreview(uploadedPreviewSnapshot);
+      }
+
+      // Reset draft modal & tutup modal terlebih dahulu
+      handleClearTTD(false);
       setShowTTDModal(false);
-      
-      showToast("Tanda tangan berhasil diupload! Anda bisa mengirim laporan sekarang.", { icon: "success" });
+
+      // Refresh data laporan & dokumen hasil auto-regenerate
+      await fetchData(suratId);
+
+      const toastMsg = uploadRes?.data?.regenerated
+        ? "Tanda tangan berhasil diperbarui & dokumen laporan (PDF/Word) telah di-generate ulang otomatis!"
+        : "Tanda tangan berhasil diupload!";
+      showToast(toastMsg, { icon: "success" });
     } catch (err) {
       await refreshAfterLockConflict(err);
       const errorMessage = getActionErrorMessage(err, "Gagal mengupload tanda tangan");
@@ -236,18 +254,21 @@ const LaporanPerjalananContent = ({ suratId }) => {
     }
   };
 
-  // Get tanda tangan dari server
+  // Get tanda tangan tersimpan dari server (dengan cache-buster agar tidak me-load gambar lama)
   const fetchTTD = async () => {
     if (data?.laporan_akhir?.ttd_pegawai) {
-      const url = toPublicFileUrl(data.laporan_akhir.ttd_pegawai, { legacyDir: "uploads/ttd" });
-      setTtdPreview(url);
+      const baseUrl = toPublicFileUrl(data.laporan_akhir.ttd_pegawai, { legacyDir: "uploads/ttd" });
+      const versionTag = data.laporan_akhir.tanggal_ttd_pegawai || data.laporan_akhir.updated_at || "";
+      const cacheBustedUrl = versionTag
+        ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}v=${encodeURIComponent(versionTag)}`
+        : baseUrl;
+      setTtdPreview(cacheBustedUrl);
       return;
     }
 
     try {
       const ttdUrl = await getTTD(suratId);
       if (ttdUrl) {
-        console.log('TTD loaded from server:', ttdUrl);
         setTtdPreview(ttdUrl);
       }
     } catch (err) {
@@ -625,15 +646,21 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
   useEffect(() => {
     fetchData(suratId);
-    
+  }, [suratId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (showTTDModal || showEditModal || ttdLoading || editLoading || loadingKirim) {
+      return undefined;
+    }
+
     const intervalId = setInterval(() => {
       fetchData(suratId);
     }, 10000);
-    
+
     return () => {
       clearInterval(intervalId);
     };
-  }, [suratId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [suratId, showTTDModal, showEditModal, ttdLoading, editLoading, loadingKirim]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch TTD saat data berubah
   useEffect(() => {
@@ -662,8 +689,11 @@ const LaporanPerjalananContent = ({ suratId }) => {
 
 
   /* ================= MODAL TANDA TANGAN ================= */
-  const TTDModal = () => {
+  const renderTTDModal = () => {
     if (!showTTDModal) return null;
+
+    const modalPreviewUrl = ttdDraftPreview || (!ttdClearedInModal ? ttdPreview : null);
+    const isNewDraftSelected = Boolean(ttdDraftPreview && ttdFile);
 
     return (
       <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -682,7 +712,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 className="btn-close btn-close-white"
                 onClick={() => {
                   setShowTTDModal(false);
-                  handleClearTTD();
+                  handleClearTTD(false);
                 }}
               ></button>
             </div>
@@ -698,9 +728,9 @@ const LaporanPerjalananContent = ({ suratId }) => {
                     <ul className="mb-0 mt-1 small">
                       <li><strong>Upload sekarang, gunakan nanti:</strong> Tanda tangan akan otomatis digunakan saat mengirim laporan</li>
                       <li><strong>File akan disimpan:</strong> Tanda tangan disimpan di server dan siap digunakan kapan saja</li>
-                      <li><strong>Bisa diganti:</strong> Anda bisa upload ulang kapanpun sebelum laporan disetujui</li>
+                      <li><strong>Bisa langsung diganti:</strong> Pilih file baru di bawah untuk langsung mengganti tanda tangan tanpa perlu menghapus yang lama</li>
                       <li><strong>Format:</strong> JPG, JPEG, PNG  Maksimal 2MB</li>
-                      <li><strong>Pastikan jelas:</strong> Tanda tangan akan muncul di bagian bawah laporan PDF</li>
+                      <li><strong>Pastikan jelas:</strong> Tanda tangan akan muncul di bagian bawah laporan PDF & Word</li>
                     </ul>
                   </div>
                 </div>
@@ -712,7 +742,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
                      style={{ backgroundColor: 'rgba(255,255,255,0.8)', zIndex: 10 }}>
                   <div className="text-center">
                     <FaSpinner className="spinner-border text-primary mb-2" size="2em" />
-                    <p className="text-primary mb-0">Mengupload tanda tangan...</p>
+                    <p className="text-primary mb-0">Mengupload tanda tangan & memperbarui dokumen...</p>
                   </div>
                 </div>
               )}
@@ -725,47 +755,63 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 
                 <div className="border-2 border-dashed rounded-3 p-4 text-center"
                      style={{ 
-                       borderColor: ttdPreview ? theme.success : theme.light,
-                       backgroundColor: ttdPreview ? `${theme.success}05` : `${theme.background}80`,
+                       borderColor: isNewDraftSelected ? theme.success : (modalPreviewUrl ? theme.signature : theme.light),
+                       backgroundColor: isNewDraftSelected ? `${theme.success}05` : `${theme.background}80`,
                        minHeight: '250px',
                        position: 'relative'
                      }}>
-                  {ttdPreview ? (
+                  {modalPreviewUrl ? (
                     <>
                       <div className="position-relative d-inline-block">
                         <img 
-                          src={ttdPreview} 
+                          src={modalPreviewUrl} 
                           alt="Preview Tanda Tangan" 
                           className="img-fluid rounded shadow-sm"
+                          onClick={() => document.getElementById('ttdUpload')?.click()}
+                          title="Klik untuk memilih/mengganti file tanda tangan"
                           style={{ 
                             maxHeight: '200px',
-                            border: `2px solid ${theme.success}`,
+                            border: `2px solid ${isNewDraftSelected ? theme.success : theme.signature}`,
                             backgroundColor: 'white',
-                            padding: '10px'
+                            padding: '10px',
+                            cursor: 'pointer'
                           }}
                         />
                         <button
+                          type="button"
                           className="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle"
                           style={{ width: '30px', height: '30px' }}
-                          onClick={handleClearTTD}
+                          title={isNewDraftSelected ? "Batalkan pilihan file baru" : "Bersihkan preview"}
+                          onClick={() => handleClearTTD(true)}
                         >
                           <FaTimes size={12} />
                         </button>
                       </div>
                       <div className="mt-3">
-                        <small className="text-success">
-                          <FaCheck className="me-1" />
-                          Tanda tangan siap diupload
-                        </small>
+                        {isNewDraftSelected ? (
+                          <small className="text-success fw-semibold">
+                            <FaCheck className="me-1" />
+                            File baru siap diupload ({ttdFile?.name}) — klik &quot;Upload Tanda Tangan&quot; di bawah
+                          </small>
+                        ) : (
+                          <small className="text-primary">
+                            <FaSignature className="me-1" />
+                            Tanda tangan aktif saat ini — langsung pilih file baru di bawah untuk mengganti
+                          </small>
+                        )}
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="py-5">
+                      <div
+                        className="py-5"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => document.getElementById('ttdUpload')?.click()}
+                      >
                         <FaImage size={48} className="text-muted mb-3 opacity-50" />
-                        <h6 className="text-muted mb-2">Belum ada tanda tangan</h6>
+                        <h6 className="text-muted mb-2">Belum ada file baru dipilih</h6>
                         <p className="text-muted small mb-0">
-                          Pilih file tanda tangan untuk melihat preview
+                          Klik di sini atau tombol &quot;Pilih File&quot; di bawah untuk memilih gambar tanda tangan baru
                         </p>
                       </div>
                     </>
@@ -776,7 +822,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
               {/* Upload Input */}
               <div className="mb-4">
                 <label className="form-label fw-semibold">
-                  Pilih File Tanda Tangan <span className="text-danger">*</span>
+                  Pilih / Ganti File Tanda Tangan <span className="text-danger">*</span>
                 </label>
                 
                 <div className="input-group">
@@ -785,6 +831,9 @@ const LaporanPerjalananContent = ({ suratId }) => {
                     id="ttdUpload"
                     className="form-control border-2"
                     accept=".jpg,.jpeg,.png"
+                    onClick={(e) => {
+                      e.target.value = "";
+                    }}
                     onChange={handleTTDChange}
                     style={{ 
                       borderColor: theme.light,
@@ -794,15 +843,21 @@ const LaporanPerjalananContent = ({ suratId }) => {
                   <button 
                     className="btn btn-outline-secondary"
                     type="button"
-                    onClick={() => document.getElementById('ttdUpload').click()}
+                    onClick={() => {
+                      const el = document.getElementById('ttdUpload');
+                      if (el) {
+                        el.value = "";
+                        el.click();
+                      }
+                    }}
                   >
                     <FaUpload className="me-2" />
-                    Pilih File
+                    {ttdPreview ? "Ganti File" : "Pilih File"}
                   </button>
                 </div>
                 
                 <div className="form-text">
-                  Format: JPG, JPEG, PNG  Maksimal 2MB
+                  Format: JPG, JPEG, PNG  Maksimal 2MB (Tidak perlu klik X, langsung pilih file baru untuk me-replace)
                 </div>
                 
                 {ttdError && (
@@ -814,14 +869,14 @@ const LaporanPerjalananContent = ({ suratId }) => {
               </div>
 
               {/* Info Tanda Tangan yang Sudah Ada */}
-              {data?.laporan_akhir?.ttd_pegawai && !ttdPreview && (
+              {data?.laporan_akhir?.ttd_pegawai && !modalPreviewUrl && (
                 <div className="alert alert-warning border-0">
                   <div className="d-flex align-items-center">
                     <FaSignature className="me-3" style={{ color: theme.warning }} />
                     <div>
-                      <strong>Tanda tangan sudah tersedia</strong>
+                      <strong>Tanda tangan sebelumnya masih tersimpan di server</strong>
                       <p className="small mb-0 mt-1">
-                        Anda telah mengupload tanda tangan sebelumnya. Upload baru untuk menggantinya.
+                        Pilih file baru di atas lalu klik &quot;Upload Tanda Tangan&quot; untuk menggantinya.
                       </p>
                     </div>
                   </div>
@@ -835,7 +890,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 className="btn btn-outline-secondary"
                 onClick={() => {
                   setShowTTDModal(false);
-                  handleClearTTD();
+                  handleClearTTD(false);
                 }}
               >
                 <FaTimes className="me-2" />
@@ -846,7 +901,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 type="button"
                 className="btn btn-primary"
                 disabled={!reportEditable || !ttdFile || ttdLoading}
-                title={!reportEditable ? reportLockMessage : undefined}
+                title={!reportEditable ? reportLockMessage : (!ttdFile ? "Pilih file tanda tangan baru terlebih dahulu" : undefined)}
                 onClick={handleUploadTTD}
                 style={{
                   background: `linear-gradient(135deg, ${theme.signature} 0%, ${theme.primary} 100%)`,
@@ -862,7 +917,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 ) : (
                   <>
                     <FaUpload className="me-2" />
-                    Upload Tanda Tangan
+                    {ttdPreview ? "Simpan & Ganti TTD" : "Upload Tanda Tangan"}
                   </>
                 )}
               </button>
@@ -1202,7 +1257,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
   return (
     <PegawaiLayout>
       {/* Modal Tanda Tangan */}
-      <TTDModal />
+      {renderTTDModal()}
       {/* Modal Edit Laporan Harian */}
       {showEditModal && (
         <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
