@@ -324,10 +324,16 @@ const PresensiPegawai = () => {
   const uploadedFotoCount = uploadedFotoList.length;
   const selectedFotoCount = fotoFiles.length;
   const totalFotoHariIni = uploadedFotoCount + selectedFotoCount;
-  const isFotoLengkapHariIni = uploadedFotoCount >= 2;
+  const isForcedByAdminHariIni = Boolean(dataPresensiHariIni?.force_foto_by_admin);
+  const isFotoLengkapHariIni =
+    Boolean(dataPresensiHariIni?.is_foto_lengkap) ||
+    uploadedFotoCount >= 2 ||
+    (isForcedByAdminHariIni && uploadedFotoCount >= 1);
   const canOpenLaporan = sudahAbsen && isFotoLengkapHariIni;
   const maxFotoPerHari = 5;
-  const fotoProgressLabel = `${uploadedFotoCount}/2 foto sudah tersimpan`;
+  const fotoProgressLabel = isForcedByAdminHariIni && uploadedFotoCount === 1
+    ? "1 foto tersimpan (Di-unlock Admin)"
+    : `${uploadedFotoCount}/2 foto sudah tersimpan`;
   const hasValidLokasi = Boolean(
     lokasi &&
     Number.isFinite(Number(lokasi.latitude)) &&
@@ -772,7 +778,12 @@ const PresensiPegawai = () => {
       const dataHariIni = response.data?.data_hari_ini;
       const fotoLengkapHariIni =
         response.data?.is_foto_lengkap_hari_ini ??
-        (Array.isArray(dataHariIni?.foto_list) && dataHariIni.foto_list.length >= 2);
+        Boolean(
+          dataHariIni?.is_foto_lengkap ||
+          (Array.isArray(dataHariIni?.foto_list) &&
+            (dataHariIni.foto_list.length >= 2 ||
+              (dataHariIni.force_foto_by_admin && dataHariIni.foto_list.length >= 1)))
+        );
       
       setRiwayatPresensi(allPresensi);
       
@@ -796,7 +807,11 @@ const PresensiPegawai = () => {
         setDataPresensiHariIni(dataHariIni);
         
         // Set waktu absen
-        const waktuAbsenData = dataHariIni.created_at || dataHariIni.createdAt || new Date().toISOString();
+        const waktuAbsenData =
+          (dataHariIni.force_foto_by_admin && dataHariIni.force_foto_at) ||
+          dataHariIni.created_at ||
+          dataHariIni.createdAt ||
+          new Date().toISOString();
         setWaktuAbsen(waktuAbsenData);
         
         const batasWaktu = new Date(waktuAbsenData);

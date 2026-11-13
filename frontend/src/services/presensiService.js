@@ -49,3 +49,21 @@ export const cekStatusPresensi = async () => {
     },
   });
 };
+
+export const getPresensiKendalaFotoAdmin = async (includeUnlocked = false) => {
+  return axios.get('/presensi/admin/kendala-foto', {
+    params: includeUnlocked ? { include_unlocked: 'true' } : {},
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+  });
+};
+
+export const forceUnlockPresensiFotoAdmin = async (presensiId, payload = { force: true }) => {
+  return axios.put(`/presensi/admin/${presensiId}/force-foto`, payload, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+      'Content-Type': 'application/json',
+    },
+  });
+};

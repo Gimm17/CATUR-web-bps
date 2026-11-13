@@ -1,11 +1,20 @@
 const Presensi = require('../models/presensi.model');
 const SuratTugas = require('../models/suratTugas.model');
 const Daerah = require('../models/daerah.model');
+const User = require('../models/user.model');
+const Notifikasi = require('../models/notifikasi.model');
 const { isPointInsideGeojson } = require('../utils/geojsonPolygon');
 const { getTodayDate } = require('../utils/date');
 const { Op } = require('sequelize');
 const { getOwnedReportContext } = require('../services/reportContext.service');
 const { assertReportEditable } = require('../services/reportWindow.service');
+const {
+  parseFotoMeta,
+  parseFotoList,
+  isPresensiFotoLengkap,
+  serializeFotoMeta,
+} = require('../utils/presensiFoto');
+const { regenerateLaporanFilesIfExists } = require('./laporan.controller');
 
 const LOCAL_AREAS = ['palu', 'sigi', 'donggala'];
 const DEFAULT_GPS_TOLERANCE_METERS = Number.parseInt(
@@ -18,33 +27,6 @@ const isLocalArea = (name) => {
   const lower = String(name).toLowerCase();
   return LOCAL_AREAS.some((area) => lower.includes(area));
 };
-
-function parseFotoList(fotoValue) {
-  if (!fotoValue) return [];
-
-  if (Array.isArray(fotoValue)) {
-    return fotoValue.filter(Boolean).map(String);
-  }
-
-  if (typeof fotoValue === 'string') {
-    const trimmed = fotoValue.trim();
-    if (!trimmed) return [];
-
-    // Support: JSON stringified array (format baru)
-    if (trimmed.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        return Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [];
-      } catch (err) {
-        // ignore
-      }
-    }
-
-    return [trimmed];
-  }
-
-  return [];
-}
 
 function getDriveLink(file) {
   return file?.drive?.webContentLink || file?.drive?.webViewLink || null;
@@ -147,14 +129,19 @@ function calculateDurasiHari(tanggalMulai, tanggalSelesai) {
 
 function buildPresensiResponseItem(presensi, hariKe) {
   const raw = typeof presensi?.toJSON === 'function' ? presensi.toJSON() : presensi;
-  const fotoList = parseFotoList(raw?.foto);
-  const isFotoLengkap = fotoList.length >= 2;
+  const meta = parseFotoMeta(raw?.foto);
+  const fotoList = meta.photos;
+  const isFotoLengkap = isPresensiFotoLengkap(raw?.foto);
   const hasLaporan = typeof raw?.laporan === 'string' && raw.laporan.trim() !== '';
 
   return {
     ...raw,
     foto: fotoList[0] || null,
     foto_list: fotoList,
+    force_foto_by_admin: meta.force_foto_by_admin,
+    force_foto_reason: meta.force_foto_reason,
+    force_foto_at: meta.force_foto_at,
+    force_foto_admin_nama: meta.force_foto_admin_nama,
     hari_ke: hariKe,
     is_foto_lengkap: isFotoLengkap,
     can_submit_laporan: isFotoLengkap,
@@ -278,7 +265,8 @@ exports.presensiDinas = async (req, res) => {
     // Ini jadi solusi untuk UI yang hanya bisa kirim 1 foto per aksi (tanpa tombol save per foto).
     const presensiHariIni = tanggalSudahAbsen[today]?.data || null;
     if (presensiHariIni) {
-      const existingFotoList = parseFotoList(presensiHariIni.foto);
+      const existingMeta = parseFotoMeta(presensiHariIni.foto);
+      const existingFotoList = existingMeta.photos;
 
       if (existingFotoList.length >= 2) {
         return res.status(409).json({
@@ -304,10 +292,13 @@ exports.presensiDinas = async (req, res) => {
         });
       }
 
-      presensiHariIni.foto = uniqueMerged.length ? JSON.stringify(uniqueMerged) : null;
+      presensiHariIni.foto = serializeFotoMeta({
+        ...existingMeta,
+        photos: uniqueMerged,
+      });
       await presensiHariIni.save();
 
-      const isFotoLengkap = uniqueMerged.length >= 2;
+      const isFotoLengkap = isPresensiFotoLengkap(presensiHariIni.foto);
       return res.status(isFotoLengkap ? 200 : 202).json({
         message: isFotoLengkap
           ? 'Foto presensi berhasil dilengkapi.'
@@ -316,6 +307,7 @@ exports.presensiDinas = async (req, res) => {
           ...(typeof presensiHariIni.toJSON === 'function' ? presensiHariIni.toJSON() : presensiHariIni),
           foto: uniqueMerged[0] || fotoPrimaryIncoming,
           foto_list: uniqueMerged,
+          force_foto_by_admin: existingMeta.force_foto_by_admin,
           is_foto_lengkap: isFotoLengkap,
           remaining_foto: Math.max(0, 2 - uniqueMerged.length),
         },
@@ -328,13 +320,14 @@ exports.presensiDinas = async (req, res) => {
       });
     }
 
-    // Pastikan presensi sebelumnya sudah lengkap (minimal 2 foto) sebelum lanjut hari berikutnya.
+    // Pastikan presensi sebelumnya sudah lengkap (minimal 2 foto atau di-unlock admin) sebelum lanjut hari berikutnya.
     if (semuaPresensi.length > 0) {
       const lastPresensi = semuaPresensi[semuaPresensi.length - 1];
       const lastTanggal = lastPresensi?.tanggal_presensi;
       const lastFotoList = parseFotoList(lastPresensi?.foto);
+      const lastFotoLengkap = isPresensiFotoLengkap(lastPresensi?.foto);
 
-      if (lastTanggal && lastTanggal !== today && lastFotoList.length < 2) {
+      if (lastTanggal && lastTanggal !== today && !lastFotoLengkap) {
         return res.status(400).json({
           message: `Lengkapi minimal 2 foto untuk presensi hari ke-${semuaPresensi.length} terlebih dahulu.`,
           min_foto: 2,
@@ -475,8 +468,10 @@ exports.updateLaporan = async (req, res) => {
     });
     assertReportEditable(context.reportWindow);
 
-    const fotoList = parseFotoList(presensi.foto);
-    if (fotoList.length < 2) {
+    const meta = parseFotoMeta(presensi.foto);
+    const fotoList = meta.photos;
+    const isFotoLengkap = isPresensiFotoLengkap(presensi.foto);
+    if (!isFotoLengkap) {
       return res.status(400).json({
         message: 'Upload minimal 2 foto sebelum mengisi laporan.',
         min_foto: 2,
@@ -488,12 +483,23 @@ exports.updateLaporan = async (req, res) => {
     presensi.laporan = laporan;
     await presensi.save();
 
+    const regen = await regenerateLaporanFilesIfExists({
+      userId,
+      suratId: presensi.surat_tugas_id,
+      surat: context?.surat || null,
+      laporan: context?.laporan || null,
+    });
+
     res.json({
-      message: 'Laporan berhasil disimpan',
+      message: regen.regenerated
+        ? 'Laporan berhasil disimpan dan dokumen akhir telah diperbarui'
+        : 'Laporan berhasil disimpan',
+      regenerated: regen.regenerated,
       data: {
         ...presensi.toJSON(),
         foto: fotoList[0] || null,
         foto_list: fotoList,
+        force_foto_by_admin: meta.force_foto_by_admin,
         is_foto_lengkap: true,
       }
     });
@@ -619,8 +625,7 @@ exports.cekPresensiHariIni = async (req, res) => {
 
     // Ambil data untuk hari ini (yang pertama)
     const dataHariIni = presensiHariIni.length > 0 ? presensiHariIni[0] : null;
-    const isFotoLengkapHariIni =
-      !!dataHariIni && Array.isArray(dataHariIni.foto_list) && dataHariIni.foto_list.length >= 2;
+    const isFotoLengkapHariIni = Boolean(dataHariIni?.is_foto_lengkap);
     const canSubmitLaporan = sudahAbsen && isFotoLengkapHariIni;
     const presensiBelumLengkap = presensiDenganHariKe.find((item) => !item.is_foto_lengkap) || null;
 
@@ -655,6 +660,192 @@ exports.cekPresensiHariIni = async (req, res) => {
       success: false,
       message: 'Gagal memeriksa status presensi',
       error: err.message 
+    });
+  }
+};
+
+exports.listPresensiKendalaFotoAdmin = async (req, res) => {
+  try {
+    const includeUnlocked = String(req.query?.include_unlocked || '').toLowerCase() === 'true';
+
+    const rows = await Presensi.findAll({
+      include: [
+        {
+          model: User,
+          as: 'user',
+          required: false,
+          attributes: ['id', 'nama', 'nip', 'email', 'unit_kerja'],
+        },
+        {
+          model: SuratTugas,
+          as: 'surat_tugas',
+          required: false,
+          attributes: [
+            'id',
+            'nomor_surat',
+            'nama_kegiatan',
+            'daerah_tujuan',
+            'tanggal_mulai',
+            'tanggal_selesai',
+            'status',
+          ],
+        },
+      ],
+      order: [
+        ['tanggal_presensi', 'DESC'],
+        ['id', 'DESC'],
+      ],
+    });
+
+    const problematicAll = [];
+    for (const row of rows) {
+      const raw = typeof row?.toJSON === 'function' ? row.toJSON() : row;
+      const meta = parseFotoMeta(raw?.foto);
+      // Hanya ambil presensi yang benar-benar tertahan di 1 foto (atau sudah di-force dari 1 foto)
+      if (meta.photos.length !== 1) continue;
+
+      problematicAll.push({
+        id: raw.id,
+        user_id: raw.user_id,
+        surat_tugas_id: raw.surat_tugas_id,
+        tanggal_presensi: raw.tanggal_presensi,
+        jam_presensi: raw.jam_presensi,
+        laporan: raw.laporan || null,
+        has_laporan: Boolean(raw.laporan && String(raw.laporan).trim()),
+        foto: meta.photos[0] || null,
+        foto_list: meta.photos,
+        foto_count: meta.photos.length,
+        force_foto_by_admin: meta.force_foto_by_admin,
+        force_foto_reason: meta.force_foto_reason,
+        force_foto_at: meta.force_foto_at,
+        force_foto_admin_nama: meta.force_foto_admin_nama,
+        is_foto_lengkap: isPresensiFotoLengkap(raw?.foto),
+        user: raw.user || null,
+        surat_tugas: raw.surat_tugas || null,
+      });
+    }
+
+    const pendingItems = problematicAll.filter((item) => !item.force_foto_by_admin);
+    const unlockedItems = problematicAll.filter((item) => item.force_foto_by_admin);
+
+    return res.json({
+      success: true,
+      pending_count: pendingItems.length,
+      unlocked_count: unlockedItems.length,
+      data: includeUnlocked ? [...pendingItems, ...unlockedItems] : pendingItems,
+    });
+  } catch (err) {
+    console.error('Error listPresensiKendalaFotoAdmin:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memuat daftar presensi terkendala 1 foto',
+    });
+  }
+};
+
+exports.forceUnlockFotoAdmin = async (req, res) => {
+  try {
+    const presensiId = Number.parseInt(req.params.presensiId, 10);
+    if (!Number.isInteger(presensiId) || presensiId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID presensi tidak valid',
+      });
+    }
+
+    const presensi = await Presensi.findByPk(presensiId, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+          required: false,
+          attributes: ['id', 'nama', 'nip'],
+        },
+        {
+          model: SuratTugas,
+          as: 'surat_tugas',
+          required: false,
+          attributes: ['id', 'nomor_surat', 'nama_kegiatan', 'daerah_tujuan'],
+        },
+      ],
+    });
+
+    if (!presensi) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data presensi tidak ditemukan',
+      });
+    }
+
+    const meta = parseFotoMeta(presensi.foto);
+    if (meta.photos.length < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Minimal harus ada 1 foto presensi untuk dapat di-unlock oleh Admin',
+      });
+    }
+
+    const forceFlag = req.body?.force !== undefined ? Boolean(req.body.force) : true;
+    const reason =
+      typeof req.body?.reason === 'string' && req.body.reason.trim()
+        ? req.body.reason.trim()
+        : 'Kendala sistem/server saat upload foto kedua (di-unlock oleh Admin)';
+
+    let adminNama = 'Admin';
+    if (req.user?.id) {
+      const adminUser = await User.findByPk(req.user.id, { attributes: ['id', 'nama'] });
+      if (adminUser?.nama) adminNama = adminUser.nama;
+    }
+
+    presensi.foto = serializeFotoMeta({
+      photos: meta.photos,
+      force_foto_by_admin: forceFlag,
+      force_foto_reason: forceFlag ? reason : null,
+      force_foto_at: forceFlag ? new Date().toISOString() : null,
+      force_foto_admin_id: forceFlag ? req.user?.id || null : null,
+      force_foto_admin_nama: forceFlag ? adminNama : null,
+    });
+
+    await presensi.save();
+
+    if (forceFlag && presensi.user_id) {
+      try {
+        await Notifikasi.create({
+          user_id: presensi.user_id,
+          judul: 'Presensi Di-unlock Admin (1 Foto)',
+          pesan: `Presensi tanggal ${presensi.tanggal_presensi} (${presensi.surat_tugas?.daerah_tujuan || 'Perjalanan Dinas'}) telah di-unlock oleh Admin. Silakan isi laporan harian dan lanjutkan pengiriman laporan akhir.`,
+          is_read: false,
+        });
+      } catch (notifErr) {
+        console.warn('Gagal mengirim notifikasi unlock presensi:', notifErr.message);
+      }
+    }
+
+    const updatedMeta = parseFotoMeta(presensi.foto);
+    return res.json({
+      success: true,
+      message: forceFlag
+        ? 'Presensi berhasil di-unlock (1 foto disetujui Admin). Pegawai kini dapat mengisi laporan.'
+        : 'Status unlock presensi telah dibatalkan.',
+      data: {
+        id: presensi.id,
+        user_id: presensi.user_id,
+        surat_tugas_id: presensi.surat_tugas_id,
+        tanggal_presensi: presensi.tanggal_presensi,
+        foto: updatedMeta.photos[0] || null,
+        foto_list: updatedMeta.photos,
+        force_foto_by_admin: updatedMeta.force_foto_by_admin,
+        force_foto_reason: updatedMeta.force_foto_reason,
+        force_foto_at: updatedMeta.force_foto_at,
+        force_foto_admin_nama: updatedMeta.force_foto_admin_nama,
+        is_foto_lengkap: isPresensiFotoLengkap(presensi.foto),
+      },
+    });
+  } catch (err) {
+    console.error('Error forceUnlockFotoAdmin:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memperbarui status unlock presensi',
     });
   }
 };

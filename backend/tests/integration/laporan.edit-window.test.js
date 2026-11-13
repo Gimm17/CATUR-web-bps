@@ -192,13 +192,13 @@ test('laporan harian ditolak satu hari setelah deadline WITA', {
   assert.equal(payload.report_window.editable, false);
 });
 
-test('status proses keuangan mengunci laporan harian sebelum deadline', {
+test('status sudah ditandatangani atasan mengunci laporan harian sebelum deadline', {
   skip: databaseUrl ? false : 'CATUR_TEST_DATABASE_URL belum dikonfigurasi',
 }, async (t) => {
   const baseUrl = await startServer(t);
   const fixture = await createFixture(t, {
     tripEndDate: getBusinessDate(),
-    reportStatus: 'dicek_keuangan',
+    reportStatus: 'ditandatangani',
   });
 
   const response = await updateDailyReport(baseUrl, fixture, 'Tidak boleh tersimpan');

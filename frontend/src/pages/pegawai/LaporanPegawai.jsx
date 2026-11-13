@@ -104,12 +104,21 @@ const LaporanPerjalananContent = ({ suratId }) => {
     return diffDays;
   };
 
+  const isPresensiItemFotoLengkap = (presensiItem) => {
+    const count = getFotoList(presensiItem).length;
+    return Boolean(
+      presensiItem?.is_foto_lengkap ||
+      count >= 2 ||
+      (presensiItem?.force_foto_by_admin && count >= 1)
+    );
+  };
+
   // Cek apakah presensi sudah lengkap
   const cekPresensiLengkap = (suratTugas, presensi, tujuan = []) => {
     const durasi = hitungDurasiSuratTugas(suratTugas, tujuan);
     const jumlahPresensi = presensi?.length || 0;
     const presensiList = Array.isArray(presensi) ? presensi : [];
-    const jumlahPresensiFotoLengkap = presensiList.filter((item) => getFotoList(item).length >= 2).length;
+    const jumlahPresensiFotoLengkap = presensiList.filter((item) => isPresensiItemFotoLengkap(item)).length;
     const jumlahPresensiFotoBelumLengkap = Math.max(0, jumlahPresensi - jumlahPresensiFotoLengkap);
     const isJumlahHariLengkap = durasi > 0 && jumlahPresensi >= durasi;
     
@@ -124,7 +133,7 @@ const LaporanPerjalananContent = ({ suratId }) => {
   };
 
   const canUploadNotaByStatus = (status) => {
-    return ["draft", "dikirim", "dicek_keuangan"].includes(status);
+    return !status || ["draft", "dikirim", "dicek_keuangan", "disetujui_keuangan"].includes(status);
   };
 
   const reportPresentation = data?.report_window
@@ -499,7 +508,9 @@ const LaporanPerjalananContent = ({ suratId }) => {
         return { ...prev, presensi: nextPresensi };
       });
 
+      await fetchData(suratId);
       handleCloseEditLaporan();
+      showToast("Laporan harian berhasil disimpan dan dokumen diperbarui!", { icon: "success" });
     } catch (err) {
       await refreshAfterLockConflict(err);
       const message = getActionErrorMessage(err, "Gagal menyimpan laporan harian");
@@ -530,6 +541,9 @@ const LaporanPerjalananContent = ({ suratId }) => {
       setRefreshing(true);
       const res = await getLaporanPerjalanan(targetSuratId);
       setData(res);
+      if (res?.laporan_akhir?.kesimpulan) {
+        setKesimpulan((prev) => prev || res.laporan_akhir.kesimpulan);
+      }
       setNotaList(Array.isArray(res?.bukti_pembayaran) ? res.bukti_pembayaran : []);
       updateActiveStage(res);
       setError("");
@@ -1985,8 +1999,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
                                     />
                                   ))}
                                 </div>
-                                <small className={`d-block mt-2 ${getFotoList(p).length >= 2 ? 'text-success' : 'text-warning'}`}>
-                                  {getFotoList(p).length} foto
+                                <small className={`d-block mt-2 ${isPresensiItemFotoLengkap(p) ? 'text-success' : 'text-warning'}`}>
+                                  {getFotoList(p).length} foto{p.force_foto_by_admin && getFotoList(p).length === 1 ? ' (Di-unlock Admin)' : ''}
                                 </small>
                               </div>
                             ) : (
@@ -2039,8 +2053,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
           </div>
         </div>
 
-        {/* FORM LAPORAN AKHIR - Hanya muncul jika presensi lengkap */}
-        {isLengkap && (!laporan_akhir || laporan_akhir.status === 'draft' || isDikembalikan) && (
+        {/* FORM LAPORAN AKHIR - Muncul jika presensi lengkap dan laporan masih editable */}
+        {isLengkap && (!laporan_akhir || laporan_akhir.status === 'draft' || isDikembalikan || reportEditable) && (
           <div className="card border-0 shadow-lg mb-4">
             <div className="card-body">
               <h5 className="fw-bold mb-4" style={{ color: isDikembalikan ? theme.danger : theme.primary }}>

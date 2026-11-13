@@ -5,7 +5,13 @@ const {
   differenceInBusinessDates,
 } = require('../utils/businessDate');
 
-const EDITABLE_STATUSES = new Set(['', 'draft', 'dikirim']);
+const EDITABLE_STATUSES = new Set([
+  '',
+  'draft',
+  'dikirim',
+  'dicek_keuangan',
+  'disetujui_keuangan',
+]);
 const REPORT_EDIT_WINDOW_DAYS = 10;
 
 function normalizeDate(value) {

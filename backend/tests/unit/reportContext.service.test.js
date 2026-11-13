@@ -84,7 +84,7 @@ test('context memuat tujuan terurut, laporan pasangan surat-pegawai, dan report 
   });
 });
 
-test('status proses pada laporan yang ditemukan mengunci report window', async () => {
+test('status ditandatangani atasan pada laporan yang ditemukan mengunci report window', async () => {
   const dependencies = createDependencies({
     surat: {
       id: 88,
@@ -92,7 +92,7 @@ test('status proses pada laporan yang ditemukan mengunci report window', async (
       tanggal_selesai: '2026-09-18',
       tujuan: [],
     },
-    laporan: { id: 44, status: 'dicek_keuangan' },
+    laporan: { id: 44, status: 'ditandatangani' },
   });
   const service = createReportContextService(dependencies);
 

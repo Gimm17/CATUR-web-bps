@@ -10,6 +10,11 @@ const { resolveActiveAssignment } = require('../services/activeAssignment.servic
 const { getOwnedReportContext } = require('../services/reportContext.service');
 const { assertReportEditable } = require('../services/reportWindow.service');
 const { getBusinessDate, isDateWithin } = require('../utils/businessDate');
+const {
+  parseFotoMeta,
+  parseFotoList,
+  isPresensiFotoLengkap,
+} = require('../utils/presensiFoto');
 const fs = require('fs');
 const path = require('path');
 
@@ -17,41 +22,21 @@ function isHttpUrl(value) {
   return typeof value === 'string' && /^https?:\/\//i.test(value);
 }
 
-function parseFotoList(fotoValue) {
-  if (!fotoValue) return [];
-
-  if (Array.isArray(fotoValue)) {
-    return fotoValue.filter(Boolean).map(String);
-  }
-
-  if (typeof fotoValue === 'string') {
-    const trimmed = fotoValue.trim();
-    if (!trimmed) return [];
-
-    if (trimmed.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        return Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [];
-      } catch (err) {
-        // ignore
-      }
-    }
-
-    return [trimmed];
-  }
-
-  return [];
-}
-
 function normalizePresensiPhotos(presensiList = []) {
   const list = Array.isArray(presensiList) ? presensiList : [];
   return list.map((p) => {
     const obj = typeof p?.toJSON === 'function' ? p.toJSON() : p;
-    const fotoList = parseFotoList(obj?.foto);
+    const meta = parseFotoMeta(obj?.foto);
+    const fotoList = meta.photos;
     return {
       ...obj,
       foto: fotoList[0] || null,
       foto_list: fotoList,
+      force_foto_by_admin: meta.force_foto_by_admin,
+      force_foto_reason: meta.force_foto_reason,
+      force_foto_at: meta.force_foto_at,
+      force_foto_admin_nama: meta.force_foto_admin_nama,
+      is_foto_lengkap: isPresensiFotoLengkap(obj?.foto),
     };
   });
 }
@@ -334,11 +319,21 @@ exports.uploadTTDPegawai = async (req, res) => {
       }
     });
 
+    const ttdValue =
+      req.file.drive?.webContentLink ||
+      req.file.drive?.webViewLink ||
+      req.file.filename ||
+      null;
+
     if (existingLaporan) {
       // Jika sudah ada laporan/draft, update TTD
       
       // Hapus file lama jika ada
-      if (existingLaporan.ttd_pegawai && !isHttpUrl(existingLaporan.ttd_pegawai)) {
+      if (
+        existingLaporan.ttd_pegawai &&
+        !isHttpUrl(existingLaporan.ttd_pegawai) &&
+        existingLaporan.ttd_pegawai !== req.file.filename
+      ) {
         const oldFilePath = path.join(__dirname, '../../uploads/ttd', existingLaporan.ttd_pegawai);
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath);
@@ -346,7 +341,7 @@ exports.uploadTTDPegawai = async (req, res) => {
       }
 
       await existingLaporan.update({
-        ttd_pegawai: req.file.drive?.webContentLink || req.file.drive?.webViewLink || null,
+        ttd_pegawai: ttdValue,
         tanggal_ttd_pegawai: new Date()
       });
 
@@ -355,19 +350,31 @@ exports.uploadTTDPegawai = async (req, res) => {
       existingLaporan = await LaporanPerjalanan.create({
         pegawai_id: userId,
         surat_tugas_id: surat.id,
-        ttd_pegawai: req.file.drive?.webContentLink || req.file.drive?.webViewLink || null,
+        ttd_pegawai: ttdValue,
         tanggal_ttd_pegawai: new Date(),
         status: 'draft',
         kesimpulan: '' // Kosongkan kesimpulan
       });
     }
 
+    const regenResult = await regenerateLaporanFilesIfExists({
+      userId,
+      suratId: surat.id,
+      surat,
+      laporan: existingLaporan,
+    });
+
     res.json({
       success: true,
-      message: 'Tanda tangan berhasil diupload',
+      message: regenResult.regenerated
+        ? 'Tanda tangan berhasil diupload dan dokumen laporan telah diperbarui otomatis'
+        : 'Tanda tangan berhasil diupload',
       data: {
-        ttd_pegawai: req.file.drive?.webContentLink || req.file.drive?.webViewLink || null,
-        tanggal_ttd_pegawai: new Date(),
+        ttd_pegawai: ttdValue,
+        tanggal_ttd_pegawai: existingLaporan.tanggal_ttd_pegawai,
+        file_pdf: existingLaporan.file_pdf || null,
+        file_word: existingLaporan.file_word || null,
+        regenerated: regenResult.regenerated,
         drive_file: req.file.drive || null,
       }
     });
@@ -411,11 +418,11 @@ exports.validateUploadBuktiPembayaran = async (req, res, next) => {
       }
     });
 
-    const allowedStatuses = ['draft', 'dikirim', 'dicek_keuangan'];
+    const allowedStatuses = ['draft', 'dikirim', 'dicek_keuangan', 'disetujui_keuangan'];
     if (!existingLaporan || !allowedStatuses.includes(existingLaporan.status)) {
       return res.status(400).json({
         success: false,
-        message: 'Upload nota dinas hanya bisa dilakukan sebelum disetujui keuangan',
+        message: 'Upload nota dinas hanya bisa dilakukan selama laporan belum disetujui atasan',
       });
     }
 
@@ -470,13 +477,19 @@ exports.uploadBuktiPembayaran = async (req, res) => {
     const mergedFiles = [...oldFiles, ...newFiles];
     writeBuktiManifest(userId, surat.id, mergedFiles);
 
-    // Tidak mengubah struktur tabel; bukti disimpan di manifest file.
-    // Jika laporan sudah ditandatangani, update versi signed.
-    // Jika belum, update file_pdf (draft) agar tidak dianggap sudah ditandatangani.
+    // Jika belum ditandatangani atasan, regenerate PDF dan Word secara penuh agar selalu sinkron.
     const hasSignedPdf = Boolean(existingLaporan.file_pdf_signed);
-    const pdfSource = existingLaporan.file_pdf_signed || existingLaporan.file_pdf;
     let driveUpdatedPdf = null;
-    if (pdfSource) {
+    if (!hasSignedPdf && (existingLaporan.file_pdf || existingLaporan.file_word || existingLaporan.status !== 'draft')) {
+      const regen = await regenerateLaporanFilesIfExists({
+        userId,
+        suratId: surat.id,
+        surat,
+        laporan: existingLaporan,
+      });
+      driveUpdatedPdf = regen.drivePdfFile || null;
+    } else if (hasSignedPdf) {
+      const pdfSource = existingLaporan.file_pdf_signed;
       const sourcePath = isHttpUrl(pdfSource)
         ? pdfSource
         : path.join(__dirname, '../../uploads/pdf', pdfSource);
@@ -487,24 +500,23 @@ exports.uploadBuktiPembayaran = async (req, res) => {
       });
 
       const updatedPdfFileName = path.basename(updatedPdfPath);
-      driveUpdatedPdf = await uploadFileToDrive({
-        filePath: updatedPdfPath,
-        fileName: updatedPdfFileName,
-        mimeType: 'application/pdf',
-        subfolderPath: hasSignedPdf ? 'pdf/signed' : 'pdf',
-      });
+      try {
+        driveUpdatedPdf = await uploadFileToDrive({
+          filePath: updatedPdfPath,
+          fileName: updatedPdfFileName,
+          mimeType: 'application/pdf',
+          subfolderPath: 'pdf/signed',
+        });
+      } catch {
+        driveUpdatedPdf = null;
+      }
 
       const updatedUrl =
         driveUpdatedPdf?.webContentLink || driveUpdatedPdf?.webViewLink || updatedPdfFileName;
-
-      if (hasSignedPdf) {
-        existingLaporan.file_pdf_signed = updatedUrl;
-      } else {
-        existingLaporan.file_pdf = updatedUrl;
-      }
+      existingLaporan.file_pdf_signed = updatedUrl;
       await existingLaporan.save();
 
-      if (fs.existsSync(updatedPdfPath)) {
+      if ((driveUpdatedPdf?.webContentLink || driveUpdatedPdf?.webViewLink) && fs.existsSync(updatedPdfPath)) {
         fs.unlinkSync(updatedPdfPath);
       }
     }
@@ -516,6 +528,8 @@ exports.uploadBuktiPembayaran = async (req, res) => {
         total: mergedFiles.length,
         bukti_pembayaran: mergedFiles,
         drive_signed_pdf: driveUpdatedPdf,
+        file_pdf: existingLaporan.file_pdf,
+        file_word: existingLaporan.file_word,
       }
     });
   } catch (err) {
@@ -578,15 +592,143 @@ exports.resetBuktiPembayaran = async (req, res) => {
 
     writeBuktiManifest(userId, surat.id, []);
 
+    const regen = await regenerateLaporanFilesIfExists({
+      userId,
+      suratId: surat.id,
+      surat,
+      laporan: req.reportContext?.laporan || null,
+    });
+
     return res.json({
       success: true,
       message: 'Bukti nota berhasil direset',
+      regenerated: regen.regenerated,
     });
   } catch (err) {
     console.error(err);
     return sendControllerError(res, err, 'Gagal mereset bukti pembayaran.');
   }
 };
+
+async function regenerateLaporanFilesIfExists({
+  userId,
+  suratId,
+  surat: providedSurat = null,
+  laporan: providedLaporan = null,
+} = {}) {
+  try {
+    if (!userId || !suratId) {
+      return { regenerated: false };
+    }
+
+    const existingLaporan =
+      providedLaporan ||
+      (await LaporanPerjalanan.findOne({
+        where: {
+          pegawai_id: userId,
+          surat_tugas_id: suratId,
+        },
+      }));
+
+    if (!existingLaporan) {
+      return { regenerated: false, laporan: null };
+    }
+
+    const lockedStatuses = ['ditandatangani', 'pencairan_dana', 'dana_turun'];
+    if (lockedStatuses.includes(existingLaporan.status)) {
+      return { regenerated: false, laporan: existingLaporan };
+    }
+
+    const hasGeneratedBefore = Boolean(
+      existingLaporan.file_pdf ||
+        existingLaporan.file_word ||
+        (existingLaporan.status && existingLaporan.status !== 'draft')
+    );
+
+    if (!hasGeneratedBefore) {
+      return { regenerated: false, laporan: existingLaporan };
+    }
+
+    const [user, surat, presensi] = await Promise.all([
+      User.findOne({ where: { id: userId } }),
+      providedSurat || SuratTugas.findByPk(suratId),
+      Presensi.findAll({
+        where: {
+          user_id: userId,
+          surat_tugas_id: suratId,
+        },
+        order: [['tanggal_presensi', 'ASC']],
+      }),
+    ]);
+
+    if (!user || !surat || !presensi.length) {
+      return { regenerated: false, laporan: existingLaporan };
+    }
+
+    const buktiPembayaran = readBuktiManifest(userId, surat.id);
+    const pdfData = {
+      pegawai: user,
+      surat,
+      presensi,
+      kesimpulan: existingLaporan.kesimpulan || '-',
+      ttd_pegawai: existingLaporan.ttd_pegawai || null,
+      ...(buktiPembayaran.length ? { bukti_pembayaran: buktiPembayaran } : {}),
+    };
+
+    const pdfFile = await generateLaporanPDF(pdfData);
+    const pdfPath = path.join(__dirname, '../../uploads/pdf', pdfFile);
+    let drivePdfFile = null;
+    try {
+      drivePdfFile = await uploadFileToDrive({
+        filePath: pdfPath,
+        fileName: pdfFile,
+        mimeType: 'application/pdf',
+        subfolderPath: 'pdf',
+      });
+    } catch {
+      drivePdfFile = null;
+    }
+
+    const wordFile = await generateLaporanWord(pdfData);
+    const wordPath = path.join(__dirname, '../../uploads/word', wordFile);
+    let driveWordFile = null;
+    try {
+      driveWordFile = await uploadFileToDrive({
+        filePath: wordPath,
+        fileName: wordFile,
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        subfolderPath: 'word',
+      });
+    } catch {
+      driveWordFile = null;
+    }
+
+    const nextPdfRef = drivePdfFile?.webContentLink || drivePdfFile?.webViewLink || pdfFile;
+    const nextWordRef = driveWordFile?.webContentLink || driveWordFile?.webViewLink || wordFile;
+
+    await existingLaporan.update({
+      file_pdf: nextPdfRef,
+      file_word: nextWordRef,
+    });
+
+    if ((drivePdfFile?.webContentLink || drivePdfFile?.webViewLink) && fs.existsSync(pdfPath)) {
+      fs.unlinkSync(pdfPath);
+    }
+    if ((driveWordFile?.webContentLink || driveWordFile?.webViewLink) && fs.existsSync(wordPath)) {
+      fs.unlinkSync(wordPath);
+    }
+
+    return {
+      regenerated: true,
+      laporan: existingLaporan,
+      drivePdfFile,
+      driveWordFile,
+    };
+  } catch (err) {
+    console.warn('Warning regenerateLaporanFilesIfExists:', err.message);
+    return { regenerated: false, error: err };
+  }
+}
 
 /* ===============================
    GET TANDA TANGAN PEGAWAI
@@ -685,7 +827,7 @@ exports.kirimLaporanAkhir = async (req, res) => {
       });
     }
 
-    const presensiBelumLengkapFoto = presensi.find((item) => parseFotoList(item?.foto).length < 2);
+    const presensiBelumLengkapFoto = presensi.find((item) => !isPresensiFotoLengkap(item?.foto));
     if (presensiBelumLengkapFoto) {
       return res.status(400).json({
         message: 'Masih ada presensi harian yang belum memenuhi minimal 2 foto.',
@@ -727,12 +869,17 @@ exports.kirimLaporanAkhir = async (req, res) => {
     try {
       pdfFile = await generateLaporanPDF(pdfData);
       const pdfPath = path.join(__dirname, '../../uploads/pdf', pdfFile);
-      drivePdfFile = await uploadFileToDrive({
-        filePath: pdfPath,
-        fileName: pdfFile,
-        mimeType: 'application/pdf',
-        subfolderPath: 'pdf',
-      });
+      try {
+        drivePdfFile = await uploadFileToDrive({
+          filePath: pdfPath,
+          fileName: pdfFile,
+          mimeType: 'application/pdf',
+          subfolderPath: 'pdf',
+        });
+      } catch (driveErr) {
+        console.warn('Upload PDF ke Google Drive dilewati, menggunakan file lokal:', driveErr.message);
+        drivePdfFile = null;
+      }
     } catch (err) {
       console.error('Error generating PDF:', err);
       return res.status(500).json({ 
@@ -746,12 +893,17 @@ exports.kirimLaporanAkhir = async (req, res) => {
     try {
       wordFile = await generateLaporanWord(pdfData);
       const wordPath = path.join(__dirname, '../../uploads/word', wordFile);
-      driveWordFile = await uploadFileToDrive({
-        filePath: wordPath,
-        fileName: wordFile,
-        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        subfolderPath: 'word',
-      });
+      try {
+        driveWordFile = await uploadFileToDrive({
+          filePath: wordPath,
+          fileName: wordFile,
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          subfolderPath: 'word',
+        });
+      } catch (driveErr) {
+        console.warn('Upload Word ke Google Drive dilewati, menggunakan file lokal:', driveErr.message);
+        driveWordFile = null;
+      }
     } catch (err) {
       console.error('Error generating WORD:', err);
       return res.status(500).json({
@@ -759,14 +911,19 @@ exports.kirimLaporanAkhir = async (req, res) => {
       });
     }
 
+    const nextStatus =
+      existingLaporan && ['dicek_keuangan', 'disetujui_keuangan'].includes(existingLaporan.status)
+        ? existingLaporan.status
+        : 'dikirim';
+
     if (existingLaporan) {
       // Update laporan yang ada
       await existingLaporan.update({
         kesimpulan,
-        status: 'dikirim',
+        status: nextStatus,
         file_pdf: drivePdfFile?.webContentLink || drivePdfFile?.webViewLink || pdfFile,
         file_word: driveWordFile?.webContentLink || driveWordFile?.webViewLink || wordFile,
-        tanggal_kirim: new Date(),
+        tanggal_kirim: existingLaporan.tanggal_kirim || new Date(),
         catatan_keuangan: null,
       });
     } else {
@@ -782,21 +939,17 @@ exports.kirimLaporanAkhir = async (req, res) => {
       });
     }
 
-    // Cleanup PDF lokal setelah berhasil upload dan save DB
+    // Cleanup PDF lokal hanya jika berhasil diupload ke Drive
     const localPdfPath = path.join(__dirname, '../../uploads/pdf', pdfFile);
-    if (fs.existsSync(localPdfPath)) {
+    if ((drivePdfFile?.webContentLink || drivePdfFile?.webViewLink) && fs.existsSync(localPdfPath)) {
       fs.unlinkSync(localPdfPath);
     }
 
-    // Cleanup WORD lokal setelah berhasil upload dan save DB
+    // Cleanup WORD lokal hanya jika berhasil diupload ke Drive
     const localWordPath = path.join(__dirname, '../../uploads/word', wordFile);
-    if (fs.existsSync(localWordPath)) {
+    if ((driveWordFile?.webContentLink || driveWordFile?.webViewLink) && fs.existsSync(localWordPath)) {
       fs.unlinkSync(localWordPath);
     }
-
-    // Setelah laporan akhir terkirim, reset daftar bukti nota di UI.
-    // File fisik tetap tersimpan di folder uploads/bukti-nota-pembayaran.
-    writeBuktiManifest(userId, surat.id, []);
 
     res.json({
       success: true,
@@ -812,3 +965,4 @@ exports.kirimLaporanAkhir = async (req, res) => {
 };
 
 exports.buildPerjalananResponse = buildPerjalananResponse;
+exports.regenerateLaporanFilesIfExists = regenerateLaporanFilesIfExists;

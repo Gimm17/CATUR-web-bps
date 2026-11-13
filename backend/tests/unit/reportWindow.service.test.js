@@ -70,6 +70,20 @@ test('laporan terkunci ketika tanggal WITA melewati deadline', () => {
 for (const status of [
   'dicek_keuangan',
   'disetujui_keuangan',
+]) {
+  test(`status ${status} tetap editable selama belum disetujui atasan dan deadline belum lewat`, () => {
+    const result = buildReportWindow({
+      tujuan: [{ tanggal_selesai: '2026-09-19' }],
+      status,
+      now: new Date('2026-09-20T08:00:00+08:00'),
+    });
+
+    assert.equal(result.editable, true);
+    assert.equal(result.lock_reason, null);
+  });
+}
+
+for (const status of [
   'ditandatangani',
   'pencairan_dana',
   'dana_turun',

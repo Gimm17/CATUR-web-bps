@@ -4,39 +4,35 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 const { buildReportBaseName } = require('./reportFilename');
+const { parseFotoList } = require('./presensiFoto');
+const { getAuthorizedDriveClient } = require('./googleDrive');
 
 function isHttpUrl(value) {
   return typeof value === 'string' && /^https?:\/\//i.test(value);
 }
 
-function parseFotoList(fotoValue) {
-  if (!fotoValue) return [];
-
-  if (Array.isArray(fotoValue)) {
-    return fotoValue.filter(Boolean).map(String);
-  }
-
-  if (typeof fotoValue === 'string') {
-    const trimmed = fotoValue.trim();
-    if (!trimmed) return [];
-
-    if (trimmed.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        return Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [];
-      } catch (err) {
-        // ignore
-      }
-    }
-
-    return [trimmed];
-  }
-
-  return [];
-}
-
 function getFotoCandidates(fotoValue) {
   return parseFotoList(fotoValue);
+}
+
+function extractDriveId(value = '') {
+  const normalized = String(value);
+  const filePathMatch = normalized.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (filePathMatch?.[1]) return filePathMatch[1];
+  const idQueryMatch = normalized.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (idQueryMatch?.[1]) return idQueryMatch[1];
+  return null;
+}
+
+function normalizeDownloadUrl(url = '') {
+  if (!url || typeof url !== 'string') return url;
+  if (url.includes('drive.google.com')) {
+    const id = extractDriveId(url);
+    if (id) {
+      return `https://drive.google.com/uc?id=${id}&export=download`;
+    }
+  }
+  return url;
 }
 
 async function resolvePresensiImageSource(fotoRef) {
@@ -55,18 +51,22 @@ async function resolvePresensiImageSource(fotoRef) {
   return localCandidates.find((candidate) => fs.existsSync(candidate)) || null;
 }
 
-function downloadUrlToBuffer(url) {
-  const client = url.startsWith('https') ? https : http;
+function downloadHttpBuffer(url) {
+  const normalized = normalizeDownloadUrl(url);
+  const client = normalized.startsWith('https') ? https : http;
 
   return new Promise((resolve, reject) => {
     client
-      .get(url, (res) => {
+      .get(normalized, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          resolve(downloadUrlToBuffer(res.headers.location));
+          const nextUrl = new URL(res.headers.location, normalized).toString();
+          res.resume();
+          resolve(downloadHttpBuffer(nextUrl));
           return;
         }
 
         if (res.statusCode !== 200) {
+          res.resume();
           reject(new Error(`Gagal download file dari URL. Status: ${res.statusCode}`));
           return;
         }
@@ -77,6 +77,37 @@ function downloadUrlToBuffer(url) {
       })
       .on('error', reject);
   });
+}
+
+async function downloadUrlToBuffer(url) {
+  try {
+    const buf = await downloadHttpBuffer(url);
+    const isHtmlResponse =
+      buf &&
+      buf.length > 0 &&
+      buf.slice(0, 32).toString('utf8').trimStart().startsWith('<');
+    if (buf && !isHtmlResponse) {
+      return buf;
+    }
+  } catch {
+    // lanjut coba via Drive API bila URL Drive
+  }
+
+  if (typeof url === 'string' && url.includes('drive.google.com')) {
+    const fileId = extractDriveId(url);
+    if (fileId) {
+      const drive = await getAuthorizedDriveClient();
+      const res = await drive.files.get(
+        { fileId, alt: 'media', supportsAllDrives: true },
+        { responseType: 'arraybuffer' }
+      );
+      if (res?.data) {
+        return Buffer.from(res.data);
+      }
+    }
+  }
+
+  return downloadHttpBuffer(url);
 }
 
 function getExtensionFromPathLike(value) {
@@ -119,94 +150,7 @@ function formatRichText(doc, html, x, y, width) {
   let currentY = y;
   
   // Proses HTML dari Quill Editor
-  let processedHtml = html;
-  
-  // Handle ordered list (<ol>)
-  if (processedHtml.includes('<ol>')) {
-    processedHtml = processedHtml.replace(/<ol>/g, '\n');
-    processedHtml = processedHtml.replace(/<\/ol>/g, '\n');
-  }
-  
-  // Handle unordered list (<ul>)
-  if (processedHtml.includes('<ul>')) {
-    processedHtml = processedHtml.replace(/<ul>/g, '\n');
-    processedHtml = processedHtml.replace(/<\/ul>/g, '\n');
-  }
-  
-  // Handle list items dengan format Quill
-  const liRegex = /<li[^>]*>(?:<span[^>]*>)?(.*?)(?:<\/span>)?<\/li>/g;
-  let orderedCounter = 1;
-  let lastWasOrdered = false;
-  
-  processedHtml = processedHtml.replace(liRegex, (match, content) => {
-    // Cek apakah ini bagian dari ordered list
-    const isOrdered = match.includes('data-list="ordered"') || 
-                     match.includes('ql-ui') && processedHtml.substring(0, processedHtml.indexOf(match)).includes('<ol>');
-    
-    // Hapus semua tag HTML dari konten
-    const cleanContent = content.replace(/<[^>]*>/g, '').trim();
-    
-    if (isOrdered) {
-      return `${orderedCounter++}. ${cleanContent}\n`;
-    } else {
-      return `• ${cleanContent}\n`;
-    }
-  });
-  
-  // Handle paragraphs
-  const pRegex = /<p>(.*?)<\/p>/g;
-  processedHtml = processedHtml.replace(pRegex, (match, content) => {
-    const cleanContent = content.replace(/<[^>]*>/g, '').trim();
-    return cleanContent ? cleanContent + '\n\n' : '\n';
-  });
-  
-  // Handle line breaks
-  processedHtml = processedHtml.replace(/<br\s*\/?>/g, '\n');
-  
-  // Handle spans (biasanya untuk styling)
-  const spanRegex = /<span[^>]*>(.*?)<\/span>/g;
-  processedHtml = processedHtml.replace(spanRegex, (match, content) => {
-    return content.replace(/<[^>]*>/g, '');
-  });
-  
-  // Handle divs
-  const divRegex = /<div>(.*?)<\/div>/g;
-  processedHtml = processedHtml.replace(divRegex, (match, content) => {
-    return content.replace(/<[^>]*>/g, '') + '\n';
-  });
-  
-  // Handle bold/strong
-  processedHtml = processedHtml.replace(/<(strong|b)>(.*?)<\/(strong|b)>/g, (match, tag, content) => {
-    return content; // PDFKit tidak support bold di dalam text biasa
-  });
-  
-  // Handle italic/em
-  processedHtml = processedHtml.replace(/<(em|i)>(.*?)<\/(em|i)>/g, (match, tag, content) => {
-    return content;
-  });
-  
-  // Handle underline
-  processedHtml = processedHtml.replace(/<u>(.*?)<\/u>/g, (match, content) => {
-    return content;
-  });
-  
-  // Hapus semua tag HTML yang tersisa
-  processedHtml = processedHtml.replace(/<[^>]*>/g, '');
-  
-  // Decode HTML entities
-  processedHtml = processedHtml
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&ndash;/g, '-')
-    .replace(/&mdash;/g, '--');
-  
-  // Bersihkan multiple newline
-  processedHtml = processedHtml.replace(/\n\s*\n\s*\n/g, '\n\n');
-  processedHtml = processedHtml.replace(/\n{3,}/g, '\n\n');
+  let processedHtml = convertQuillHtmlToPlainText(html);
   
   // Split berdasarkan baris
   const lines = processedHtml.split('\n');
@@ -279,38 +223,87 @@ function formatWrappedText(doc, text, x, y, width, options = {}) {
 function convertQuillHtmlToPlainText(html) {
   if (!html) return '-';
 
-  let processedHtml = html;
-  let orderedCounter = 1;
+  let processedHtml = String(html)
+    .replace(/\r\n/g, '\n')
+    .replace(/<span[^>]*class=["'][^"']*ql-ui[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, '');
 
+  processedHtml = processedHtml.replace(
+    /<(ol|ul)[^>]*>([\s\S]*?)<\/\1>/gi,
+    (listMatch, listTag, listInner) => {
+      const tag = String(listTag || '').toLowerCase();
+      let orderedCounter = 1;
+      let prevWasOrdered = null;
+
+      const itemsText = String(listInner || '').replace(
+        /<li([^>]*)>([\s\S]*?)<\/li>/gi,
+        (liMatch, liAttrs, liContent) => {
+          let isOrdered = tag === 'ol';
+          if (/data-list=["']bullet["']/i.test(liAttrs)) {
+            isOrdered = false;
+          } else if (/data-list=["']ordered["']/i.test(liAttrs)) {
+            isOrdered = true;
+          }
+
+          if (prevWasOrdered !== null && prevWasOrdered !== isOrdered && isOrdered) {
+            orderedCounter = 1;
+          }
+          prevWasOrdered = isOrdered;
+
+          let cleanContent = liContent
+            .replace(/<br\s*\/?>/gi, ' ')
+            .replace(/<[^>]*>/g, '')
+            .trim();
+
+          if (isOrdered) {
+            cleanContent = cleanContent.replace(/^\d+[\.\)]\s+/, '');
+            return `${orderedCounter++}. ${cleanContent}\n`;
+          }
+
+          cleanContent = cleanContent.replace(/^[•\-\*]\s+/, '');
+          return `• ${cleanContent}\n`;
+        }
+      );
+
+      return `\n${itemsText}\n`;
+    }
+  );
+
+  let fallbackCounter = 1;
   processedHtml = processedHtml
-    .replace(/<ol>/g, '\n')
-    .replace(/<\/ol>/g, '\n')
-    .replace(/<ul>/g, '\n')
-    .replace(/<\/ul>/g, '\n')
-    .replace(/<li[^>]*>(?:<span[^>]*>)?(.*?)(?:<\/span>)?<\/li>/g, (match, content) => {
-      const isOrdered = match.includes('data-list="ordered"') ||
-        (match.includes('ql-ui') && processedHtml.substring(0, processedHtml.indexOf(match)).includes('<ol>'));
-      const cleanContent = content.replace(/<[^>]*>/g, '').trim();
-      return isOrdered ? `${orderedCounter++}. ${cleanContent}\n` : `• ${cleanContent}\n`;
+    .replace(/<li([^>]*)>([\s\S]*?)<\/li>/gi, (match, liAttrs, content) => {
+      const isOrdered = /data-list=["']ordered["']/i.test(liAttrs);
+      let cleanContent = content.replace(/<[^>]*>/g, '').trim();
+      if (isOrdered) {
+        cleanContent = cleanContent.replace(/^\d+[\.\)]\s+/, '');
+        return `${fallbackCounter++}. ${cleanContent}\n`;
+      }
+      cleanContent = cleanContent.replace(/^[•\-\*]\s+/, '');
+      return `• ${cleanContent}\n`;
     })
-    .replace(/<p>(.*?)<\/p>/g, (match, content) => {
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (match, content) => {
+      const cleanContent = content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
+      return cleanContent ? cleanContent + '\n\n' : '\n';
+    })
+    .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, (match, content) => {
       const cleanContent = content.replace(/<[^>]*>/g, '').trim();
       return cleanContent ? cleanContent + '\n\n' : '\n';
     })
-    .replace(/<br\s*\/?>/g, '\n')
-    .replace(/<span[^>]*>(.*?)<\/span>/g, '$1')
-    .replace(/<div>(.*?)<\/div>/g, '$1\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1')
+    .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
     .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&ndash;/gi, '-')
+    .replace(/&mdash;/gi, '--')
     .replace(/\n\s*\n\s*\n/g, '\n\n')
     .replace(/\n{3,}/g, '\n\n');
 
-  return processedHtml;
+  return processedHtml.trim();
 }
 
 module.exports = async function generateLaporanPDF({
@@ -931,12 +924,23 @@ doc.moveDown(2);
 
     if (isHttpUrl(ttd_pegawai)) {
       try {
-        const ttdBuffer = await downloadUrlToBuffer(ttd_pegawai);
-        doc.image(ttdBuffer, rightX, doc.y, {
-          width: 150,
-          height: 60,
-          fit: [150, 60]
-        });
+        let ttdBuffer = await downloadUrlToBuffer(ttd_pegawai);
+        try {
+          doc.image(ttdBuffer, rightX, doc.y, {
+            width: 150,
+            height: 60,
+            fit: [150, 60]
+          });
+        } catch {
+          const Jimp = require('jimp');
+          const img = await Jimp.read(ttdBuffer);
+          ttdBuffer = await img.getBufferAsync(Jimp.MIME_PNG);
+          doc.image(ttdBuffer, rightX, doc.y, {
+            width: 150,
+            height: 60,
+            fit: [150, 60]
+          });
+        }
         ttdAdded = true;
         doc.y += 90;
       } catch (urlError) {
@@ -946,11 +950,22 @@ doc.moveDown(2);
       for (const ttdPath of possiblePaths) {
         if (fs.existsSync(ttdPath)) {
           try {
-            doc.image(ttdPath, rightX, doc.y, {
-              width: 150,
-              height: 60,
-              fit: [150, 60]
-            });
+            try {
+              doc.image(ttdPath, rightX, doc.y, {
+                width: 150,
+                height: 60,
+                fit: [150, 60]
+              });
+            } catch {
+              const Jimp = require('jimp');
+              const img = await Jimp.read(ttdPath);
+              const pngBuffer = await img.getBufferAsync(Jimp.MIME_PNG);
+              doc.image(pngBuffer, rightX, doc.y, {
+                width: 150,
+                height: 60,
+                fit: [150, 60]
+              });
+            }
             ttdAdded = true;
             doc.y += 90;
             break;

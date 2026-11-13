@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const presensiController = require('../controllers/presensi.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
+const adminMiddleware = require('../middlewares/admin.middleware');
 const { uploadPresensi } = require('../middlewares/upload.middleware');
 const requirePresensiPhoto = require('../middlewares/requirePresensiPhoto.middleware');
 const stampPresensiPhoto = require('../middlewares/stampPresensi.middleware');
@@ -43,6 +44,21 @@ router.get(
   '/status',
   authMiddleware,
   presensiController.cekPresensiHariIni
+);
+
+// Route khusus Admin untuk memantau & unlock presensi yang tertahan 1 foto
+router.get(
+  '/admin/kendala-foto',
+  authMiddleware,
+  adminMiddleware,
+  presensiController.listPresensiKendalaFotoAdmin
+);
+
+router.put(
+  '/admin/:presensiId/force-foto',
+  authMiddleware,
+  adminMiddleware,
+  presensiController.forceUnlockFotoAdmin
 );
 
 // Backward compatibility (opsional)

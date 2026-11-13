@@ -19,73 +19,288 @@ const https = require('https');
 const http = require('http');
 const Jimp = require('jimp');
 const { buildReportBaseName } = require('./reportFilename');
-
-function parseFotoList(fotoValue) {
-  if (!fotoValue) return [];
-
-  if (Array.isArray(fotoValue)) {
-    return fotoValue.filter(Boolean).map(String);
-  }
-
-  if (typeof fotoValue === 'string') {
-    const trimmed = fotoValue.trim();
-    if (!trimmed) return [];
-
-    if (trimmed.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        return Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [];
-      } catch (err) {
-        // ignore
-      }
-    }
-
-    return [trimmed];
-  }
-
-  return [];
-}
+const { parseFotoList } = require('./presensiFoto');
+const { getAuthorizedDriveClient } = require('./googleDrive');
 
 function getFotoCandidates(fotoValue) {
   return parseFotoList(fotoValue);
 }
 
+function decodeHtmlEntities(text = '') {
+  return String(text || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&ndash;/gi, '-')
+    .replace(/&mdash;/gi, '--');
+}
+
+function parseInlineRuns(htmlFragment = '', baseStyle = {}) {
+  const runs = [];
+  const cleaned = String(htmlFragment || '')
+    .replace(/<span[^>]*class=["'][^"']*ql-ui[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, '');
+
+  const tokenRegex = /<(\/?)(strong|b|em|i|u|a|span|code)([^>]*)>|([^<]+)/gi;
+  const state = {
+    bold: Boolean(baseStyle.bold),
+    italics: Boolean(baseStyle.italics),
+    underline: Boolean(baseStyle.underline),
+  };
+  let match;
+
+  while ((match = tokenRegex.exec(cleaned)) !== null) {
+    const [, closingSlash, tagNameRaw, , textNode] = match;
+    if (textNode !== undefined) {
+      const decoded = decodeHtmlEntities(textNode);
+      if (decoded) {
+        runs.push({
+          text: decoded,
+          bold: state.bold,
+          italics: state.italics,
+          underline: state.underline,
+        });
+      }
+      continue;
+    }
+
+    const tag = String(tagNameRaw || '').toLowerCase();
+    const isClosing = closingSlash === '/';
+    if (tag === 'strong' || tag === 'b') state.bold = !isClosing;
+    if (tag === 'em' || tag === 'i') state.italics = !isClosing;
+    if (tag === 'u') state.underline = !isClosing;
+  }
+
+  return runs;
+}
+
+function stripLeadingListMarkerFromRuns(runs = [], isOrdered = true) {
+  if (!runs.length) return runs;
+  const cloned = runs.map((r) => ({ ...r }));
+  const pattern = isOrdered ? /^\s*\d+[\.\)]\s+/ : /^\s*[•\-\*]\s+/;
+  for (let i = 0; i < cloned.length; i += 1) {
+    if (!cloned[i].text) continue;
+    if (pattern.test(cloned[i].text)) {
+      cloned[i].text = cloned[i].text.replace(pattern, '');
+    }
+    break;
+  }
+  return cloned;
+}
+
+function buildTextRuns(runDescriptors = []) {
+  return runDescriptors
+    .filter((r) => r && r.text)
+    .map(
+      (r) =>
+        new TextRun({
+          text: r.text,
+          bold: Boolean(r.bold),
+          italics: Boolean(r.italics),
+          ...(r.underline ? { underline: {} } : {}),
+        })
+    );
+}
+
+function htmlToWordParagraphs(html = '') {
+  if (!html || typeof html !== 'string') {
+    return [new Paragraph({ text: '-' })];
+  }
+
+  const normalized = html
+    .replace(/\r\n/g, '\n')
+    .replace(/<span[^>]*class=["'][^"']*ql-ui[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .trim();
+
+  if (!normalized) {
+    return [new Paragraph({ text: '-' })];
+  }
+
+  const hasHtmlTags = /<(?:p|ol|ul|li|h[1-6]|div|blockquote|pre|strong|b|em|i|u)\b/i.test(normalized);
+  const paragraphs = [];
+
+  if (!hasHtmlTags) {
+    const lines = decodeHtmlEntities(normalized)
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    if (!lines.length) return [new Paragraph({ text: '-' })];
+
+    for (const line of lines) {
+      const isListLine = /^(\d+[\.\)]|[•\-\*])\s+/.test(line);
+      paragraphs.push(
+        new Paragraph({
+          spacing: { before: 40, after: 80 },
+          ...(isListLine ? { indent: { left: 360, hanging: 240 } } : {}),
+          children: [new TextRun({ text: line })],
+        })
+      );
+    }
+    return paragraphs;
+  }
+
+  const blockRegex = /<(ol|ul|p|h[1-6]|blockquote|pre|div)[^>]*>([\s\S]*?)<\/\1>/gi;
+  let blockMatch;
+  let matchedAnyBlock = false;
+
+  while ((blockMatch = blockRegex.exec(normalized)) !== null) {
+    matchedAnyBlock = true;
+    const tag = String(blockMatch[1] || '').toLowerCase();
+    const innerHtml = blockMatch[2] || '';
+
+    if (tag === 'ol' || tag === 'ul') {
+      const liRegex = /<li([^>]*)>([\s\S]*?)<\/li>/gi;
+      let liMatch;
+      let orderedCounter = 1;
+      let prevWasOrdered = null;
+
+      while ((liMatch = liRegex.exec(innerHtml)) !== null) {
+        const liAttrs = String(liMatch[1] || '');
+        const liContent = String(liMatch[2] || '');
+
+        let isOrdered = tag === 'ol';
+        if (/data-list=["']bullet["']/i.test(liAttrs)) {
+          isOrdered = false;
+        } else if (/data-list=["']ordered["']/i.test(liAttrs)) {
+          isOrdered = true;
+        }
+
+        if (prevWasOrdered !== null && prevWasOrdered !== isOrdered && isOrdered) {
+          orderedCounter = 1;
+        }
+        prevWasOrdered = isOrdered;
+
+        const subLines = liContent.split('\n');
+        for (let lineIdx = 0; lineIdx < subLines.length; lineIdx += 1) {
+          const rawRuns = parseInlineRuns(subLines[lineIdx]);
+          const cleanedRuns =
+            lineIdx === 0 ? stripLeadingListMarkerFromRuns(rawRuns, isOrdered) : rawRuns;
+          const textContent = cleanedRuns.map((r) => r.text).join('').trim();
+          if (!textContent) continue;
+
+          const prefix =
+            lineIdx === 0 ? (isOrdered ? `${orderedCounter++}. ` : '• ') : '   ';
+
+          paragraphs.push(
+            new Paragraph({
+              indent: { left: 360, hanging: 240 },
+              spacing: { before: 40, after: 60 },
+              children: [new TextRun({ text: prefix }), ...buildTextRuns(cleanedRuns)],
+            })
+          );
+        }
+      }
+      continue;
+    }
+
+    const isHeading = /^h[1-6]$/.test(tag);
+    const subLines = innerHtml.split('\n');
+    for (const subLine of subLines) {
+      const runs = parseInlineRuns(subLine, { bold: isHeading });
+      const textContent = runs.map((r) => r.text).join('').trim();
+      if (!textContent) continue;
+
+      const isManualList = /^(\d+[\.\)]|[•\-\*])\s+/.test(textContent);
+      paragraphs.push(
+        new Paragraph({
+          spacing: { before: isHeading ? 120 : 40, after: 80 },
+          ...(isManualList ? { indent: { left: 360, hanging: 240 } } : {}),
+          children: buildTextRuns(runs),
+        })
+      );
+    }
+  }
+
+  if (!matchedAnyBlock || !paragraphs.length) {
+    const fallbackText = stripHtmlToText(normalized);
+    const lines = fallbackText
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    if (!lines.length) return [new Paragraph({ text: '-' })];
+
+    return lines.map((line) => {
+      const isListLine = /^(\d+[\.\)]|[•\-\*])\s+/.test(line);
+      return new Paragraph({
+        spacing: { before: 40, after: 80 },
+        ...(isListLine ? { indent: { left: 360, hanging: 240 } } : {}),
+        children: [new TextRun({ text: line })],
+      });
+    });
+  }
+
+  return paragraphs;
+}
+
 function stripHtmlToText(html = '') {
   if (!html || typeof html !== 'string') return '';
 
-  let processedHtml = html;
+  let processedHtml = html
+    .replace(/\r\n/g, '\n')
+    .replace(/<span[^>]*class=["'][^"']*ql-ui[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, '');
 
-  if (processedHtml.includes('<ol>')) {
-    processedHtml = processedHtml.replace(/<ol>/g, '\n');
-    processedHtml = processedHtml.replace(/<\/ol>/g, '\n');
-  }
+  processedHtml = processedHtml.replace(
+    /<(ol|ul)[^>]*>([\s\S]*?)<\/\1>/gi,
+    (listMatch, listTag, listInner) => {
+      const tag = String(listTag || '').toLowerCase();
+      let orderedCounter = 1;
+      let prevWasOrdered = null;
 
-  if (processedHtml.includes('<ul>')) {
-    processedHtml = processedHtml.replace(/<ul>/g, '\n');
-    processedHtml = processedHtml.replace(/<\/ul>/g, '\n');
-  }
+      const itemsText = String(listInner || '').replace(
+        /<li([^>]*)>([\s\S]*?)<\/li>/gi,
+        (liMatch, liAttrs, liContent) => {
+          let isOrdered = tag === 'ol';
+          if (/data-list=["']bullet["']/i.test(liAttrs)) {
+            isOrdered = false;
+          } else if (/data-list=["']ordered["']/i.test(liAttrs)) {
+            isOrdered = true;
+          }
 
-  const liRegex = /<li[^>]*>(?:<span[^>]*>)?(.*?)(?:<\/span>)?<\/li>/g;
-  let orderedCounter = 1;
+          if (prevWasOrdered !== null && prevWasOrdered !== isOrdered && isOrdered) {
+            orderedCounter = 1;
+          }
+          prevWasOrdered = isOrdered;
 
-  processedHtml = processedHtml.replace(liRegex, (match, content) => {
-    const isOrdered =
-      match.includes('data-list="ordered"') ||
-      (match.includes('ql-ui') &&
-        processedHtml.substring(0, processedHtml.indexOf(match)).includes('<ol>'));
+          let cleanContent = liContent
+            .replace(/<br\s*\/?>/gi, ' ')
+            .replace(/<[^>]*>/g, '')
+            .trim();
 
-    const cleanContent = content.replace(/<[^>]*>/g, '').trim();
+          if (isOrdered) {
+            cleanContent = cleanContent.replace(/^\d+[\.\)]\s+/, '');
+            return `${orderedCounter++}. ${cleanContent}\n`;
+          }
 
-    if (isOrdered) {
-      return `${orderedCounter++}. ${cleanContent}\n`;
+          cleanContent = cleanContent.replace(/^[•\-\*]\s+/, '');
+          return `- ${cleanContent}\n`;
+        }
+      );
+
+      return `\n${itemsText}\n`;
     }
+  );
 
+  // Fallback jika ada <li> di luar <ol>/<ul>
+  let fallbackCounter = 1;
+  processedHtml = processedHtml.replace(/<li([^>]*)>([\s\S]*?)<\/li>/gi, (match, liAttrs, content) => {
+    const isOrdered = /data-list=["']ordered["']/i.test(liAttrs);
+    let cleanContent = content.replace(/<[^>]*>/g, '').trim();
+    if (isOrdered) {
+      cleanContent = cleanContent.replace(/^\d+[\.\)]\s+/, '');
+      return `${fallbackCounter++}. ${cleanContent}\n`;
+    }
+    cleanContent = cleanContent.replace(/^[•\-\*]\s+/, '');
     return `- ${cleanContent}\n`;
   });
 
-  const pRegex = /<p>(.*?)<\/p>/g;
+  const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
   processedHtml = processedHtml.replace(pRegex, (match, content) => {
-    const cleanContent = content.replace(/<[^>]*>/g, '').trim();
+    const cleanContent = content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim();
     return cleanContent ? cleanContent + '\n\n' : '\n';
   });
 
@@ -243,18 +458,45 @@ function detectImageType(buffer, fallbackExt = '') {
   return null;
 }
 
+async function downloadDriveFileBuffer(fileId) {
+  if (!fileId) return null;
+  try {
+    const drive = await getAuthorizedDriveClient();
+    const res = await drive.files.get(
+      { fileId, alt: 'media', supportsAllDrives: true },
+      { responseType: 'arraybuffer' }
+    );
+    return res?.data ? Buffer.from(res.data) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function loadImageBuffer(candidates = []) {
   for (const filePath of candidates) {
     try {
       if (isHttpUrl(filePath)) {
-        const buffer = await downloadUrlToBuffer(filePath);
-        let type = detectImageType(buffer, path.extname(new URL(filePath).pathname));
-        if (type === 'webp') {
+        let buffer = null;
+        try {
+          buffer = await downloadUrlToBuffer(filePath);
+        } catch {
+          buffer = null;
+        }
+        let type = buffer ? detectImageType(buffer, path.extname(new URL(filePath).pathname)) : null;
+        if (!type && filePath.includes('drive.google.com')) {
+          const driveId = extractDriveId(filePath);
+          const driveBuf = await downloadDriveFileBuffer(driveId);
+          if (driveBuf) {
+            buffer = driveBuf;
+            type = detectImageType(buffer);
+          }
+        }
+        if (buffer && type === 'webp') {
           const image = await Jimp.read(buffer);
           const converted = await image.getBufferAsync(Jimp.MIME_PNG);
           return { buffer: converted, type: 'png' };
         }
-        if (!type) return null;
+        if (!buffer || !type) continue;
         return { buffer, type };
       }
 
@@ -266,7 +508,7 @@ async function loadImageBuffer(candidates = []) {
           const converted = await image.getBufferAsync(Jimp.MIME_PNG);
           return { buffer: converted, type: 'png' };
         }
-        if (!type) return null;
+        if (!type) continue;
         return { buffer, type };
       }
     } catch {
@@ -514,10 +756,9 @@ module.exports = async function generateLaporanWord({
   for (let i = 0; i < presensiList.length; i += 1) {
     const p = presensiList[i];
     const tanggal = formatDateId(p.tanggal_presensi || p.created_at || p.createdAt);
-    const laporanText = stripHtmlToText(p.kegiatan || p.laporan || p.catatan || '-') || '-';
 
     const kegiatanParagraphs = [
-      new Paragraph({ text: laporanText }),
+      ...htmlToWordParagraphs(p.kegiatan || p.laporan || p.catatan || '-'),
     ];
 
     const fotoList = getFotoCandidates(p?.foto);
@@ -568,9 +809,21 @@ module.exports = async function generateLaporanWord({
     laporanRows.push(
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph(String(i + 1))] }),
-          new TableCell({ children: [new Paragraph(String(tanggal))] }),
-          new TableCell({ children: kegiatanParagraphs }),
+          new TableCell({
+            width: { size: 7, type: WidthType.PERCENTAGE },
+            margins: { top: 80, bottom: 80, left: 100, right: 100 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, text: String(i + 1) })],
+          }),
+          new TableCell({
+            width: { size: 23, type: WidthType.PERCENTAGE },
+            margins: { top: 80, bottom: 80, left: 100, right: 100 },
+            children: [new Paragraph(String(tanggal))],
+          }),
+          new TableCell({
+            width: { size: 70, type: WidthType.PERCENTAGE },
+            margins: { top: 80, bottom: 80, left: 120, right: 120 },
+            children: kegiatanParagraphs,
+          }),
         ],
       })
     );
@@ -578,18 +831,30 @@ module.exports = async function generateLaporanWord({
 
   const laporanTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    columnWidths: [650, 2150, 6560],
     rows: [
       new TableRow({
         children: [
           new TableCell({
+            width: { size: 7, type: WidthType.PERCENTAGE },
+            margins: { top: 80, bottom: 80, left: 100, right: 100 },
             shading: { type: ShadingType.CLEAR, color: 'FFFFFF', fill: 'F2F2F2' },
-            children: [new Paragraph({ children: [new TextRun({ text: 'No', bold: true })] })],
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [new TextRun({ text: 'No', bold: true })],
+              }),
+            ],
           }),
           new TableCell({
+            width: { size: 23, type: WidthType.PERCENTAGE },
+            margins: { top: 80, bottom: 80, left: 100, right: 100 },
             shading: { type: ShadingType.CLEAR, color: 'FFFFFF', fill: 'F2F2F2' },
             children: [new Paragraph({ children: [new TextRun({ text: 'Tanggal', bold: true })] })],
           }),
           new TableCell({
+            width: { size: 70, type: WidthType.PERCENTAGE },
+            margins: { top: 80, bottom: 80, left: 120, right: 120 },
             shading: { type: ShadingType.CLEAR, color: 'FFFFFF', fill: 'F2F2F2' },
             children: [new Paragraph({ children: [new TextRun({ text: 'Kegiatan', bold: true })] })],
           }),
@@ -598,9 +863,9 @@ module.exports = async function generateLaporanWord({
       ...(laporanRows.length ? laporanRows : [
         new TableRow({
           children: [
-            new TableCell({ children: [new Paragraph('-')] }),
-            new TableCell({ children: [new Paragraph('-')] }),
-            new TableCell({ children: [new Paragraph('-')] }),
+            new TableCell({ width: { size: 7, type: WidthType.PERCENTAGE }, children: [new Paragraph('-')] }),
+            new TableCell({ width: { size: 23, type: WidthType.PERCENTAGE }, children: [new Paragraph('-')] }),
+            new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph('-')] }),
           ],
         }),
       ]),
@@ -741,7 +1006,8 @@ module.exports = async function generateLaporanWord({
 
           new Paragraph({ spacing: { after: 200 } }),
           sectionHeader('IV. KESIMPULAN DAN SARAN'),
-          new Paragraph({ text: stripHtmlToText(kesimpulan) || '-', spacing: { after: 200 } }),
+          ...htmlToWordParagraphs(kesimpulan || '-'),
+          new Paragraph({ spacing: { after: 120 } }),
 
           sectionHeader('V. BUKTI NOTA / PENGELUARAN PERJALANAN DINAS'),
      
