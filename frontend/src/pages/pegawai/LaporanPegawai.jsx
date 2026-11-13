@@ -13,6 +13,7 @@ import {
 import { submitLaporan } from "../../services/presensiService";
 import RichTextRenderer from "./RichTextRenderer";
 import RichTextEditor from "./RichTextEditor";
+import SignatureImageEditor, { renderTransformedSignature } from "../../components/SignatureImageEditor";
 import { toPublicFileUrl } from "../../utils/fileUrl";
 import { confirmAction, showToast } from "../../utils/alerts";
 import { getReportWindowPresentation } from "../../features/laporan/reportWindow";
@@ -71,6 +72,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
   const [ttdFile, setTtdFile] = useState(null);
   const [ttdPreview, setTtdPreview] = useState(null);
   const [ttdDraftPreview, setTtdDraftPreview] = useState(null);
+  const [ttdOriginalSource, setTtdOriginalSource] = useState(null);
+  const [ttdPendingCrop, setTtdPendingCrop] = useState(null);
   const [ttdClearedInModal, setTtdClearedInModal] = useState(false);
   const [ttdLoading, setTtdLoading] = useState(false);
   const [showTTDModal, setShowTTDModal] = useState(false);
@@ -171,9 +174,9 @@ const LaporanPerjalananContent = ({ suratId }) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validasi ukuran file (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      setTtdError("Ukuran file maksimal 2MB");
+    // Validasi ukuran file (max 5MB sebelum di-crop/kompres di browser)
+    if (file.size > 5 * 1024 * 1024) {
+      setTtdError("Ukuran file maksimal 5MB");
       return;
     }
 
@@ -187,11 +190,13 @@ const LaporanPerjalananContent = ({ suratId }) => {
     setTtdError("");
     setTtdFile(file);
     setTtdClearedInModal(false);
+    setTtdPendingCrop(null);
 
     // Buat preview khusus draft file baru di modal
     const reader = new FileReader();
     reader.onloadend = () => {
       setTtdDraftPreview(reader.result);
+      setTtdOriginalSource(reader.result);
     };
     reader.readAsDataURL(file);
   };
@@ -205,6 +210,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
     }
     setTtdFile(null);
     setTtdDraftPreview(null);
+    setTtdOriginalSource(null);
+    setTtdPendingCrop(null);
     setTtdError("");
     const inputEl = document.getElementById("ttdUpload");
     if (inputEl) {
@@ -215,22 +222,42 @@ const LaporanPerjalananContent = ({ suratId }) => {
   // Upload tanda tangan ke server
   const handleUploadTTD = async () => {
     if (!guardReportEditable()) return;
-    if (!ttdFile) {
-      setTtdError("Pilih file tanda tangan baru terlebih dahulu");
+
+    let finalFileToUpload = ttdFile;
+    let finalPreviewSnapshot = ttdDraftPreview;
+
+    // Jika user sedang membuka kotak Crop dan langsung klik Simpan, otomatis terapkan Crop terlebih dahulu
+    if (ttdPendingCrop?.isCropping && ttdPendingCrop?.previewUrl) {
+      try {
+        setTtdLoading(true);
+        const cropped = await renderTransformedSignature(
+          ttdPendingCrop.previewUrl,
+          { cropRect: ttdPendingCrop.cropRect },
+          ttdPendingCrop.fileName || ttdFile?.name || "ttd-cropped.png"
+        );
+        finalFileToUpload = cropped.file;
+        finalPreviewSnapshot = cropped.dataUrl;
+      } catch (cropErr) {
+        console.error("Error auto-applying crop:", cropErr);
+      }
+    }
+
+    if (!finalFileToUpload) {
+      setTtdLoading(false);
+      setTtdError("Pilih file tanda tangan baru atau edit (Crop/Mirror) tanda tangan terlebih dahulu");
       return;
     }
 
     const formData = new FormData();
-    formData.append("ttd_pegawai", ttdFile);
+    formData.append("ttd_pegawai", finalFileToUpload);
 
     try {
       setTtdLoading(true);
-      const uploadedPreviewSnapshot = ttdDraftPreview;
       const uploadRes = await uploadTTD(suratId, formData);
 
       // Langsung tampilkan TTD baru secara instan tanpa glitch kembali ke TTD lama
-      if (uploadedPreviewSnapshot) {
-        setTtdPreview(uploadedPreviewSnapshot);
+      if (finalPreviewSnapshot) {
+        setTtdPreview(finalPreviewSnapshot);
       }
 
       // Reset draft modal & tutup modal terlebih dahulu
@@ -724,13 +751,12 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 <div className="d-flex">
                   <FaPen className="me-3 mt-1" style={{ color: theme.primary }} />
                   <div>
-                    <strong> Petunjuk Upload Tanda Tangan:</strong>
+                    <strong> Petunjuk Upload & Edit Tanda Tangan:</strong>
                     <ul className="mb-0 mt-1 small">
-                      <li><strong>Upload sekarang, gunakan nanti:</strong> Tanda tangan akan otomatis digunakan saat mengirim laporan</li>
-                      <li><strong>File akan disimpan:</strong> Tanda tangan disimpan di server dan siap digunakan kapan saja</li>
                       <li><strong>Bisa langsung diganti:</strong> Pilih file baru di bawah untuk langsung mengganti tanda tangan tanpa perlu menghapus yang lama</li>
-                      <li><strong>Format:</strong> JPG, JPEG, PNG  Maksimal 2MB</li>
-                      <li><strong>Pastikan jelas:</strong> Tanda tangan akan muncul di bagian bawah laporan PDF & Word</li>
+                      <li><strong>Fitur Crop & Mirror (0% Beban Server):</strong> Gunakan tombol <strong>Crop / Potong</strong>, <strong>Mirror Kiri-Kanan</strong>, <strong>Mirror Atas-Bawah</strong>, atau <strong>Putar 90°</strong> langsung di kotak preview</li>
+                      <li><strong>Format:</strong> JPG, JPEG, PNG — otomatis dioptimalkan di browser sebelum dikirim</li>
+                      <li><strong>Auto-Regenerate:</strong> Tanda tangan otomatis diperbarui di bagian bawah laporan PDF & Word</li>
                     </ul>
                   </div>
                 </div>
@@ -747,76 +773,34 @@ const LaporanPerjalananContent = ({ suratId }) => {
                 </div>
               )}
 
-              {/* Tanda Tangan Preview */}
+              {/* Tanda Tangan Preview + Editor (Crop, Mirror, Rotate) */}
               <div className="mb-4">
                 <label className="form-label fw-semibold">
-                  Preview Tanda Tangan
+                  Preview & Editor Tanda Tangan (Crop / Mirror / Putar)
                 </label>
-                
-                <div className="border-2 border-dashed rounded-3 p-4 text-center"
-                     style={{ 
-                       borderColor: isNewDraftSelected ? theme.success : (modalPreviewUrl ? theme.signature : theme.light),
-                       backgroundColor: isNewDraftSelected ? `${theme.success}05` : `${theme.background}80`,
-                       minHeight: '250px',
-                       position: 'relative'
-                     }}>
-                  {modalPreviewUrl ? (
-                    <>
-                      <div className="position-relative d-inline-block">
-                        <img 
-                          src={modalPreviewUrl} 
-                          alt="Preview Tanda Tangan" 
-                          className="img-fluid rounded shadow-sm"
-                          onClick={() => document.getElementById('ttdUpload')?.click()}
-                          title="Klik untuk memilih/mengganti file tanda tangan"
-                          style={{ 
-                            maxHeight: '200px',
-                            border: `2px solid ${isNewDraftSelected ? theme.success : theme.signature}`,
-                            backgroundColor: 'white',
-                            padding: '10px',
-                            cursor: 'pointer'
-                          }}
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle"
-                          style={{ width: '30px', height: '30px' }}
-                          title={isNewDraftSelected ? "Batalkan pilihan file baru" : "Bersihkan preview"}
-                          onClick={() => handleClearTTD(true)}
-                        >
-                          <FaTimes size={12} />
-                        </button>
-                      </div>
-                      <div className="mt-3">
-                        {isNewDraftSelected ? (
-                          <small className="text-success fw-semibold">
-                            <FaCheck className="me-1" />
-                            File baru siap diupload ({ttdFile?.name}) — klik &quot;Upload Tanda Tangan&quot; di bawah
-                          </small>
-                        ) : (
-                          <small className="text-primary">
-                            <FaSignature className="me-1" />
-                            Tanda tangan aktif saat ini — langsung pilih file baru di bawah untuk mengganti
-                          </small>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div
-                        className="py-5"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => document.getElementById('ttdUpload')?.click()}
-                      >
-                        <FaImage size={48} className="text-muted mb-3 opacity-50" />
-                        <h6 className="text-muted mb-2">Belum ada file baru dipilih</h6>
-                        <p className="text-muted small mb-0">
-                          Klik di sini atau tombol &quot;Pilih File&quot; di bawah untuk memilih gambar tanda tangan baru
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
+
+                <SignatureImageEditor
+                  previewUrl={modalPreviewUrl}
+                  originalSourceUrl={ttdOriginalSource || (!ttdClearedInModal ? ttdPreview : null)}
+                  isNewDraftSelected={isNewDraftSelected}
+                  fileName={ttdFile?.name || "ttd-edited.png"}
+                  theme={theme}
+                  onApplyResult={({ dataUrl, file }) => {
+                    setTtdDraftPreview(dataUrl);
+                    setTtdFile(file);
+                    setTtdClearedInModal(false);
+                    setTtdError("");
+                  }}
+                  onPendingCropChange={setTtdPendingCrop}
+                  onClear={() => handleClearTTD(true)}
+                  onTriggerFileSelect={() => {
+                    const el = document.getElementById("ttdUpload");
+                    if (el) {
+                      el.value = "";
+                      el.click();
+                    }
+                  }}
+                />
               </div>
 
               {/* Upload Input */}
@@ -900,8 +884,8 @@ const LaporanPerjalananContent = ({ suratId }) => {
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={!reportEditable || !ttdFile || ttdLoading}
-                title={!reportEditable ? reportLockMessage : (!ttdFile ? "Pilih file tanda tangan baru terlebih dahulu" : undefined)}
+                disabled={!reportEditable || (!ttdFile && !ttdPendingCrop?.isCropping) || ttdLoading}
+                title={!reportEditable ? reportLockMessage : (!ttdFile && !ttdPendingCrop?.isCropping ? "Pilih file tanda tangan baru atau edit TTD terlebih dahulu" : undefined)}
                 onClick={handleUploadTTD}
                 style={{
                   background: `linear-gradient(135deg, ${theme.signature} 0%, ${theme.primary} 100%)`,
