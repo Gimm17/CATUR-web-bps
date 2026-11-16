@@ -426,12 +426,13 @@
   font-size: 14px;
 }
 
-.logo-text {
+.sensus-sidebar .logo-text {
   color: white;
   flex: 1;
+  min-width: 0;
 }
 
-.brand-title {
+.sensus-sidebar .brand-title {
   font-size: 18px;
   font-weight: bold;
   margin: 0;
@@ -439,10 +440,17 @@
   color: white;
 }
 
-.brand-subtitle {
+.sensus-sidebar .brand-subtitle {
+  display: block;
   font-size: 11px;
+  line-height: 1.35;
   opacity: 0.9;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  max-width: 100% !important;
+  word-break: break-word;
 }
 
 /* Year Badge */

@@ -812,13 +812,13 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
-.brand-text {
+.brand-mobile .brand-text {
   display: flex;
   flex-direction: column;
   line-height: 1.2;
 }
 
-.brand-title {
+.brand-mobile .brand-title {
   font-size: 18px;
   font-weight: 800;
   color: #fff;
@@ -826,7 +826,7 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.brand-subtitle {
+.brand-mobile .brand-subtitle {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.9);
   letter-spacing: 0.5px;
@@ -889,7 +889,7 @@
     padding: 8px 12px !important;
   }
   
-  .brand-subtitle {
+  .brand-mobile .brand-subtitle {
     max-width: 120px;
   }
   
