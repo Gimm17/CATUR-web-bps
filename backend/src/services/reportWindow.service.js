@@ -12,7 +12,7 @@ const EDITABLE_STATUSES = new Set([
   'dicek_keuangan',
   'disetujui_keuangan',
 ]);
-const REPORT_EDIT_WINDOW_DAYS = 10;
+const REPORT_EDIT_WINDOW_DAYS = 14;
 
 function normalizeDate(value) {
   return addBusinessDays(value, 0);
