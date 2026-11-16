@@ -21,7 +21,7 @@
   display: none;
 }
 
-/* ===== SIDEBAR DESKTOP - TETAP (FIXED VIEWPORT, TIDAK IKUT SCROLL HALAMAN) ===== */
+/* ===== SIDEBAR DESKTOP - TETAP (FIXED VIEWPORT, TANPA SCROLLBAR PUTIH) ===== */
 .wrapper .main-sidebar.sensus-sidebar,
 .main-sidebar.sensus-sidebar,
 .sensus-sidebar {
@@ -41,6 +41,17 @@
   transition: width 0.3s ease, transform 0.3s ease;
   overflow-y: auto !important;
   overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.wrapper .main-sidebar.sensus-sidebar::-webkit-scrollbar,
+.main-sidebar.sensus-sidebar::-webkit-scrollbar,
+.sensus-sidebar::-webkit-scrollbar,
+.sensus-sidebar .sidebar::-webkit-scrollbar {
+  width: 0px !important;
+  height: 0px !important;
+  display: none !important;
 }
 
 .wrapper .main-sidebar.sensus-sidebar::before,
@@ -63,6 +74,11 @@
   height: auto !important;
   min-height: 0;
   overflow: visible !important;
+  padding: 0 !important;
+}
+
+.sensus-sidebar > .sidebar > nav {
+  margin-top: 6px !important;
 }
 
 /* Collapsed Sidebar */
@@ -375,7 +391,7 @@
 /* ===== BRAND/HEADER ===== */
 .sensus-brand {
   position: relative;
-  padding: 20px 15px;
+  padding: 14px 14px 12px;
   background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -384,21 +400,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 
 .sensus-logo {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
   flex: 1;
 }
 
 /* Logo BPS */
 .bps-logo {
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
   position: relative;
 }
 
@@ -454,12 +470,12 @@
 /* Brand Link */
 .brand-link {
   display: block;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .brand-text-container {
   text-align: center;
-  padding: 12px;
+  padding: 8px 10px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -467,41 +483,41 @@
 
 .sensus-brand-text {
   color: white !important;
-  font-size: 12px;
-  letter-spacing: 0.5px;
+  font-size: 11px;
+  letter-spacing: 0.4px;
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 2px;
 }
 
 .brand-slogan {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 11px;
+  font-size: 10.5px;
   font-style: italic;
 }
 
 /* ===== NAVIGATION ===== */
 .sensus-nav {
-  padding: 10px 0;
+  padding: 4px 0;
 }
 
 .sensus-nav-item {
-  margin: 5px 15px;
+  margin: 2px 12px;
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.2s;
 }
 
 .sensus-nav-item:hover {
-  transform: translateX(5px);
+  transform: translateX(4px);
 }
 
 .sensus-nav-link {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
   border-left: 4px solid transparent !important;
-  padding: 14px 15px !important;
+  padding: 10px 14px !important;
   display: flex !important;
   align-items: center;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   position: relative;
   text-decoration: none !important;
 }
@@ -578,7 +594,7 @@
 
 /* ===== DIVIDER ===== */
 .nav-divider {
-  padding: 15px 20px;
+  padding: 8px 18px;
 }
 
 .sensus-divider {
@@ -599,7 +615,7 @@
 
 /* ===== FOOTER ===== */
 .sensus-footer {
-  padding: 20px 15px;
+  padding: 12px 14px;
   background: rgba(0, 0, 0, 0.25);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin-top: auto;
@@ -608,20 +624,20 @@
 
 .sensus-tagline {
   color: rgba(255, 255, 255, 0.8);
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
-  margin-bottom: 15px;
-  line-height: 1.5;
+  margin-bottom: 8px;
+  line-height: 1.35;
 }
 
 .sensus-tagline p {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   font-style: italic;
   font-weight: 500;
 }
 
 .sensus-tagline small {
-  font-size: 10px;
+  font-size: 9.5px;
   opacity: 0.7;
   display: block;
 }
@@ -629,12 +645,12 @@
 .sensus-watermark {
   text-align: center;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  padding: 10px;
+  padding: 7px 8px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   color: white;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }

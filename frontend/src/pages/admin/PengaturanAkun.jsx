@@ -17,6 +17,8 @@ import {
   FaSpinner,
   FaBuilding,
   FaFilter,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import { confirmAction, showToast } from "../../utils/alerts";
 import {
@@ -35,17 +37,17 @@ const normalizeToSatkerOption = (rawUnitKerja) => {
 const inputStyle = {
   border: "1.5px solid #cbd5e1",
   borderRadius: "8px",
-  padding: "9px 12px",
-  height: "42px",
-  fontSize: "0.92rem",
+  padding: "8px 12px",
+  height: "40px",
+  fontSize: "0.9rem",
   backgroundColor: "#ffffff",
 };
 
 const labelStyle = {
-  fontSize: "0.84rem",
+  fontSize: "0.82rem",
   fontWeight: 600,
   color: "#334155",
-  marginBottom: "6px",
+  marginBottom: "5px",
 };
 
 const PengaturanAkun = () => {
@@ -53,6 +55,8 @@ const PengaturanAkun = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [error, setError] = useState("");
 
   // FORM TAMBAH/EDIT USER
@@ -97,6 +101,17 @@ const PengaturanAkun = () => {
       );
     });
   }, [users, searchQuery, roleFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedUsers = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredUsers.slice(start, start + pageSize);
+  }, [filteredUsers, safePage, pageSize]);
 
   const resetForm = () => {
     setNama("");
@@ -234,7 +249,7 @@ const PengaturanAkun = () => {
         style={{
           minHeight: "calc(100vh - 70px)",
           backgroundColor: "#f8fafc",
-          padding: "20px 24px",
+          padding: "18px 24px 28px",
         }}
       >
         {/* HEADER */}
@@ -243,7 +258,7 @@ const PengaturanAkun = () => {
             <h1
               className="mb-1 d-flex align-items-center"
               style={{
-                fontSize: "1.55rem",
+                fontSize: "1.45rem",
                 fontWeight: "700",
                 color: "#0f172a",
               }}
@@ -260,7 +275,7 @@ const PengaturanAkun = () => {
             style={{
               backgroundColor: "#e0e7ff",
               color: "#1e40af",
-              fontSize: "0.85rem",
+              fontSize: "0.84rem",
               fontWeight: 600,
               borderRadius: "8px",
             }}
@@ -269,67 +284,102 @@ const PengaturanAkun = () => {
           </span>
         </div>
 
-        {/* FORM CARD */}
-        <div
-          className="card mb-4"
-          style={{
-            borderRadius: "12px",
-            boxShadow: editId
-              ? "0 8px 20px rgba(26, 86, 219, 0.12)"
-              : "0 2px 10px rgba(15, 23, 42, 0.05)",
-            border: editId ? "1.5px solid #3b82f6" : "1px solid #e2e8f0",
-            overflow: "hidden",
-          }}
-        >
+        {/* FORM CARD (Grid 4 Kolom Sejajar Presisi + Tombol di Header) */}
+        <form onSubmit={handleSubmit}>
           <div
-            className="card-header"
+            className="card mb-3"
             style={{
-              background: editId
-                ? "linear-gradient(135deg, #1e40af 0%, #0284c7 100%)"
-                : "linear-gradient(135deg, #1A56DB 0%, #0EA5E9 100%)",
-              color: "white",
-              padding: "14px 20px",
-              borderBottom: "none",
+              borderRadius: "12px",
+              boxShadow: editId
+                ? "0 8px 20px rgba(26, 86, 219, 0.12)"
+                : "0 2px 10px rgba(15, 23, 42, 0.05)",
+              border: editId ? "1.5px solid #3b82f6" : "1px solid #e2e8f0",
+              overflow: "hidden",
             }}
           >
-            <div className="d-flex justify-content-between align-items-center">
-              <h6 className="mb-0 fw-bold d-flex align-items-center gap-2">
-                {editId ? <FaUserEdit /> : <FaUserPlus />}
-                <span>
-                  {editId ? `Edit Pengguna — ${nama || email}` : "Tambah Pengguna Baru"}
-                </span>
-              </h6>
-              {editId && (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="btn btn-sm d-flex align-items-center gap-1"
-                  style={{
-                    background: "rgba(255,255,255,0.18)",
-                    color: "white",
-                    border: "1px solid rgba(255,255,255,0.35)",
-                    borderRadius: "6px",
-                    padding: "4px 12px",
-                    fontSize: "0.82rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  <FaTimes size={12} /> Batal Edit
-                </button>
-              )}
-            </div>
-          </div>
+            <div
+              className="card-header"
+              style={{
+                background: editId
+                  ? "linear-gradient(135deg, #1e40af 0%, #0284c7 100%)"
+                  : "linear-gradient(135deg, #1A56DB 0%, #0EA5E9 100%)",
+                color: "white",
+                padding: "12px 20px",
+                borderBottom: "none",
+              }}
+            >
+              <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h6 className="mb-0 fw-bold d-flex align-items-center gap-2">
+                  {editId ? <FaUserEdit /> : <FaUserPlus />}
+                  <span>
+                    {editId
+                      ? `Edit Pengguna — ${nama || email}`
+                      : "Tambah Pengguna Baru"}
+                  </span>
+                </h6>
 
-          <div className="card-body" style={{ padding: "20px 22px" }}>
-            {error && (
-              <div className="alert alert-danger py-2 mb-3 small">
-                {error}
+                <div className="d-flex align-items-center gap-2">
+                  {editId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="btn btn-sm d-flex align-items-center gap-1"
+                      style={{
+                        background: "rgba(255,255,255,0.18)",
+                        color: "white",
+                        border: "1px solid rgba(255,255,255,0.35)",
+                        borderRadius: "7px",
+                        padding: "6px 14px",
+                        fontSize: "0.84rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <FaTimes size={12} /> Batal
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="btn btn-sm d-flex align-items-center gap-2"
+                    disabled={loading}
+                    style={{
+                      background: editId
+                        ? "#10b981"
+                        : "#ffffff",
+                      color: editId ? "#ffffff" : "#1A56DB",
+                      border: "none",
+                      borderRadius: "7px",
+                      padding: "6px 16px",
+                      fontWeight: 700,
+                      fontSize: "0.85rem",
+                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
+                    }}
+                  >
+                    {loading ? (
+                      <>
+                        <FaSpinner className="spinner-border spinner-border-sm" />
+                        <span>{editId ? "Menyimpan..." : "Menambah..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        {editId ? <FaSave /> : <FaUserPlus />}
+                        <span>{editId ? "Simpan Perubahan" : "Tambah Pengguna"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            )}
+            </div>
 
-            <form onSubmit={handleSubmit}>
+            <div className="card-body" style={{ padding: "18px 20px" }}>
+              {error && (
+                <div className="alert alert-danger py-2 mb-3 small">
+                  {error}
+                </div>
+              )}
+
+              {/* Grid 4 Kolom x 2 Baris — 100% Sejajar Lurus Atas-Bawah */}
               <div className="row g-3">
-                {/* Baris 1: 4 Kolom Sejajar */}
+                {/* Baris 1: 3 - 3 - 3 - 3 */}
                 <div className="col-lg-3 col-md-6">
                   <label className="form-label" style={labelStyle}>
                     Nama Lengkap <span className="text-danger">*</span>
@@ -362,7 +412,7 @@ const PengaturanAkun = () => {
 
                 <div className="col-lg-3 col-md-6">
                   <label className="form-label" style={labelStyle}>
-                    {editId ? "Password Baru (Opsional)" : "Password *"}{" "}
+                    {editId ? "Password Baru (Opsional)" : "Password *"}
                   </label>
                   <input
                     type="password"
@@ -396,8 +446,8 @@ const PengaturanAkun = () => {
                   </select>
                 </div>
 
-                {/* Baris 2: NIP, Telepon, Unit Kerja (Single Clean Select), Alamat */}
-                <div className="col-lg-2 col-md-6">
+                {/* Baris 2: 3 - 3 - 3 - 3 (Lurus Presisi dengan Baris 1) */}
+                <div className="col-lg-3 col-md-6">
                   <label className="form-label" style={labelStyle}>
                     NIP
                   </label>
@@ -411,7 +461,7 @@ const PengaturanAkun = () => {
                   />
                 </div>
 
-                <div className="col-lg-2 col-md-6">
+                <div className="col-lg-3 col-md-6">
                   <label className="form-label" style={labelStyle}>
                     No. Telepon
                   </label>
@@ -425,7 +475,7 @@ const PengaturanAkun = () => {
                   />
                 </div>
 
-                <div className="col-lg-4 col-md-6">
+                <div className="col-lg-3 col-md-6">
                   <label className="form-label" style={labelStyle}>
                     <FaBuilding className="me-1 text-primary" />
                     Unit Kerja / Wilayah Satker
@@ -444,7 +494,7 @@ const PengaturanAkun = () => {
                   </select>
                 </div>
 
-                <div className="col-lg-4 col-md-6">
+                <div className="col-lg-3 col-md-6">
                   <label className="form-label" style={labelStyle}>
                     Alamat
                   </label>
@@ -458,79 +508,30 @@ const PengaturanAkun = () => {
                   />
                 </div>
               </div>
-
-              {/* Footer Tombol Submit di Kanan Bawah Form */}
-              <div className="d-flex justify-content-end align-items-center gap-2 mt-3 pt-3 border-top">
-                {editId && (
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    className="btn"
-                    style={{
-                      backgroundColor: "#f1f5f9",
-                      color: "#475569",
-                      border: "1px solid #cbd5e1",
-                      borderRadius: "8px",
-                      padding: "9px 18px",
-                      fontWeight: 600,
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    <FaTimes className="me-1" />
-                    Batal
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className="btn d-flex align-items-center justify-content-center"
-                  disabled={loading}
-                  style={{
-                    background: editId
-                      ? "linear-gradient(135deg, #059669 0%, #10B981 100%)"
-                      : "linear-gradient(135deg, #1A56DB 0%, #2563EB 100%)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "9px 24px",
-                    fontWeight: 600,
-                    fontSize: "0.92rem",
-                    minWidth: "160px",
-                    boxShadow: "0 2px 6px rgba(15, 23, 42, 0.12)",
-                  }}
-                >
-                  {loading ? (
-                    <>
-                      <FaSpinner className="spinner-border spinner-border-sm me-2" />
-                      {editId ? "Menyimpan..." : "Menambah..."}
-                    </>
-                  ) : (
-                    <>
-                      {editId ? (
-                        <FaSave className="me-2" />
-                      ) : (
-                        <FaUserPlus className="me-2" />
-                      )}
-                      {editId ? "Simpan Perubahan" : "Tambah Pengguna"}
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
+        </form>
 
-        {/* SEARCH & FILTER BAR */}
+        {/* DAFTAR PENGGUNA CARD (Menyatu dengan Search, Filter, Tabel & Pagination) */}
         <div
-          className="card mb-3"
+          className="card"
           style={{
             borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
+            boxShadow: "0 2px 10px rgba(15, 23, 42, 0.05)",
             border: "1px solid #e2e8f0",
+            overflow: "hidden",
           }}
         >
-          <div className="card-body py-3 px-3">
+          {/* Toolbar Search & Filter di Atas Tabel */}
+          <div
+            className="card-header bg-white"
+            style={{
+              padding: "14px 20px",
+              borderBottom: "1px solid #e2e8f0",
+            }}
+          >
             <div className="row g-2 align-items-center">
-              <div className="col-md-8">
+              <div className="col-lg-6 col-md-6">
                 <div className="input-group">
                   <span
                     className="input-group-text"
@@ -542,12 +543,12 @@ const PengaturanAkun = () => {
                       color: "#64748b",
                     }}
                   >
-                    <FaSearch />
+                    <FaSearch size={13} />
                   </span>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Cari berdasarkan nama, email, NIP, atau Satker..."
+                    placeholder="Cari nama, email, NIP, atau Satker..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     style={{
@@ -558,7 +559,8 @@ const PengaturanAkun = () => {
                   />
                 </div>
               </div>
-              <div className="col-md-4">
+
+              <div className="col-lg-3 col-md-3">
                 <div className="input-group">
                   <span
                     className="input-group-text"
@@ -570,7 +572,7 @@ const PengaturanAkun = () => {
                       color: "#64748b",
                     }}
                   >
-                    <FaFilter size={13} />
+                    <FaFilter size={12} />
                   </span>
                   <select
                     className="form-select"
@@ -590,28 +592,31 @@ const PengaturanAkun = () => {
                   </select>
                 </div>
               </div>
+
+              <div className="col-lg-3 col-md-3">
+                <select
+                  className="form-select"
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  style={inputStyle}
+                >
+                  <option value={10}>Tampilkan 10 baris / halaman</option>
+                  <option value={25}>Tampilkan 25 baris / halaman</option>
+                  <option value={50}>Tampilkan 50 baris / halaman</option>
+                  <option value={500}>Tampilkan Semua ({filteredUsers.length})</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* TABLE */}
-        <div
-          className="card"
-          style={{
-            borderRadius: "12px",
-            boxShadow: "0 2px 10px rgba(15, 23, 42, 0.05)",
-            border: "1px solid #e2e8f0",
-            overflow: "hidden",
-          }}
-        >
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead style={{ backgroundColor: "#f1f5f9" }}>
                 <tr>
                   <th
                     style={{
-                      padding: "13px 16px",
-                      fontSize: "0.8rem",
+                      padding: "11px 16px",
+                      fontSize: "0.78rem",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                       color: "#475569",
@@ -622,8 +627,8 @@ const PengaturanAkun = () => {
                   </th>
                   <th
                     style={{
-                      padding: "13px 16px",
-                      fontSize: "0.8rem",
+                      padding: "11px 16px",
+                      fontSize: "0.78rem",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                       color: "#475569",
@@ -633,8 +638,8 @@ const PengaturanAkun = () => {
                   </th>
                   <th
                     style={{
-                      padding: "13px 16px",
-                      fontSize: "0.8rem",
+                      padding: "11px 16px",
+                      fontSize: "0.78rem",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                       color: "#475569",
@@ -644,8 +649,8 @@ const PengaturanAkun = () => {
                   </th>
                   <th
                     style={{
-                      padding: "13px 16px",
-                      fontSize: "0.8rem",
+                      padding: "11px 16px",
+                      fontSize: "0.78rem",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                       color: "#475569",
@@ -655,8 +660,8 @@ const PengaturanAkun = () => {
                   </th>
                   <th
                     style={{
-                      padding: "13px 16px",
-                      fontSize: "0.8rem",
+                      padding: "11px 16px",
+                      fontSize: "0.78rem",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                       color: "#475569",
@@ -666,8 +671,8 @@ const PengaturanAkun = () => {
                   </th>
                   <th
                     style={{
-                      padding: "13px 16px",
-                      fontSize: "0.8rem",
+                      padding: "11px 16px",
+                      fontSize: "0.78rem",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                       color: "#475569",
@@ -678,8 +683,8 @@ const PengaturanAkun = () => {
                   <th
                     className="text-end"
                     style={{
-                      padding: "13px 16px",
-                      fontSize: "0.8rem",
+                      padding: "11px 16px",
+                      fontSize: "0.78rem",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                       color: "#475569",
@@ -691,14 +696,15 @@ const PengaturanAkun = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.length === 0 ? (
+                {paginatedUsers.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="text-center py-5 text-muted">
                       Tidak ada data pengguna yang sesuai pencarian
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((u, index) => {
+                  paginatedUsers.map((u, idx) => {
+                    const rowNumber = (safePage - 1) * pageSize + idx + 1;
                     const wilayah = resolveWilayahAccess(u);
                     const isKab = wilayah.scope === "kabupaten";
                     const isBeingEdited = editId === u.id;
@@ -711,19 +717,20 @@ const PengaturanAkun = () => {
                       >
                         <td
                           style={{
-                            padding: "12px 16px",
+                            padding: "10px 16px",
                             color: "#64748b",
                             fontWeight: 600,
+                            fontSize: "0.88rem",
                           }}
                         >
-                          {index + 1}
+                          {rowNumber}
                         </td>
-                        <td style={{ padding: "12px 16px" }}>
+                        <td style={{ padding: "10px 16px" }}>
                           <div
                             style={{
                               fontWeight: 600,
                               color: "#0f172a",
-                              fontSize: "0.93rem",
+                              fontSize: "0.9rem",
                             }}
                           >
                             {u.nama}
@@ -731,7 +738,7 @@ const PengaturanAkun = () => {
                           <div
                             style={{
                               color: "#64748b",
-                              fontSize: "0.82rem",
+                              fontSize: "0.8rem",
                             }}
                           >
                             {u.email}
@@ -739,22 +746,22 @@ const PengaturanAkun = () => {
                         </td>
                         <td
                           style={{
-                            padding: "12px 16px",
+                            padding: "10px 16px",
                             fontFamily: "monospace",
-                            fontSize: "0.88rem",
+                            fontSize: "0.86rem",
                             color: "#334155",
                           }}
                         >
                           {u.nip || "-"}
                         </td>
-                        <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "10px 16px", whiteSpace: "nowrap" }}>
                           <span
                             style={{
                               backgroundColor: `${getRoleColor(u.role)}15`,
                               color: getRoleColor(u.role),
-                              padding: "5px 12px",
+                              padding: "4px 11px",
                               borderRadius: "999px",
-                              fontSize: "0.78rem",
+                              fontSize: "0.76rem",
                               fontWeight: 600,
                               display: "inline-block",
                             }}
@@ -762,37 +769,37 @@ const PengaturanAkun = () => {
                             {getRoleName(u.role)}
                           </span>
                         </td>
-                        <td style={{ padding: "12px 16px" }}>
+                        <td style={{ padding: "10px 16px" }}>
                           <div
                             style={{
                               fontWeight: 600,
                               color: "#1e293b",
-                              fontSize: "0.88rem",
+                              fontSize: "0.86rem",
                             }}
                           >
                             {wilayah.satker_label}
                           </div>
-                          <div className="d-flex align-items-center gap-2 mt-1">
-                            <span
-                              style={{
-                                fontSize: "0.74rem",
-                                fontWeight: 600,
-                                padding: "2px 8px",
-                                borderRadius: "4px",
-                                backgroundColor: isKab ? "#e0f2fe" : "#f1f5f9",
-                                color: isKab ? "#0369a1" : "#475569",
-                              }}
-                            >
-                              {isKab
-                                ? `Terkunci: ${wilayah.kabupaten_label}`
-                                : "Provinsi (Semua Wilayah)"}
-                            </span>
-                          </div>
+                          <span
+                            style={{
+                              fontSize: "0.72rem",
+                              fontWeight: 600,
+                              padding: "1px 7px",
+                              borderRadius: "4px",
+                              backgroundColor: isKab ? "#e0f2fe" : "#f1f5f9",
+                              color: isKab ? "#0369a1" : "#64748b",
+                              display: "inline-block",
+                              marginTop: "2px",
+                            }}
+                          >
+                            {isKab
+                              ? `Terkunci: ${wilayah.kabupaten_label}`
+                              : "Provinsi (Semua Wilayah)"}
+                          </span>
                         </td>
                         <td
                           style={{
-                            padding: "12px 16px",
-                            fontSize: "0.88rem",
+                            padding: "10px 16px",
+                            fontSize: "0.86rem",
                             color: "#334155",
                             whiteSpace: "nowrap",
                           }}
@@ -801,7 +808,7 @@ const PengaturanAkun = () => {
                         </td>
                         <td
                           style={{
-                            padding: "12px 16px",
+                            padding: "10px 16px",
                             whiteSpace: "nowrap",
                             textAlign: "right",
                           }}
@@ -815,13 +822,13 @@ const PengaturanAkun = () => {
                                 background: "#F59E0B",
                                 color: "white",
                                 border: "none",
-                                padding: "6px 11px",
+                                padding: "5px 10px",
                                 borderRadius: "6px",
-                                fontSize: "0.8rem",
+                                fontSize: "0.78rem",
                                 fontWeight: 600,
                               }}
                             >
-                              <FaUserEdit size={13} /> Edit
+                              <FaUserEdit size={12} /> Edit
                             </button>
                             <button
                               type="button"
@@ -831,13 +838,13 @@ const PengaturanAkun = () => {
                                 background: "#EF4444",
                                 color: "white",
                                 border: "none",
-                                padding: "6px 11px",
+                                padding: "5px 10px",
                                 borderRadius: "6px",
-                                fontSize: "0.8rem",
+                                fontSize: "0.78rem",
                                 fontWeight: 600,
                               }}
                             >
-                              <FaTrash size={12} /> Hapus
+                              <FaTrash size={11} /> Hapus
                             </button>
                           </div>
                         </td>
@@ -848,6 +855,99 @@ const PengaturanAkun = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Footer Pagination */}
+          {filteredUsers.length > 0 && (
+            <div
+              className="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2"
+              style={{
+                padding: "12px 20px",
+                borderTop: "1px solid #e2e8f0",
+              }}
+            >
+              <span className="text-muted small">
+                Menampilkan{" "}
+                <strong>{(safePage - 1) * pageSize + 1}</strong> –{" "}
+                <strong>
+                  {Math.min(safePage * pageSize, filteredUsers.length)}
+                </strong>{" "}
+                dari <strong>{filteredUsers.length}</strong> akun
+              </span>
+
+              {totalPages > 1 && (
+                <div className="d-flex align-items-center gap-1">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary d-flex align-items-center"
+                    disabled={safePage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    style={{ borderRadius: "6px", padding: "5px 10px" }}
+                  >
+                    <FaChevronLeft size={11} />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(
+                      (p) =>
+                        p === 1 ||
+                        p === totalPages ||
+                        Math.abs(p - safePage) <= 1
+                    )
+                    .reduce((acc, p, idx, arr) => {
+                      if (idx > 0 && p - arr[idx - 1] > 1) {
+                        acc.push("...");
+                      }
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      item === "..." ? (
+                        <span
+                          key={`ellipsis-${idx}`}
+                          className="px-2 text-muted small"
+                        >
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => setCurrentPage(item)}
+                          className="btn btn-sm"
+                          style={{
+                            borderRadius: "6px",
+                            padding: "4px 10px",
+                            fontWeight: 600,
+                            fontSize: "0.82rem",
+                            backgroundColor:
+                              safePage === item ? "#1A56DB" : "#f8fafc",
+                            color: safePage === item ? "#ffffff" : "#334155",
+                            border:
+                              safePage === item
+                                ? "1px solid #1A56DB"
+                                : "1px solid #cbd5e1",
+                          }}
+                        >
+                          {item}
+                        </button>
+                      )
+                    )}
+
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary d-flex align-items-center"
+                    disabled={safePage >= totalPages}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    style={{ borderRadius: "6px", padding: "5px 10px" }}
+                  >
+                    <FaChevronRight size={11} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>
