@@ -61,11 +61,11 @@ B. FRONTEND PRODUCTION BUILD (Folder: public/)
 --------------------------------------------------------------------------------
 1. public/index.html
    - Entry point SPA, mengarah ke bundle production terbaru.
-2. public/assets/index-_2VR0uDx.js
+2. public/assets/index-CRcE25gY.js
    - Bundle utama JavaScript (mencakup seluruh perbaikan sebelumnya + fitur baru).
 3. public/assets/index-CHCa17Ld.css
    - Bundle stylesheet CSS utama (termasuk fix sidebar, navbar spinner, dan layout responsif).
-4. public/assets/quill-Dx6S5wZS.js
+4. public/assets/quill-DJp3b0lS.js
    - Vendor bundle rich text editor Quill untuk laporan harian & kesimpulan.
 5. public/img/ & public/logo.*
    - Aset statis logo dan cover aplikasi.
@@ -118,6 +118,8 @@ A. FRONTEND SOURCE CODE (frontend/src/)
       dalam mode dropdown (default tersembunyi/collapse saat halaman dibuka),
       lengkap dengan tombol "Unlock (Force 1 Foto)" dan "Completed (Abaikan)"
       untuk mengabaikan kasus lama.
+    - Perombakan tabel "Laporan Seluruh Pegawai" menjadi 5 kolom ringkas & compact
+      (pengelompokan Pegawai & Kegiatan, Tujuan & Tanggal, Status, dan Pencairan).
     - Optimalisasi layout mobile: header tanggal responsif & kartu statistik horizontal
       kompak tanpa teks terpotong serta scoping style agar tidak bocor ke Navbar.
 12. frontend/src/pages/pegawai/RichTextEditor.jsx

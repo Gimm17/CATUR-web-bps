@@ -1151,76 +1151,84 @@ const DashboardPegawai = () => {
                   <div className="card-header" style={{
                     backgroundColor: 'white',
                     borderBottom: '1px solid #e2e8f0',
-                    padding: '20px',
+                    padding: '16px 20px',
                     borderTopLeftRadius: '12px',
                     borderTopRightRadius: '12px'
                   }}>
-                    <div className="d-flex justify-content-between align-items-center">
+                    <div
+                      className="d-flex justify-content-between align-items-center"
+                      style={{ flexWrap: 'wrap', gap: '12px' }}
+                    >
                       <div>
                         <h5 style={{
-                          fontSize: '1.1rem',
-                          fontWeight: '600',
-                          color: '#1e293b',
-                          marginBottom: '5px',
+                          fontSize: '1.05rem',
+                          fontWeight: '700',
+                          color: '#0f172a',
+                          marginBottom: '3px',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '10px'
+                          flexWrap: 'wrap',
+                          gap: '8px'
                         }}>
                           <FaFileAlt style={{ color: '#0ea5e9' }} />
-                          Laporan Seluruh Pegawai
+                          <span>Laporan Seluruh Pegawai</span>
+                          <span style={{
+                            backgroundColor: '#e0f2fe',
+                            color: '#0284c7',
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            padding: '3px 10px',
+                            borderRadius: '999px'
+                          }}>
+                            {laporanList.length} Laporan
+                          </span>
                         </h5>
                         <p style={{
-                          fontSize: '0.9rem',
+                          fontSize: '0.84rem',
                           color: '#64748b',
                           marginBottom: '0'
                         }}>
-                          Ringkasan laporan perjalanan dinas pegawai
+                          Ringkasan perjalanan dinas dan status pencairan
                         </p>
                       </div>
-                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="form-control form-control-sm"
-                            placeholder="Cari nama atau tujuan..."
-                            style={{ minWidth: '220px' }}
-                          />
-                          <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="form-select form-select-sm"
-                            style={{ minWidth: '170px' }}
-                          >
-                            {statusOptions.map(option => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div style={{
-                          backgroundColor: '#f8fafc',
-                          padding: '8px 15px',
-                          borderRadius: '8px',
-                          textAlign: 'center'
-                        }}>
-                          <div style={{
-                            fontSize: '1.5rem',
-                            fontWeight: '800',
-                            color: '#0ea5e9',
-                            lineHeight: '1'
-                          }}>
-                            {laporanList.length}
-                          </div>
-                          <div style={{
-                            fontSize: '0.8rem',
-                            color: '#64748b'
-                          }}>
-                            Laporan
-                          </div>
-                        </div>
+
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        flex: '0 1 auto'
+                      }}>
+                        <input
+                          type="text"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="form-control form-control-sm"
+                          placeholder="Cari nama, kegiatan, atau tujuan..."
+                          style={{
+                            width: '210px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            padding: '6px 10px'
+                          }}
+                        />
+                        <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          className="form-select form-select-sm"
+                          style={{
+                            width: '155px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            padding: '6px 10px'
+                          }}
+                        >
+                          {statusOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -1270,82 +1278,73 @@ const DashboardPegawai = () => {
                       </div>
                     ) : (
                       <div className="table-responsive">
-                        <table className="table table-hover mb-0">
+                        <table className="table table-hover align-middle mb-0">
                           <thead style={{ backgroundColor: '#f8fafc' }}>
                             <tr>
                               <th style={{
-                                width: '5%',
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                padding: '15px',
-                                borderBottom: '2px solid #e2e8f0'
+                                width: '44px',
+                                fontSize: '0.76rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em',
+                                fontWeight: '700',
+                                color: '#475569',
+                                padding: '11px 12px',
+                                textAlign: 'center',
+                                borderBottom: '1.5px solid #e2e8f0'
                               }}>
                                 No
                               </th>
                               <th style={{
-                                width: '18%',
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                padding: '15px',
-                                borderBottom: '2px solid #e2e8f0'
+                                width: '36%',
+                                fontSize: '0.76rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em',
+                                fontWeight: '700',
+                                color: '#475569',
+                                padding: '11px 14px',
+                                borderBottom: '1.5px solid #e2e8f0'
                               }}>
-                                Nama
+                                Pegawai & Kegiatan
                               </th>
                               <th style={{
-                                width: '20%',
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                padding: '15px',
-                                borderBottom: '2px solid #e2e8f0'
+                                width: '26%',
+                                fontSize: '0.76rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em',
+                                fontWeight: '700',
+                                color: '#475569',
+                                padding: '11px 14px',
+                                borderBottom: '1.5px solid #e2e8f0'
                               }}>
-                                Kegiatan
+                                Tujuan & Tanggal
                               </th>
                               <th style={{
-                                width: '20%',
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                padding: '15px',
-                                borderBottom: '2px solid #e2e8f0'
+                                width: '16%',
+                                fontSize: '0.76rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em',
+                                fontWeight: '700',
+                                color: '#475569',
+                                padding: '11px 14px',
+                                borderBottom: '1.5px solid #e2e8f0',
+                                whiteSpace: 'nowrap'
                               }}>
-                                Lokasi/Tujuan Perjadin
+                                Status
                               </th>
                               <th style={{
-                                width: '18%',
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                padding: '15px',
-                                borderBottom: '2px solid #e2e8f0'
+                                width: '16%',
+                                fontSize: '0.76rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em',
+                                fontWeight: '700',
+                                color: '#475569',
+                                padding: '11px 14px',
+                                textAlign: 'right',
+                                borderBottom: '1.5px solid #e2e8f0',
+                                whiteSpace: 'nowrap'
                               }}>
-                                Tanggal Perjadin
+                                Pencairan
                               </th>
-                              <th style={{
-                                width: '14%',
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                padding: '15px',
-                                borderBottom: '2px solid #e2e8f0'
-                              }}>
-                                Status Laporan
-                              </th>
-                              <th style={{
-                                width: '15%',
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                padding: '15px',
-                                borderBottom: '2px solid #e2e8f0'
-                              }}>
-                                Pencairan Anggaran
-                              </th>
-                              <th style={{
-                                width: '15%',
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                padding: '15px',
-                                borderBottom: '2px solid #e2e8f0'
-                              }}>
-                                Nilai Pencairan
-                              </th>
-                             
                             </tr>
                           </thead>
                           <tbody>
@@ -1354,39 +1353,84 @@ const DashboardPegawai = () => {
                                 borderBottom: '1px solid #f1f5f9'
                               }}>
                                 <td style={{
-                                  padding: '15px',
+                                  padding: '10px 12px',
                                   fontWeight: '600',
+                                  fontSize: '0.84rem',
                                   textAlign: 'center',
-                                  color: '#1e293b'
+                                  color: '#64748b'
                                 }}>
                                   {startIndex + index + 1}
                                 </td>
-                                <td style={{ padding: '15px' }}>
-                                  <div style={{ fontWeight: '500', color: '#1e293b' }}>
+                                <td style={{ padding: '10px 14px' }}>
+                                  <div style={{
+                                    fontWeight: '600',
+                                    color: '#0f172a',
+                                    fontSize: '0.88rem',
+                                    marginBottom: '2px'
+                                  }}>
                                     {item.user?.nama || '-'}
                                   </div>
+                                  <div
+                                    title={item.surat_tugas?.nama_kegiatan || '-'}
+                                    style={{
+                                      color: '#64748b',
+                                      fontSize: '0.79rem',
+                                      lineHeight: '1.35',
+                                      display: '-webkit-box',
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: 'vertical',
+                                      overflow: 'hidden'
+                                    }}
+                                  >
+                                    {item.surat_tugas?.nama_kegiatan || '-'}
+                                  </div>
                                 </td>
-                                <td style={{ padding: '15px', color: '#64748b' }}>
-                                  {item.surat_tugas?.nama_kegiatan || '-'}
+                                <td style={{ padding: '10px 14px' }}>
+                                  <div style={{
+                                    fontWeight: '500',
+                                    color: '#1e293b',
+                                    fontSize: '0.84rem',
+                                    marginBottom: '2px'
+                                  }}>
+                                    {item.surat_tugas?.daerah_tujuan || '-'}
+                                  </div>
+                                  <div style={{
+                                    color: '#64748b',
+                                    fontSize: '0.76rem',
+                                    whiteSpace: 'nowrap',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}>
+                                    <FaCalendarAlt size={10} />
+                                    <span>{formatTanggalPerjadin(item.surat_tugas)}</span>
+                                  </div>
                                 </td>
-                                <td style={{ padding: '15px', color: '#64748b' }}>
-                                  {item.surat_tugas?.daerah_tujuan || '-'}
-                                </td>
-                                <td style={{ padding: '15px' }}>
-                                  {formatTanggalPerjadin(item.surat_tugas)}
-                                </td>
-                                <td style={{ padding: '15px' }}>
-                                  <span style={getStatusBadgeStyle(item.status)}>
+                                <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
+                                  <span style={{
+                                    ...getStatusBadgeStyle(item.status),
+                                    whiteSpace: 'nowrap',
+                                    fontSize: '0.75rem',
+                                    padding: '4px 10px',
+                                    display: 'inline-block'
+                                  }}>
                                     {formatStatusLaporan(item.status)}
                                   </span>
                                 </td>
-                                <td style={{ padding: '15px', color: '#64748b' }}>
-                                  {formatPencairanAnggaran(item.status)}
-                                </td>
-                                <td style={{ padding: '15px' }}>
-                                  <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                                <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                  <div style={{
+                                    fontWeight: '700',
+                                    color: '#0f172a',
+                                    fontSize: '0.85rem'
+                                  }}>
                                     Rp {formatRupiah(item.nominal_dana)}
-                                  </span>
+                                  </div>
+                                  <div style={{
+                                    fontSize: '0.74rem',
+                                    color: '#64748b'
+                                  }}>
+                                    {formatPencairanAnggaran(item.status)}
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -1400,11 +1444,11 @@ const DashboardPegawai = () => {
                     <div className="card-footer" style={{
                       backgroundColor: '#f8fafc',
                       borderTop: '1px solid #e2e8f0',
-                      padding: '15px 20px'
+                      padding: '12px 18px'
                     }}>
                       <div className="d-flex justify-content-between align-items-center" style={{ gap: '12px', flexWrap: 'wrap' }}>
                         <small style={{ color: '#64748b' }}>
-                          Menampilkan {filteredLaporan.length} laporan
+                          Menampilkan {filteredLaporan.length === 0 ? 0 : startIndex + 1}–{Math.min(startIndex + pageSize, filteredLaporan.length)} dari {filteredLaporan.length} laporan
                         </small>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <button
