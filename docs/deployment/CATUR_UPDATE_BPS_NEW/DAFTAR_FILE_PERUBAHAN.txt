@@ -2,7 +2,7 @@
 CATUR BPS SULTENG - DAFTAR FILE PERUBAHAN UPDATE CODE (KUMULATIF LENGKAP)
 Target Server : https://catur.bpssulteng.id/
 Branch Git    : feature/multi-destination-location (merged to main)
-Tanggal Rilis : 13 November 2026
+Tanggal Rilis : 16 November 2026
 ================================================================================
 
 CATATAN TEKNIS PENTING:
@@ -40,29 +40,31 @@ A. BACKEND LOGIC (Folder: src/)
    - Penambahan route khusus Admin:
      GET  /api/presensi/admin/kendala-foto
      POST /api/presensi/admin/force-foto/:id
-7. src/utils/presensiFoto.js  [FILE BARU]
+7. src/services/reportWindow.service.js
+   - Sinkronisasi REPORT_EDIT_WINDOW_DAYS = 14 sesuai konfigurasi server BPS.
+8. src/utils/presensiFoto.js  [FILE BARU]
    - Utilitas parsing & serialisasi metadata foto presensi (backward-compatible)
      beserta flag 'force_foto_by_admin' tanpa perlu migrasi kolom database.
-8. src/utils/wordGenerator.js
+9. src/utils/wordGenerator.js
    - Perbaikan konversi HTML ke Word (.docx): dukungan penuh nested list (<ol>/<ul>),
      numbering otomatis tanpa duplikasi ("1. 1."), dan margin sel tabel rapi.
-9. src/utils/pdfGenerator.js
-   - Perbaikan konversi HTML ke PDF: dukungan nested list & sanitasi penomoran ganda
-     agar isi laporan harian dan kesimpulan presisi antara editor, PDF, dan Word.
-10. src/utils/wilayahHierarki.js  [FILE BARU]
+10. src/utils/pdfGenerator.js
+    - Perbaikan konversi HTML ke PDF: dukungan nested list & sanitasi penomoran ganda
+      agar isi laporan harian dan kesimpulan presisi antara editor, PDF, dan Word.
+11. src/utils/wilayahHierarki.js  [FILE BARU]
     - Master data 13 Kab/Kota + 179 Kecamatan se-Sulawesi Tengah dan logic hierarki.
-11. src/utils/geojsonImporter.js
+12. src/utils/geojsonImporter.js
     - Validasi path dan pengecekan file poligon geojson.
 
 B. FRONTEND PRODUCTION BUILD (Folder: public/)
 --------------------------------------------------------------------------------
 1. public/index.html
    - Entry point SPA, mengarah ke bundle production terbaru.
-2. public/assets/index-PLT5686V.js
+2. public/assets/index-BU5a-lr3.js
    - Bundle utama JavaScript (mencakup seluruh perbaikan sebelumnya + fitur baru).
 3. public/assets/index-D4OjGpJl.css
    - Bundle stylesheet CSS utama.
-4. public/assets/quill-CoEyZN-A.js
+4. public/assets/quill-C06aAU7z.js
    - Vendor bundle rich text editor Quill untuk laporan harian & kesimpulan.
 5. public/img/ & public/logo.*
    - Aset statis logo dan cover aplikasi.
@@ -97,44 +99,49 @@ A. FRONTEND SOURCE CODE (frontend/src/)
    - Master data 14 Satker BPS, 13 Kabupaten/Kota, dan 179 Kecamatan.
 
 [MODIFIKASI FILE EKSISTING]
-9. frontend/src/pages/pegawai/LaporanPegawai.jsx
-   - Perbaikan bug Modal Upload/Ganti TTD: mencegah unmount/remount input file,
-     bisa langsung pilih file & replace tanpa harus klik tombol X merah dulu,
-     pemisahan state preview draft vs server, pause polling 10 detik saat modal
-     terbuka (mencegah glitch kembali ke TTD lama), dan cache-buster URL TTD.
-   - Integrasi SignatureImageEditor (Crop, Mirror, Rotate) di modal TTD.
-   - Dukungan indikator status presensi 1 foto yang telah di-unlock Admin.
-10. frontend/src/pages/admin/DashboardAdmin.jsx
+9. frontend/src/pages/admin/PengaturanAkun.jsx
+   - Perbaikan UI & Layout halaman Manajemen Akun Pengguna: penghapusan input ganda
+     pada field Unit Kerja/Satker, auto-mapping kode satker lama ('7200') ke nama
+     resmi Satker, penataan ulang grid form & footer tombol simpan, perbaikan tombol
+     Edit/Hapus agar sejajar (tidak bertumpuk), serta penambahan filter Role.
+10. frontend/src/pages/pegawai/LaporanPegawai.jsx
+    - Perbaikan bug Modal Upload/Ganti TTD: mencegah unmount/remount input file,
+      bisa langsung pilih file & replace tanpa harus klik tombol X merah dulu,
+      pemisahan state preview draft vs server, pause polling 10 detik saat modal
+      terbuka (mencegah glitch kembali ke TTD lama), dan cache-buster URL TTD.
+    - Integrasi SignatureImageEditor (Crop, Mirror, Rotate) di modal TTD.
+    - Dukungan indikator status presensi 1 foto yang telah di-unlock Admin.
+11. frontend/src/pages/admin/DashboardAdmin.jsx
     - Penambahan panel khusus "Kendala Presensi 1 Foto (Perlu Unlock Admin)" yang
       hanya menampilkan pegawai yang terkendala baru upload 1 foto, lengkap dengan
       tombol "Force Unlock (1 Foto)" sekali klik.
-11. frontend/src/pages/pegawai/RichTextEditor.jsx
+12. frontend/src/pages/pegawai/RichTextEditor.jsx
     - Pencegahan inisialisasi toolbar ganda pada editor Quill.
     - Sanitasi otomatis paste teks bernomor manual ("1. ...", "2. ...") menjadi
       elemen <ol><li> agar tidak terjadi penomoran ganda di Word & PDF.
-12. frontend/src/services/presensiService.js
+13. frontend/src/services/presensiService.js
     - Support pengiriman payload laporan dalam bentuk object maupun raw text.
     - Penambahan fungsi API Admin: getKendalaPresensiSatuFoto & forceUnlockPresensiSatuFoto.
-13. frontend/src/auth/login.jsx
+14. frontend/src/auth/login.jsx
     - Integrasi WilayahLoginSelect pada form login mobile dan desktop.
     - Perbaikan scoping selector CSS '.overlay-panel span' untuk mengatasi bug margin.
-14. frontend/src/features/surat-tugas/TujuanScheduleEditor.jsx
+15. frontend/src/features/surat-tugas/TujuanScheduleEditor.jsx
     - Implementasi cascading dropdown: Kabupaten/Kota -> Kecamatan ber-poligon.
     - Perbaikan default fallback: opsi dropdown tetap muncul lengkap saat filter wilayah kosong/reset.
-15. frontend/src/features/surat-tugas/TujuanScheduleEditor.test.jsx
+16. frontend/src/features/surat-tugas/TujuanScheduleEditor.test.jsx
     - Unit test pengujian cascading dan filter wilayah.
-16. frontend/src/pages/pegawai/PresensiPegawai.jsx
+17. frontend/src/pages/pegawai/PresensiPegawai.jsx
     - Perbaikan handling simpan laporan harian (Step 2 langsung lanjut ke Step 3).
     - Penggunaan setCurrentStep(3) yang stabil pasca-submit presensi.
-17. frontend/src/contexts/SidebarContext.jsx
+18. frontend/src/contexts/SidebarContext.jsx
     - State management drawer sidebar mobile (open/close).
-18. frontend/src/css/sidebar.css & frontend/src/css/navbar.css
+19. frontend/src/css/sidebar.css & frontend/src/css/navbar.css
     - Implementasi off-canvas mobile drawer agar sidebar tidak menabrak header di layar kecil.
-19. frontend/src/fragments/Sidebar*.jsx & Navbar*.jsx (Admin, Atasan, Keuangan, Pegawai)
+20. frontend/src/fragments/Sidebar*.jsx & Navbar*.jsx (Admin, Atasan, Keuangan, Pegawai)
     - Sinkronisasi toggle drawer dan layout responsif multi-device.
-20. frontend/src/layouts/*Layout.jsx (Admin, Atasan, Keuangan, Pegawai)
+21. frontend/src/layouts/*Layout.jsx (Admin, Atasan, Keuangan, Pegawai)
     - Backdrop overlay klik luar untuk menutup drawer pada mobile.
-21. frontend/src/config/apiBaseUrl.js
+22. frontend/src/config/apiBaseUrl.js
     - Pengamanan base URL API agar selalu memakai same-origin pada production.
 
 B. BACKEND SOURCE CODE (backend/)
@@ -145,44 +152,26 @@ B. BACKEND SOURCE CODE (backend/)
 4. backend/src/controllers/presensi.controller.js
 5. backend/src/controllers/laporan.controller.js
 6. backend/src/routes/presensi.routes.js
-7. backend/src/utils/presensiFoto.js [BARU]
-8. backend/src/utils/wordGenerator.js
-9. backend/src/utils/pdfGenerator.js
-10. backend/src/utils/wilayahHierarki.js [BARU]
-11. backend/src/utils/geojsonImporter.js
-12. backend/tests/unit/wilayahHierarki.test.js [BARU]
+7. backend/src/services/reportWindow.service.js
+8. backend/src/utils/presensiFoto.js [BARU]
+9. backend/src/utils/wordGenerator.js
+10. backend/src/utils/pdfGenerator.js
+11. backend/src/utils/wilayahHierarki.js [BARU]
+12. backend/src/utils/geojsonImporter.js
+13. backend/tests/unit/wilayahHierarki.test.js [BARU]
 
 ================================================================================
-3. RINGKASAN PERBAIKAN BUG & PENAMBAHAN FITUR (LENGKAP)
+3. RINGKASAN PERBAIKAN BUG & PENAMBAHAN FITUR (LENGKAP 1 - 11)
 ================================================================================
-1. [SOLVED] Laporan Harian Terbaca Kosong pada Presensi Pegawai:
-   - Payload tersimpan utuh dan transisi ke Step Selesai (Step 3) berjalan otomatis.
-2. [SOLVED] Dropdown Wilayah Kosong saat Filter Non-Aktif / Di-reset:
-   - Dropdown tujuan kini otomatis menampilkan seluruh opsi secara default.
-3. [SOLVED] Collision / Tabrakan Tampilan Sidebar di Layar Mobile:
-   - Diganti dengan sistem off-canvas drawer modern dengan backdrop klik luar.
-4. [SOLVED] Desain & Layout Dropdown Satker Login (Antislop & Compact):
-   - Menghapus ketergantungan pada native select browser yang kaku.
-   - Tampilan bersih tanpa emoji/icon berlebihan, compact, dan responsif.
-5. [FEATURE] Pembatasan Akses Satker Kabupaten/Kota & Cascading Kecamatan:
-   - Akun BPS daerah otomatis terkunci ke kabupatennya masing-masing.
-   - Pilihan kecamatan tujuan langsung terfilter otomatis sesuai kabupaten ber-poligon.
-6. [SOLVED] Format Dokumen Word (.docx) & PDF Tidak Rapi / Penomoran Ganda:
-   - Perbaikan parser HTML-to-Docx dan HTML-to-PDF untuk mendukung penuh ordered/
-     unordered list bertingkat, merapikan margin tabel, dan mencegah nomor ganda.
-7. [SOLVED] Edit Laporan Harian & Upload TTD Tidak Meng-update File PDF/Word:
-   - Sistem kini otomatis men-generate ulang (auto-regenerate) file PDF & Word
-     setiap kali pegawai mengedit laporan harian atau mengupload/mengganti TTD
-     (selama laporan belum disetujui atasan).
-8. [FEATURE] Force Unlock Presensi 1 Foto dari Panel Admin (Kasus Server Mati):
-   - Aturan default tetap wajib minimal 2 foto per hari.
-   - Jika pegawai terkendala hanya sempat upload 1 foto karena gangguan server/listrik,
-     Admin dapat melakukan Force Unlock sekali klik pada seksi khusus di Dashboard Admin
-     (hanya menampilkan user yang bermasalah 1 foto agar panel Admin tetap bersih).
-9. [SOLVED] Bug Ganti Tanda Tangan (TTD) Harus Klik X & Glitch Kembali ke TTD Lama:
-   - Pegawai kini bisa langsung klik Pilih/Ganti File dan me-replace TTD tanpa harus
-     menekan tombol X merah terlebih dahulu, serta bebas dari glitch polling 10 detik.
-10. [FEATURE] Fitur Crop, Mirror (Kiri-Kanan / Atas-Bawah), & Putar 90° pada Modal TTD:
-    - Diproses 100% di sisi browser (Client-Side HTML5 Canvas) sehingga tidak
-      memberatkan server hosting sama sekali dan menghasilkan ukuran file yang lebih ringan.
+1. [SOLVED] Laporan Harian Terbaca Kosong pada Presensi Pegawai
+2. [SOLVED] Dropdown Wilayah Kosong saat Filter Non-Aktif / Di-reset
+3. [SOLVED] Collision / Tabrakan Tampilan Sidebar di Layar Mobile (Off-Canvas Drawer)
+4. [SOLVED] Desain & Layout Dropdown Satker Login (Antislop & Compact)
+5. [FEATURE] Pembatasan Akses Satker Kabupaten/Kota & Cascading Kecamatan Ber-Poligon
+6. [SOLVED] Format Dokumen Word (.docx) & PDF Tidak Rapi / Penomoran Ganda ("Tahambur")
+7. [SOLVED] Edit Laporan Harian & Upload TTD Otomatis Men-generate Ulang File PDF & Word
+8. [FEATURE] Force Unlock Presensi 1 Foto dari Panel Admin (Khusus User Terkendala)
+9. [SOLVED] Bug Ganti Tanda Tangan (TTD) Langsung Pilih/Replace Tanpa Klik X & Anti-Glitch
+10. [FEATURE] Fitur Crop, Mirror (Kiri-Kanan / Atas-Bawah), & Putar 90° di Modal TTD (Client-Side)
+11. [SOLVED] Perbaikan UI & Layout Halaman Manajemen Akun Pengguna di Panel Admin
 ================================================================================
