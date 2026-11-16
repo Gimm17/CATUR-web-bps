@@ -21,27 +21,54 @@
   display: none;
 }
 
-/* ===== SIDEBAR DESKTOP - TETAP ===== */
+/* ===== SIDEBAR DESKTOP - TETAP (FIXED VIEWPORT, TIDAK IKUT SCROLL HALAMAN) ===== */
+.wrapper .main-sidebar.sensus-sidebar,
+.main-sidebar.sensus-sidebar,
 .sensus-sidebar {
   background: linear-gradient(180deg, var(--bps-blue-dark) 0%, var(--bps-blue) 100%) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  min-height: 100vh;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: var(--sidebar-width);
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  z-index: 1040;
+  transition: width 0.3s ease, transform 0.3s ease;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.wrapper .main-sidebar.sensus-sidebar::before,
+.main-sidebar.sensus-sidebar::before {
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  height: 100vh !important;
+}
+
+.sensus-sidebar > .sensus-brand {
+  flex-shrink: 0;
+}
+
+.sensus-sidebar > .sidebar {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  width: var(--sidebar-width);
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 1040;
-  transition: all 0.3s ease;
-  overflow-y: auto;
-  overflow-x: hidden;
+  height: auto !important;
+  min-height: 0;
+  overflow: visible !important;
 }
 
 /* Collapsed Sidebar */
+.wrapper .main-sidebar.sensus-sidebar.collapsed,
 .sensus-sidebar.collapsed {
-  width: var(--sidebar-collapsed-width);
+  width: var(--sidebar-collapsed-width) !important;
 }
 
 /* ===== BOTTOM NAVIGATION UNTUK MOBILE ===== */
@@ -290,25 +317,29 @@
 /* ... (semua CSS sidebar desktop yang sudah ada tetap dipertahankan) ... */
 
 /* ===== SIDEBAR UTAMA ===== */
+.wrapper .main-sidebar.sensus-sidebar,
 .sensus-sidebar {
   background: linear-gradient(180deg, var(--bps-blue-dark) 0%, var(--bps-blue) 100%) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
   z-index: 1040;
-  transition: all 0.3s ease;
-  overflow-y: auto;
-  overflow-x: hidden;
+  transition: width 0.3s ease, transform 0.3s ease;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 /* Collapsed Sidebar */
+.wrapper .main-sidebar.sensus-sidebar.collapsed,
 .sensus-sidebar.collapsed {
-  width: 70px;
+  width: 70px !important;
 }
 
 .sensus-sidebar.collapsed .logo-text,
@@ -612,14 +643,27 @@
 
 /* Desktop viewports (>= 992px) */
 @media (min-width: 992px) {
+  .wrapper .main-sidebar.sensus-sidebar,
   .sensus-sidebar {
     width: var(--sidebar-width);
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
     z-index: 1040;
     transform: translateX(0) !important;
+  }
+
+  .content-wrapper {
+    margin-left: var(--sidebar-width) !important;
+    transition: margin-left 0.3s ease;
+  }
+
+  body.sidebar-collapse .content-wrapper,
+  body.sidebar-collapsed .content-wrapper {
+    margin-left: var(--sidebar-collapsed-width) !important;
   }
 
   .sensus-sidebar-close-btn {
