@@ -26,12 +26,43 @@
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Scoped inline spinner inside Navbar (isolated from dashboard/laporan .spinner overrides) */
+.sensus-navbar .spinner,
+.sensus-navbar .spinner-icon,
+.sensus-navbar .navbar-inline-spinner {
+  width: 15px !important;
+  height: 15px !important;
+  font-size: 15px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--primary-blue) !important;
+  display: inline-block !important;
+  flex-shrink: 0;
+  animation: navbar-spin 1s linear infinite !important;
+}
+
+.sensus-navbar .notification-badge .spinner-icon,
+.sensus-navbar .notification-badge .navbar-inline-spinner {
+  width: 11px !important;
+  height: 11px !important;
+  font-size: 11px !important;
+  margin-left: 4px !important;
+}
+
+@keyframes navbar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (min-width: 992px) {
   body.sidebar-collapse .sensus-navbar,
   body.sidebar-collapsed .sensus-navbar,
   .sensus-navbar.collapsed {
-    margin-left: var(--sidebar-collapsed-width, 70px) !important;
-    width: calc(100% - var(--sidebar-collapsed-width, 70px)) !important;
+    margin-left: 0 !important;
+    width: 100% !important;
   }
 }
 
@@ -728,7 +759,9 @@
   .content-wrapper {
     padding-bottom: 80px !important;
   }
-  /* Mobile Brand Styles */
+}
+
+/* Mobile Brand Styles */
 .brand-mobile {
   display: flex;
   align-items: center;
@@ -877,7 +910,4 @@
   .avatar-placeholder {
     font-size: 28px !important;
   }
-}
-
-
 }

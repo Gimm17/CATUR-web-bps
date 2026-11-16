@@ -346,49 +346,59 @@ const DashboardPegawai = () => {
   return (
     <AdminLayout>
       {/* MAIN CONTENT AREA - Disesuaikan dengan sidebar */}
-      <div  style={{ 
-        minHeight: 'calc(100vh - 70px)',
-        backgroundColor: '#f8fafc',
-        padding: '20px'
-      }}>
+      <div
+        className="admin-dashboard-page"
+        style={{
+          minHeight: 'calc(100vh - 70px)',
+          backgroundColor: '#f8fafc',
+          padding: '20px'
+        }}
+      >
         
         {/* HEADER SECTION */}
-        <section className="content-header">
-          <div className="container-fluid">
+        <section className="content-header px-0">
+          <div className="container-fluid px-0">
             <div className="row mb-4">
               <div className="col-sm-12">
-                <div className="d-flex justify-content-between align-items-center">
+                <div
+                  className="d-flex justify-content-between align-items-center admin-dashboard-header"
+                  style={{ flexWrap: 'wrap', gap: '12px' }}
+                >
                   <div>
                     <h1 style={{ 
-                      fontSize: '1.8rem', 
+                      fontSize: '1.7rem', 
                       fontWeight: '700',
                       color: '#1e293b',
-                      marginBottom: '5px'
+                      marginBottom: '4px'
                     }}>
                       Dashboard Admin
                     </h1>
                     <p style={{ 
                       color: '#64748b',
                       marginBottom: '0',
-                      fontSize: '0.95rem'
+                      fontSize: '0.92rem'
                     }}>
                       Selamat datang di Sistem Presensi Dinas 
                     </p>
                   </div>
-                  <div style={{
-                    backgroundColor: 'white',
-                    padding: '10px 20px',
-                    borderRadius: '10px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                  }}>
-                    <FaCalendarAlt style={{ color: '#1a56db' }} />
+                  <div
+                    className="admin-date-pill"
+                    style={{
+                      backgroundColor: 'white',
+                      padding: '9px 16px',
+                      borderRadius: '10px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <FaCalendarAlt style={{ color: '#1a56db', flexShrink: 0 }} />
                     <span style={{ 
                       fontWeight: '500',
                       color: '#1e293b',
-                      fontSize: '0.95rem'
+                      fontSize: '0.9rem'
                     }}>
                       {currentDate}
                     </span>
@@ -400,8 +410,8 @@ const DashboardPegawai = () => {
         </section>
 
         {/* STATISTICS CARDS */}
-        <section className="content">
-          <div className="container-fluid">
+        <section className="content px-0">
+          <div className="container-fluid px-0">
             <div className="row">
               {/* TOTAL PEGAWAI */}
               <div className="col-lg-3 col-md-6 col-sm-12 mb-4">
@@ -531,18 +541,18 @@ const DashboardPegawai = () => {
                   {laporanPendingCount > 0 && (
                     <div style={{
                       position: 'absolute',
-                      top: '-8px',
-                      right: '-8px',
+                      top: '10px',
+                      right: '10px',
                       backgroundColor: '#ef4444',
                       color: 'white',
-                      width: '24px',
-                      height: '24px',
+                      width: '22px',
+                      height: '22px',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '0.8rem',
-                      fontWeight: '600',
+                      fontSize: '0.78rem',
+                      fontWeight: '700',
                       boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)'
                     }}>
                       !
@@ -1543,37 +1553,76 @@ const DashboardPegawai = () => {
         </section>
       </div>
 
-      {/* HOVER EFFECTS STYLE */}
-      <style jsx>{`
-        .info-box:hover {
+      {/* HOVER EFFECTS & MOBILE RESPONSIVE STYLE (SCOPED) */}
+      <style>{`
+        .admin-dashboard-page .info-box {
+          min-height: unset;
+          margin-bottom: 0;
+        }
+
+        .admin-dashboard-page .info-box:hover {
           transform: translateY(-3px);
           transition: transform 0.3s ease;
         }
-        
-        a:hover {
+
+        .admin-dashboard-page .card-body a:hover {
           background-color: white !important;
           border-color: #1a56db !important;
-          transform: translateX(5px);
+          transform: translateX(4px);
           transition: all 0.2s;
         }
-        
-        button:hover {
-          opacity: 0.9;
-        }
-        
+
         @media (max-width: 768px) {
-          .content-wrapper {
-            padding: 15px;
+          .admin-dashboard-page {
+            padding: 14px !important;
           }
-          
-          .info-box {
-            flex-direction: column;
-            text-align: center;
-            gap: 15px;
+
+          .admin-dashboard-page .admin-dashboard-header h1 {
+            font-size: 1.4rem !important;
           }
-          
-          .info-box-icon {
+
+          .admin-dashboard-page .admin-date-pill {
+            width: 100%;
+            justify-content: flex-start;
+            font-size: 0.84rem !important;
+            padding: 8px 12px !important;
+          }
+
+          .admin-dashboard-page .info-box {
+            flex-direction: row !important;
+            align-items: center !important;
+            text-align: left !important;
+            padding: 14px 16px !important;
+            gap: 14px !important;
+            min-height: auto !important;
+          }
+
+          .admin-dashboard-page .info-box-icon {
+            width: 50px !important;
+            height: 50px !important;
+            font-size: 1.25rem !important;
             margin-right: 0 !important;
+            flex-shrink: 0 !important;
+          }
+
+          .admin-dashboard-page .info-box-content {
+            padding: 0 !important;
+            min-width: 0;
+            flex: 1;
+          }
+
+          .admin-dashboard-page .info-box-text {
+            font-size: 0.88rem !important;
+            margin-bottom: 2px !important;
+          }
+
+          .admin-dashboard-page .info-box-number {
+            font-size: 1.6rem !important;
+            margin-bottom: 4px !important;
+          }
+
+          .admin-dashboard-page .info-box-detail {
+            font-size: 0.8rem !important;
           }
         }
       `}</style>

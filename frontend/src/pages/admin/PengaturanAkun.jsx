@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
   getAllUsers,
@@ -19,6 +19,8 @@ import {
   FaFilter,
   FaChevronLeft,
   FaChevronRight,
+  FaChevronDown,
+  FaCheck,
 } from "react-icons/fa";
 import { confirmAction, showToast } from "../../utils/alerts";
 import {
@@ -49,6 +51,212 @@ const labelStyle = {
   color: "#334155",
   marginBottom: "5px",
 };
+
+/**
+ * Custom dropdown terkunci searah ke bawah & lebarnya 100% mengikuti lebar tombol trigger
+ * agar tidak pernah melebar atau terlempar ke atas seperti native <select> OS.
+ */
+const AdminDropdownSelect = ({
+  value,
+  onChange,
+  options,
+  placeholder = "Pilih opsi...",
+  searchable = false,
+  searchPlaceholder = "Cari...",
+  prefixIcon = null,
+  triggerStyle = {},
+}) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  const selectedOption = options.find((opt) => String(opt.value) === String(value));
+  const filteredOptions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!searchable || !q) return options;
+    return options.filter((opt) => opt.label.toLowerCase().includes(q));
+  }, [options, query, searchable]);
+
+  return (
+    <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
+      <button
+        type="button"
+        onClick={() => {
+          setOpen((prev) => {
+            if (!prev) setQuery("");
+            return !prev;
+          });
+        }}
+        aria-expanded={open}
+        className="w-100 d-flex align-items-center justify-content-between text-start"
+        style={{
+          ...inputStyle,
+          width: "100%",
+          cursor: "pointer",
+          borderColor: open ? "#3b82f6" : "#cbd5e1",
+          boxShadow: open ? "0 0 0 3px rgba(59, 130, 246, 0.14)" : "none",
+          ...triggerStyle,
+        }}
+      >
+        <span
+          className="d-flex align-items-center gap-2"
+          style={{ minWidth: 0, flex: 1 }}
+        >
+          {prefixIcon && (
+            <span style={{ color: "#64748b", flexShrink: 0, display: "inline-flex" }}>
+              {prefixIcon}
+            </span>
+          )}
+          <span
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              color: selectedOption ? "#0f172a" : "#64748b",
+            }}
+          >
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+        </span>
+        <FaChevronDown
+          size={11}
+          style={{
+            color: "#64748b",
+            flexShrink: 0,
+            marginLeft: "8px",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+          }}
+        />
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            width: "100%",
+            zIndex: 1055,
+            backgroundColor: "#ffffff",
+            border: "1px solid #cbd5e1",
+            borderRadius: "10px",
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+            overflow: "hidden",
+          }}
+        >
+          {searchable && (
+            <div
+              style={{
+                padding: "8px",
+                borderBottom: "1px solid #e2e8f0",
+                backgroundColor: "#f8fafc",
+              }}
+            >
+              <div className="input-group input-group-sm">
+                <span
+                  className="input-group-text bg-white border-end-0"
+                  style={{ borderColor: "#cbd5e1", color: "#64748b" }}
+                >
+                  <FaSearch size={11} />
+                </span>
+                <input
+                  type="text"
+                  className="form-control border-start-0"
+                  placeholder={searchPlaceholder}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  autoFocus
+                  style={{
+                    borderColor: "#cbd5e1",
+                    fontSize: "0.84rem",
+                    boxShadow: "none",
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div
+            role="listbox"
+            style={{
+              maxHeight: "240px",
+              overflowY: "auto",
+              padding: "4px",
+            }}
+          >
+            {filteredOptions.length === 0 ? (
+              <div className="text-center text-muted small py-3">
+                Tidak ada opsi cocok
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = String(opt.value) === String(value);
+                return (
+                  <button
+                    key={String(opt.value)}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                    className="w-100 border-0 text-start d-flex align-items-center justify-content-between gap-2"
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: "7px",
+                      fontSize: "0.86rem",
+                      lineHeight: 1.35,
+                      backgroundColor: isSelected ? "#eff6ff" : "transparent",
+                      color: isSelected ? "#1d4ed8" : "#1e293b",
+                      fontWeight: isSelected ? 600 : 400,
+                      cursor: "pointer",
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    <span>{opt.label}</span>
+                    {isSelected && (
+                      <FaCheck size={11} style={{ color: "#1d4ed8", flexShrink: 0 }} />
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ROLE_OPTIONS = [
+  { value: "pegawai", label: "Pegawai" },
+  { value: "admin", label: "Administrator" },
+  { value: "atasan", label: "Kepala BPS SULTENG" },
+  { value: "keuangan", label: "Keuangan" },
+];
 
 const PengaturanAkun = () => {
   const [users, setUsers] = useState([]);
@@ -294,7 +502,7 @@ const PengaturanAkun = () => {
                 ? "0 8px 20px rgba(26, 86, 219, 0.12)"
                 : "0 2px 10px rgba(15, 23, 42, 0.05)",
               border: editId ? "1.5px solid #3b82f6" : "1px solid #e2e8f0",
-              overflow: "hidden",
+              overflow: "visible",
             }}
           >
             <div
@@ -306,6 +514,7 @@ const PengaturanAkun = () => {
                 color: "white",
                 padding: "12px 20px",
                 borderBottom: "none",
+                borderRadius: "11px 11px 0 0",
               }}
             >
               <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -432,18 +641,12 @@ const PengaturanAkun = () => {
                   <label className="form-label" style={labelStyle}>
                     Role Sistem <span className="text-danger">*</span>
                   </label>
-                  <select
-                    className="form-select"
+                  <AdminDropdownSelect
                     value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    required
-                    style={inputStyle}
-                  >
-                    <option value="pegawai">Pegawai</option>
-                    <option value="admin">Administrator</option>
-                    <option value="atasan">Kepala BPS SULTENG</option>
-                    <option value="keuangan">Keuangan</option>
-                  </select>
+                    onChange={setRole}
+                    options={ROLE_OPTIONS}
+                    placeholder="Pilih role sistem..."
+                  />
                 </div>
 
                 {/* Baris 2: 3 - 3 - 3 - 3 (Lurus Presisi dengan Baris 1) */}
@@ -480,18 +683,17 @@ const PengaturanAkun = () => {
                     <FaBuilding className="me-1 text-primary" />
                     Unit Kerja / Wilayah Satker
                   </label>
-                  <select
-                    className="form-select"
+                  <AdminDropdownSelect
                     value={unitKerja}
-                    onChange={(e) => setUnitKerja(e.target.value)}
-                    style={inputStyle}
-                  >
-                    {SATKER_UNIT_KERJA_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label} ({opt.badge})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setUnitKerja}
+                    searchable
+                    searchPlaceholder="Cari satker..."
+                    options={SATKER_UNIT_KERJA_OPTIONS.map((opt) => ({
+                      value: opt.value,
+                      label: `${opt.label} (${opt.badge})`,
+                    }))}
+                    placeholder="Pilih Satker BPS..."
+                  />
                 </div>
 
                 <div className="col-lg-3 col-md-6">
@@ -519,7 +721,7 @@ const PengaturanAkun = () => {
             borderRadius: "12px",
             boxShadow: "0 2px 10px rgba(15, 23, 42, 0.05)",
             border: "1px solid #e2e8f0",
-            overflow: "hidden",
+            overflow: "visible",
           }}
         >
           {/* Toolbar Search & Filter di Atas Tabel */}
@@ -528,6 +730,7 @@ const PengaturanAkun = () => {
             style={{
               padding: "14px 20px",
               borderBottom: "1px solid #e2e8f0",
+              borderRadius: "11px 11px 0 0",
             }}
           >
             <div className="row g-2 align-items-center">
@@ -561,50 +764,28 @@ const PengaturanAkun = () => {
               </div>
 
               <div className="col-lg-3 col-md-3">
-                <div className="input-group">
-                  <span
-                    className="input-group-text"
-                    style={{
-                      background: "#f8fafc",
-                      border: "1.5px solid #cbd5e1",
-                      borderRight: "none",
-                      borderRadius: "8px 0 0 8px",
-                      color: "#64748b",
-                    }}
-                  >
-                    <FaFilter size={12} />
-                  </span>
-                  <select
-                    className="form-select"
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    style={{
-                      ...inputStyle,
-                      borderLeft: "none",
-                      borderRadius: "0 8px 8px 0",
-                    }}
-                  >
-                    <option value="">Semua Role ({users.length})</option>
-                    <option value="pegawai">Pegawai</option>
-                    <option value="admin">Administrator</option>
-                    <option value="atasan">Kepala BPS SULTENG</option>
-                    <option value="keuangan">Keuangan</option>
-                  </select>
-                </div>
+                <AdminDropdownSelect
+                  value={roleFilter}
+                  onChange={setRoleFilter}
+                  prefixIcon={<FaFilter size={12} />}
+                  options={[
+                    { value: "", label: `Semua Role (${users.length})` },
+                    ...ROLE_OPTIONS,
+                  ]}
+                />
               </div>
 
               <div className="col-lg-3 col-md-3">
-                <select
-                  className="form-select"
+                <AdminDropdownSelect
                   value={pageSize}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
-                  style={inputStyle}
-                >
-                  <option value={10}>Tampilkan 10 baris / halaman</option>
-                  <option value={25}>Tampilkan 25 baris / halaman</option>
-                  <option value={50}>Tampilkan 50 baris / halaman</option>
-                  <option value={500}>Tampilkan Semua ({filteredUsers.length})</option>
-                </select>
+                  onChange={(val) => setPageSize(Number(val))}
+                  options={[
+                    { value: 10, label: "Tampilkan 10 baris / halaman" },
+                    { value: 25, label: "Tampilkan 25 baris / halaman" },
+                    { value: 50, label: "Tampilkan 50 baris / halaman" },
+                    { value: 500, label: `Tampilkan Semua (${filteredUsers.length})` },
+                  ]}
+                />
               </div>
             </div>
           </div>

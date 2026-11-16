@@ -60,11 +60,11 @@ B. FRONTEND PRODUCTION BUILD (Folder: public/)
 --------------------------------------------------------------------------------
 1. public/index.html
    - Entry point SPA, mengarah ke bundle production terbaru.
-2. public/assets/index-CRUzb4bG.js
+2. public/assets/index-BiBRvIh6.js
    - Bundle utama JavaScript (mencakup seluruh perbaikan sebelumnya + fitur baru).
-3. public/assets/index-wFOIKZxj.css
-   - Bundle stylesheet CSS utama (termasuk fix sidebar fixed viewport & warna biru tua seragam).
-4. public/assets/quill-CT59Vzyu.js
+3. public/assets/index-j-tP322M.css
+   - Bundle stylesheet CSS utama (termasuk fix sidebar, navbar spinner, dan layout responsif).
+4. public/assets/quill-DKInGOA7.js
    - Vendor bundle rich text editor Quill untuk laporan harian & kesimpulan.
 5. public/img/ & public/logo.*
    - Aset statis logo dan cover aplikasi.
@@ -102,8 +102,9 @@ A. FRONTEND SOURCE CODE (frontend/src/)
 9. frontend/src/pages/admin/PengaturanAkun.jsx
    - Perbaikan UI & Layout halaman Manajemen Akun Pengguna: penghapusan input ganda
      pada field Unit Kerja/Satker, auto-mapping kode satker lama ('7200') ke nama
-     resmi Satker, penataan ulang grid form & footer tombol simpan, perbaikan tombol
-     Edit/Hapus agar sejajar (tidak bertumpuk), serta penambahan filter Role.
+     resmi Satker, custom dropdown searah ke bawah (lebar 100% sesuai tombol &
+     searchable), penataan ulang grid form 4 kolom sejajar, pagination 10/25/50/Semua,
+     perbaikan tombol Edit/Hapus agar sejajar, serta penambahan filter Role.
 10. frontend/src/pages/pegawai/LaporanPegawai.jsx
     - Perbaikan bug Modal Upload/Ganti TTD: mencegah unmount/remount input file,
       bisa langsung pilih file & replace tanpa harus klik tombol X merah dulu,
@@ -115,6 +116,8 @@ A. FRONTEND SOURCE CODE (frontend/src/)
     - Penambahan panel khusus "Kendala Presensi 1 Foto (Perlu Unlock Admin)" yang
       hanya menampilkan pegawai yang terkendala baru upload 1 foto, lengkap dengan
       tombol "Force Unlock (1 Foto)" sekali klik.
+    - Optimalisasi layout mobile: header tanggal responsif & kartu statistik horizontal
+      kompak tanpa teks terpotong serta scoping style agar tidak bocor ke Navbar.
 12. frontend/src/pages/pegawai/RichTextEditor.jsx
     - Pencegahan inisialisasi toolbar ganda pada editor Quill.
     - Sanitasi otomatis paste teks bernomor manual ("1. ...", "2. ...") menjadi
@@ -135,10 +138,15 @@ A. FRONTEND SOURCE CODE (frontend/src/)
     - Penggunaan setCurrentStep(3) yang stabil pasca-submit presensi.
 18. frontend/src/contexts/SidebarContext.jsx
     - State management drawer sidebar mobile (open/close).
-19. frontend/src/css/sidebar.css & frontend/src/css/navbar.css
-    - Implementasi off-canvas mobile drawer agar sidebar tidak menabrak header di layar kecil.
+19. frontend/src/css/sidebar.css, navbar.css & AdminDaerah.css
+    - Warna sidebar biru tua seragam (#162b63) & fixed viewport tanpa scrollbar.
+    - Isolasi class .sensus-badge, .new-badge, dan .spinner agar tidak tabrakan
+      dengan CSS dashboard/laporan.
+    - Perbaikan toggle hamburger minimize (konten full mentok kiri 0px), drawer
+      tablet (< 992px) lebar penuh 270px, dan proporsi 6 tombol bottom nav mobile.
 20. frontend/src/fragments/Sidebar*.jsx & Navbar*.jsx (Admin, Atasan, Keuangan, Pegawai)
-    - Sinkronisasi toggle drawer dan layout responsif multi-device.
+    - Sinkronisasi state awal user dari localStorage, scoped inline spinner,
+      toggle drawer dan layout responsif multi-device.
 21. frontend/src/layouts/*Layout.jsx (Admin, Atasan, Keuangan, Pegawai)
     - Backdrop overlay klik luar untuk menutup drawer pada mobile.
 22. frontend/src/config/apiBaseUrl.js
@@ -173,5 +181,7 @@ B. BACKEND SOURCE CODE (backend/)
 8. [FEATURE] Force Unlock Presensi 1 Foto dari Panel Admin (Khusus User Terkendala)
 9. [SOLVED] Bug Ganti Tanda Tangan (TTD) Langsung Pilih/Replace Tanpa Klik X & Anti-Glitch
 10. [FEATURE] Fitur Crop, Mirror (Kiri-Kanan / Atas-Bawah), & Putar 90° di Modal TTD (Client-Side)
-11. [SOLVED] Perbaikan UI & Layout Halaman Manajemen Akun Pengguna di Panel Admin
+11. [SOLVED] Perbaikan UI & Layout Halaman Manajemen Akun + Custom Dropdown ke Bawah
+12. [SOLVED] Perbaikan 6 Bug UI/UX Global (Navbar Spinner, Sidebar Fixed & Badge
+             Kelola Daerah, Hamburger Minimize Full Kiri, Drawer Tablet, & Mobile UX)
 ================================================================================

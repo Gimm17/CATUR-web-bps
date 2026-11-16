@@ -25,10 +25,23 @@ import '../css/navbar.css';
 
 export default function Navbar() {
   const { isSidebarCollapsed, isMobileOpen, toggleSidebar } = useSidebar();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem("user");
+    } catch {
+      return true;
+    }
+  });
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -365,7 +378,7 @@ export default function Navbar() {
               <span className="badge-count">{unreadCount}</span>
             )}
             {loading && notifications.length === 0 && (
-              <FaSpinner className="spinner-icon" />
+              <FaSpinner className="navbar-inline-spinner spinner-icon" />
             )}
           </a>
           
@@ -462,9 +475,9 @@ export default function Navbar() {
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
-            {loading ? (
+            {!user && loading ? (
               <div className="d-flex align-items-center gap-2">
-                <FaSpinner className="spinner" />
+                <FaSpinner className="navbar-inline-spinner" />
                 {!isMobile && <span>Memuat...</span>}
               </div>
             ) : user ? (
@@ -495,9 +508,9 @@ export default function Navbar() {
           </a>
           
           <ul className="dropdown-menu dropdown-menu-end sensus-dropdown" aria-labelledby="navbarDropdown">
-            {loading ? (
+            {!user && loading ? (
               <li className="dropdown-item text-center py-3">
-                <FaSpinner className="spinner" />
+                <FaSpinner className="navbar-inline-spinner me-2" />
                 <small className="text-muted">Memuat data...</small>
               </li>
             ) : user ? (
