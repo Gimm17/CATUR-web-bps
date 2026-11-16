@@ -61,11 +61,11 @@ B. FRONTEND PRODUCTION BUILD (Folder: public/)
 --------------------------------------------------------------------------------
 1. public/index.html
    - Entry point SPA, mengarah ke bundle production terbaru.
-2. public/assets/index-CRcE25gY.js
+2. public/assets/index-CAMzyLtb.js
    - Bundle utama JavaScript (mencakup seluruh perbaikan sebelumnya + fitur baru).
 3. public/assets/index-CHCa17Ld.css
    - Bundle stylesheet CSS utama (termasuk fix sidebar, navbar spinner, dan layout responsif).
-4. public/assets/quill-DJp3b0lS.js
+4. public/assets/quill-eUtmCqAT.js
    - Vendor bundle rich text editor Quill untuk laporan harian & kesimpulan.
 5. public/img/ & public/logo.*
    - Aset statis logo dan cover aplikasi.
