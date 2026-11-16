@@ -27,7 +27,9 @@ import {
   FaDatabase,
   FaUnlock,
   FaLock,
-  FaSync
+  FaSync,
+  FaChevronDown,
+  FaChevronUp
 } from "react-icons/fa";
 
 import AdminLayout from "../../layouts/AdminLayout";
@@ -50,6 +52,7 @@ const DashboardPegawai = () => {
   const [kendalaPendingCount, setKendalaPendingCount] = useState(0);
   const [kendalaUnlockedCount, setKendalaUnlockedCount] = useState(0);
   const [showUnlockedKendala, setShowUnlockedKendala] = useState(false);
+  const [isKendalaExpanded, setIsKendalaExpanded] = useState(false);
   const [loadingKendala, setLoadingKendala] = useState(false);
   const [unlockingId, setUnlockingId] = useState(null);
 
@@ -70,15 +73,14 @@ const DashboardPegawai = () => {
 
   const handleToggleForceUnlock = async (item, targetForce = true) => {
     if (!item?.id) return;
-    const confirmed = await confirmAction({
-      title: targetForce
-        ? "Unlock Presensi 1 Foto?"
-        : "Batalkan Unlock Presensi?",
-      text: targetForce
-        ? `Izinkan ${item.user?.nama || "Pegawai"} melanjutkan pengisian laporan harian & laporan akhir untuk tanggal ${item.tanggal_presensi} dengan 1 foto yang sudah terupload?`
-        : `Kembalikan status presensi ${item.user?.nama || "Pegawai"} (${item.tanggal_presensi}) menjadi terkunci (wajib 2 foto)?`,
-      confirmButtonText: targetForce ? "Ya, Unlock Sekarang" : "Ya, Batalkan Unlock",
-      cancelButtonText: "Batal",
+    const message = targetForce
+      ? `Izinkan ${item.user?.nama || "Pegawai"} melanjutkan pengisian laporan harian & laporan akhir untuk tanggal ${item.tanggal_presensi} dengan 1 foto yang sudah terupload?`
+      : `Kembalikan status presensi ${item.user?.nama || "Pegawai"} (${item.tanggal_presensi}) ke antrean menunggu?`;
+
+    const confirmed = await confirmAction(message, {
+      title: targetForce ? "Unlock Presensi 1 Foto?" : "Batalkan Status?",
+      confirmText: targetForce ? "Ya, Unlock Sekarang" : "Ya, Kembalikan",
+      cancelText: "Batal",
       icon: targetForce ? "question" : "warning",
     });
 
@@ -88,6 +90,7 @@ const DashboardPegawai = () => {
       setUnlockingId(item.id);
       await forceUnlockPresensiFotoAdmin(item.id, {
         force: targetForce,
+        ignored: false,
         reason: targetForce
           ? "Kendala server/sistem saat upload foto kedua (di-unlock oleh Admin)"
           : null,
@@ -95,13 +98,47 @@ const DashboardPegawai = () => {
       showToast(
         targetForce
           ? `Presensi ${item.user?.nama || "Pegawai"} berhasil di-unlock!`
-          : "Status unlock presensi berhasil dibatalkan.",
+          : "Status presensi berhasil dikembalikan ke antrean.",
         { icon: "success" }
       );
       await fetchKendalaFoto(showUnlockedKendala);
     } catch (err) {
       showToast(
         err.response?.data?.message || "Gagal memperbarui status unlock presensi",
+        { icon: "error" }
+      );
+    } finally {
+      setUnlockingId(null);
+    }
+  };
+
+  const handleIgnoreOldKendala = async (item) => {
+    if (!item?.id) return;
+    const confirmed = await confirmAction(
+      `Tandai presensi ${item.user?.nama || "Pegawai"} (${item.tanggal_presensi}) sebagai Completed / Diabaikan karena kasus lama? Baris ini tidak akan lagi muncul di daftar tertahan.`,
+      {
+        title: "Completed / Abaikan Kasus Lama?",
+        confirmText: "Ya, Tandai Completed",
+        cancelText: "Batal",
+        icon: "info",
+      }
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setUnlockingId(item.id);
+      await forceUnlockPresensiFotoAdmin(item.id, {
+        force: false,
+        ignored: true,
+        action: "ignore",
+        reason: "Completed / Diabaikan karena kasus lama",
+      });
+      showToast("Kasus lama ditandai Completed / Diabaikan.", { icon: "success" });
+      await fetchKendalaFoto(showUnlockedKendala);
+    } catch (err) {
+      showToast(
+        err.response?.data?.message || "Gagal menandai kasus sebagai Completed",
         { icon: "error" }
       );
     } finally {
@@ -800,7 +837,7 @@ const DashboardPegawai = () => {
               </div>
             </div>
 
-            {/* PANEL KENDALA PRESENSI 1 FOTO (KHUSUS USER YANG TERKENDALA) */}
+            {/* PANEL KENDALA PRESENSI 1 FOTO (DEFAULT TERTUTUP / DROPDOWN) */}
             {(kendalaPendingCount > 0 || kendalaUnlockedCount > 0 || showUnlockedKendala) && (
               <div className="row mb-4">
                 <div className="col-12">
@@ -820,17 +857,19 @@ const DashboardPegawai = () => {
                       className="card-header"
                       style={{
                         backgroundColor: "white",
-                        borderBottom: "1px solid #e2e8f0",
-                        padding: "18px 20px",
-                        borderTopLeftRadius: "12px",
-                        borderTopRightRadius: "12px",
+                        borderBottom: isKendalaExpanded ? "1px solid #e2e8f0" : "none",
+                        padding: "16px 20px",
+                        borderRadius: isKendalaExpanded ? "12px 12px 0 0" : "12px",
                       }}
                     >
                       <div
                         className="d-flex justify-content-between align-items-center"
                         style={{ flexWrap: "wrap", gap: "12px" }}
                       >
-                        <div>
+                        <div
+                          onClick={() => setIsKendalaExpanded((prev) => !prev)}
+                          style={{ cursor: "pointer", flex: "1 1 280px" }}
+                        >
                           <h5
                             style={{
                               fontSize: "1.05rem",
@@ -839,7 +878,8 @@ const DashboardPegawai = () => {
                               marginBottom: "4px",
                               display: "flex",
                               alignItems: "center",
-                              gap: "10px",
+                              flexWrap: "wrap",
+                              gap: "8px",
                             }}
                           >
                             <FaExclamationTriangle
@@ -851,9 +891,18 @@ const DashboardPegawai = () => {
                               }}
                             />
                             Kendala Presensi 1 Foto (Perlu Unlock Admin)
-                            {kendalaPendingCount > 0 && (
+                            {kendalaPendingCount > 0 ? (
                               <span className="badge bg-warning text-dark">
                                 {kendalaPendingCount} Tertahan
+                              </span>
+                            ) : (
+                              <span className="badge bg-success">
+                                0 Tertahan
+                              </span>
+                            )}
+                            {kendalaUnlockedCount > 0 && (
+                              <span className="badge bg-light text-secondary border">
+                                {kendalaUnlockedCount} Selesai/Diabaikan
                               </span>
                             )}
                           </h5>
@@ -864,7 +913,7 @@ const DashboardPegawai = () => {
                               marginBottom: 0,
                             }}
                           >
-                            Hanya menampilkan pegawai yang presensinya tertahan di 1 foto (mis. akibat kendala server) agar dapat di-unlock untuk lanjut mengisi laporan tanpa menambah foto palsu.
+                            Hanya menampilkan pegawai yang presensinya tertahan di 1 foto. Klik tombol di kanan untuk membuka/menutup daftar atau menandai kasus lama sebagai Completed.
                           </p>
                         </div>
 
@@ -876,7 +925,7 @@ const DashboardPegawai = () => {
                             flexWrap: "wrap",
                           }}
                         >
-                          {kendalaUnlockedCount > 0 && (
+                          {isKendalaExpanded && kendalaUnlockedCount > 0 && (
                             <button
                               type="button"
                               className="btn btn-sm btn-outline-secondary"
@@ -887,139 +936,204 @@ const DashboardPegawai = () => {
                               }}
                             >
                               {showUnlockedKendala
-                                ? "Sembunyikan yang Sudah Di-unlock"
-                                : `Lihat yang Sudah Di-unlock (${kendalaUnlockedCount})`}
+                                ? "Sembunyikan Riwayat"
+                                : `Riwayat Selesai/Unlock (${kendalaUnlockedCount})`}
+                            </button>
+                          )}
+                          {isKendalaExpanded && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-primary"
+                              onClick={() => fetchKendalaFoto(showUnlockedKendala)}
+                              disabled={loadingKendala}
+                            >
+                              <FaSync className="me-1" />
+                              Refresh
                             </button>
                           )}
                           <button
                             type="button"
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => fetchKendalaFoto(showUnlockedKendala)}
-                            disabled={loadingKendala}
+                            className={`btn btn-sm d-inline-flex align-items-center gap-2 fw-semibold ${
+                              isKendalaExpanded ? "btn-outline-dark" : "btn-warning text-dark"
+                            }`}
+                            onClick={() => setIsKendalaExpanded((prev) => !prev)}
                           >
-                            <FaSync className="me-1" />
-                            Refresh
+                            {isKendalaExpanded ? (
+                              <>
+                                <FaChevronUp size={12} />
+                                Sembunyikan Daftar
+                              </>
+                            ) : (
+                              <>
+                                <FaChevronDown size={12} />
+                                Tampilkan Daftar ({kendalaPendingCount})
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="card-body" style={{ padding: "0" }}>
-                      {kendalaFotoList.length === 0 ? (
-                        <div className="p-4 text-center text-muted">
-                          Tidak ada presensi 1 foto yang menunggu unlock saat ini.
-                        </div>
-                      ) : (
-                        <div className="table-responsive">
-                          <table className="table table-hover mb-0">
-                            <thead style={{ backgroundColor: "#f8fafc" }}>
-                              <tr>
-                                <th style={{ padding: "12px 15px" }}>Pegawai</th>
-                                <th style={{ padding: "12px 15px" }}>Surat Tugas & Tujuan</th>
-                                <th style={{ padding: "12px 15px" }}>Tanggal Presensi</th>
-                                <th style={{ padding: "12px 15px" }}>Foto Tersimpan</th>
-                                <th style={{ padding: "12px 15px" }}>Laporan Harian</th>
-                                <th style={{ padding: "12px 15px" }}>Status / Aksi</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {kendalaFotoList.map((item) => (
-                                <tr key={item.id}>
-                                  <td style={{ padding: "12px 15px" }}>
-                                    <div style={{ fontWeight: 600, color: "#1e293b" }}>
-                                      {item.user?.nama || "-"}
-                                    </div>
-                                    <small style={{ color: "#64748b" }}>
-                                      NIP: {item.user?.nip || "-"}
-                                    </small>
-                                  </td>
-                                  <td style={{ padding: "12px 15px" }}>
-                                    <div style={{ fontWeight: 500, color: "#1e293b" }}>
-                                      {item.surat_tugas?.daerah_tujuan || "-"}
-                                    </div>
-                                    <small style={{ color: "#64748b" }}>
-                                      {item.surat_tugas?.nomor_surat || item.surat_tugas?.nama_kegiatan || "-"}
-                                    </small>
-                                  </td>
-                                  <td style={{ padding: "12px 15px" }}>
-                                    <div style={{ fontWeight: 500 }}>
-                                      {item.tanggal_presensi || "-"}
-                                    </div>
-                                    <small style={{ color: "#64748b" }}>
-                                      Jam: {item.jam_presensi || "-"}
-                                    </small>
-                                  </td>
-                                  <td style={{ padding: "12px 15px" }}>
-                                    <div className="d-flex align-items-center gap-2">
-                                      {item.foto && (
-                                        <a
-                                          href={toPublicFileUrl(item.foto, { legacyDir: "uploads/presensi" })}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                        >
-                                          <img
-                                            src={toPublicFileUrl(item.foto, { legacyDir: "uploads/presensi" })}
-                                            alt="Foto 1"
-                                            style={{
-                                              width: "44px",
-                                              height: "44px",
-                                              objectFit: "cover",
-                                              borderRadius: "6px",
-                                              border: "1px solid #cbd5e1",
-                                            }}
-                                          />
-                                        </a>
-                                      )}
-                                      <span className="badge bg-warning text-dark">
-                                        {item.foto_count}/2 Foto
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td style={{ padding: "12px 15px" }}>
-                                    {item.has_laporan ? (
-                                      <span className="badge bg-success">Sudah Diisi</span>
-                                    ) : (
-                                      <span className="badge bg-secondary">Belum Diisi</span>
-                                    )}
-                                  </td>
-                                  <td style={{ padding: "12px 15px" }}>
-                                    {item.force_foto_by_admin ? (
-                                      <div className="d-flex align-items-center gap-2 flex-wrap">
-                                        <span className="badge bg-success">
-                                          <FaCheckCircle className="me-1" />
-                                          Di-unlock ({item.force_foto_admin_nama || "Admin"})
-                                        </span>
-                                        <button
-                                          type="button"
-                                          className="btn btn-sm btn-outline-danger"
-                                          disabled={unlockingId === item.id}
-                                          onClick={() => handleToggleForceUnlock(item, false)}
-                                        >
-                                          <FaLock className="me-1" />
-                                          Batalkan
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        className="btn btn-sm btn-warning fw-semibold"
-                                        disabled={unlockingId === item.id}
-                                        onClick={() => handleToggleForceUnlock(item, true)}
-                                      >
-                                        <FaUnlock className="me-1" />
-                                        {unlockingId === item.id
-                                          ? "Memproses..."
-                                          : "Unlock (Force 1 Foto)"}
-                                      </button>
-                                    )}
-                                  </td>
+                    {isKendalaExpanded && (
+                      <div className="card-body" style={{ padding: "0" }}>
+                        {kendalaFotoList.length === 0 ? (
+                          <div className="p-4 text-center text-muted">
+                            Tidak ada presensi 1 foto yang menunggu tindakan saat ini.
+                            {kendalaUnlockedCount > 0 && !showUnlockedKendala && (
+                              <div className="mt-2">
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-secondary"
+                                  onClick={() => {
+                                    setShowUnlockedKendala(true);
+                                    fetchKendalaFoto(true);
+                                  }}
+                                >
+                                  Lihat Riwayat Selesai/Unlock ({kendalaUnlockedCount})
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="table-responsive">
+                            <table className="table table-hover align-middle mb-0">
+                              <thead style={{ backgroundColor: "#f8fafc" }}>
+                                <tr>
+                                  <th style={{ padding: "12px 15px" }}>Pegawai</th>
+                                  <th style={{ padding: "12px 15px" }}>Surat Tugas & Tujuan</th>
+                                  <th style={{ padding: "12px 15px" }}>Tanggal Presensi</th>
+                                  <th style={{ padding: "12px 15px" }}>Foto Tersimpan</th>
+                                  <th style={{ padding: "12px 15px" }}>Laporan Harian</th>
+                                  <th style={{ padding: "12px 15px" }}>Status / Aksi</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
+                              </thead>
+                              <tbody>
+                                {kendalaFotoList.map((item) => (
+                                  <tr key={item.id}>
+                                    <td style={{ padding: "12px 15px" }}>
+                                      <div style={{ fontWeight: 600, color: "#1e293b" }}>
+                                        {item.user?.nama || "-"}
+                                      </div>
+                                      <small style={{ color: "#64748b" }}>
+                                        NIP: {item.user?.nip || "-"}
+                                      </small>
+                                    </td>
+                                    <td style={{ padding: "12px 15px" }}>
+                                      <div style={{ fontWeight: 500, color: "#1e293b" }}>
+                                        {item.surat_tugas?.daerah_tujuan || "-"}
+                                      </div>
+                                      <small style={{ color: "#64748b" }}>
+                                        {item.surat_tugas?.nomor_surat || item.surat_tugas?.nama_kegiatan || "-"}
+                                      </small>
+                                    </td>
+                                    <td style={{ padding: "12px 15px" }}>
+                                      <div style={{ fontWeight: 500 }}>
+                                        {item.tanggal_presensi || "-"}
+                                      </div>
+                                      <small style={{ color: "#64748b" }}>
+                                        Jam: {item.jam_presensi || "-"}
+                                      </small>
+                                    </td>
+                                    <td style={{ padding: "12px 15px" }}>
+                                      <div className="d-flex align-items-center gap-2">
+                                        {item.foto && (
+                                          <a
+                                            href={toPublicFileUrl(item.foto, { legacyDir: "uploads/presensi" })}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                          >
+                                            <img
+                                              src={toPublicFileUrl(item.foto, { legacyDir: "uploads/presensi" })}
+                                              alt="Foto 1"
+                                              style={{
+                                                width: "44px",
+                                                height: "44px",
+                                                objectFit: "cover",
+                                                borderRadius: "6px",
+                                                border: "1px solid #cbd5e1",
+                                              }}
+                                            />
+                                          </a>
+                                        )}
+                                        <span className="badge bg-warning text-dark">
+                                          {item.foto_count}/2 Foto
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td style={{ padding: "12px 15px" }}>
+                                      {item.has_laporan ? (
+                                        <span className="badge bg-success">Sudah Diisi</span>
+                                      ) : (
+                                        <span className="badge bg-secondary">Belum Diisi</span>
+                                      )}
+                                    </td>
+                                    <td style={{ padding: "12px 15px" }}>
+                                      {item.force_foto_by_admin ? (
+                                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                                          <span className="badge bg-success">
+                                            <FaCheckCircle className="me-1" />
+                                            Di-unlock ({item.force_foto_admin_nama || "Admin"})
+                                          </span>
+                                          <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger"
+                                            disabled={unlockingId === item.id}
+                                            onClick={() => handleToggleForceUnlock(item, false)}
+                                          >
+                                            <FaLock className="me-1" />
+                                            Batalkan
+                                          </button>
+                                        </div>
+                                      ) : item.ignored_by_admin ? (
+                                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                                          <span className="badge bg-secondary">
+                                            <FaCheckCircle className="me-1" />
+                                            Completed / Diabaikan ({item.ignored_admin_nama || "Admin"})
+                                          </span>
+                                          <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger"
+                                            disabled={unlockingId === item.id}
+                                            onClick={() => handleToggleForceUnlock(item, false)}
+                                          >
+                                            <FaLock className="me-1" />
+                                            Batalkan
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                                          <button
+                                            type="button"
+                                            className="btn btn-sm btn-warning fw-semibold"
+                                            disabled={unlockingId === item.id}
+                                            onClick={() => handleToggleForceUnlock(item, true)}
+                                          >
+                                            <FaUnlock className="me-1" />
+                                            {unlockingId === item.id
+                                              ? "Memproses..."
+                                              : "Unlock (Force 1 Foto)"}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-success fw-semibold"
+                                            disabled={unlockingId === item.id}
+                                            title="Tandai Completed / Abaikan karena itu kasus lama"
+                                            onClick={() => handleIgnoreOldKendala(item)}
+                                          >
+                                            <FaCheckCircle className="me-1" />
+                                            Completed (Abaikan)
+                                          </button>
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

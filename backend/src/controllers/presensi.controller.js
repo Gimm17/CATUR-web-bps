@@ -719,20 +719,28 @@ exports.listPresensiKendalaFotoAdmin = async (req, res) => {
         force_foto_reason: meta.force_foto_reason,
         force_foto_at: meta.force_foto_at,
         force_foto_admin_nama: meta.force_foto_admin_nama,
+        ignored_by_admin: meta.ignored_by_admin,
+        ignored_reason: meta.ignored_reason,
+        ignored_at: meta.ignored_at,
+        ignored_admin_nama: meta.ignored_admin_nama,
         is_foto_lengkap: isPresensiFotoLengkap(raw?.foto),
         user: raw.user || null,
         surat_tugas: raw.surat_tugas || null,
       });
     }
 
-    const pendingItems = problematicAll.filter((item) => !item.force_foto_by_admin);
-    const unlockedItems = problematicAll.filter((item) => item.force_foto_by_admin);
+    const pendingItems = problematicAll.filter(
+      (item) => !item.force_foto_by_admin && !item.ignored_by_admin
+    );
+    const resolvedItems = problematicAll.filter(
+      (item) => item.force_foto_by_admin || item.ignored_by_admin
+    );
 
     return res.json({
       success: true,
       pending_count: pendingItems.length,
-      unlocked_count: unlockedItems.length,
-      data: includeUnlocked ? [...pendingItems, ...unlockedItems] : pendingItems,
+      unlocked_count: resolvedItems.length,
+      data: includeUnlocked ? [...pendingItems, ...resolvedItems] : pendingItems,
     });
   } catch (err) {
     console.error('Error listPresensiKendalaFotoAdmin:', err);
@@ -785,11 +793,16 @@ exports.forceUnlockFotoAdmin = async (req, res) => {
       });
     }
 
-    const forceFlag = req.body?.force !== undefined ? Boolean(req.body.force) : true;
+    const ignoreFlag = Boolean(req.body?.ignored || req.body?.action === 'ignore');
+    const forceFlag = ignoreFlag
+      ? false
+      : (req.body?.force !== undefined ? Boolean(req.body.force) : true);
     const reason =
       typeof req.body?.reason === 'string' && req.body.reason.trim()
         ? req.body.reason.trim()
-        : 'Kendala sistem/server saat upload foto kedua (di-unlock oleh Admin)';
+        : (ignoreFlag
+            ? 'Completed / Diabaikan karena kasus lama'
+            : 'Kendala sistem/server saat upload foto kedua (di-unlock oleh Admin)');
 
     let adminNama = 'Admin';
     if (req.user?.id) {
@@ -797,13 +810,19 @@ exports.forceUnlockFotoAdmin = async (req, res) => {
       if (adminUser?.nama) adminNama = adminUser.nama;
     }
 
+    const nowIso = new Date().toISOString();
     presensi.foto = serializeFotoMeta({
       photos: meta.photos,
       force_foto_by_admin: forceFlag,
       force_foto_reason: forceFlag ? reason : null,
-      force_foto_at: forceFlag ? new Date().toISOString() : null,
+      force_foto_at: forceFlag ? nowIso : null,
       force_foto_admin_id: forceFlag ? req.user?.id || null : null,
       force_foto_admin_nama: forceFlag ? adminNama : null,
+      ignored_by_admin: ignoreFlag,
+      ignored_reason: ignoreFlag ? reason : null,
+      ignored_at: ignoreFlag ? nowIso : null,
+      ignored_admin_id: ignoreFlag ? req.user?.id || null : null,
+      ignored_admin_nama: ignoreFlag ? adminNama : null,
     });
 
     await presensi.save();
@@ -826,7 +845,9 @@ exports.forceUnlockFotoAdmin = async (req, res) => {
       success: true,
       message: forceFlag
         ? 'Presensi berhasil di-unlock (1 foto disetujui Admin). Pegawai kini dapat mengisi laporan.'
-        : 'Status unlock presensi telah dibatalkan.',
+        : (ignoreFlag
+            ? 'Kendala ditandai Completed / Diabaikan (Kasus Lama).'
+            : 'Status kendala presensi dikembalikan ke antrean menunggu.'),
       data: {
         id: presensi.id,
         user_id: presensi.user_id,
@@ -838,6 +859,10 @@ exports.forceUnlockFotoAdmin = async (req, res) => {
         force_foto_reason: updatedMeta.force_foto_reason,
         force_foto_at: updatedMeta.force_foto_at,
         force_foto_admin_nama: updatedMeta.force_foto_admin_nama,
+        ignored_by_admin: updatedMeta.ignored_by_admin,
+        ignored_reason: updatedMeta.ignored_reason,
+        ignored_at: updatedMeta.ignored_at,
+        ignored_admin_nama: updatedMeta.ignored_admin_nama,
         is_foto_lengkap: isPresensiFotoLengkap(presensi.foto),
       },
     });

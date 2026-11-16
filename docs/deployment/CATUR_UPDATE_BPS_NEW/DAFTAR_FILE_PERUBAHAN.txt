@@ -30,7 +30,8 @@ A. BACKEND LOGIC (Folder: src/)
 4. src/controllers/presensi.controller.js
    - Fix parsing payload submitLaporan (support object payload & string).
    - Auto-regenerate dokumen PDF & Word saat pegawai mengedit laporan harian.
-   - Endpoint Admin untuk daftar kendala presensi 1 foto & Force Unlock 1 foto.
+   - Endpoint Admin untuk daftar kendala presensi 1 foto, Force Unlock 1 foto,
+     serta aksi Completed (Abaikan kasus lama).
 5. src/controllers/laporan.controller.js
    - Helper regenerateLaporanFilesIfExists: otomatis men-generate ulang PDF & Word
      setiap kali laporan harian diedit atau tanda tangan (TTD) diupload/diganti
@@ -39,12 +40,12 @@ A. BACKEND LOGIC (Folder: src/)
 6. src/routes/presensi.routes.js
    - Penambahan route khusus Admin:
      GET  /api/presensi/admin/kendala-foto
-     POST /api/presensi/admin/force-foto/:id
+     PUT  /api/presensi/admin/:presensiId/force-foto
 7. src/services/reportWindow.service.js
    - Sinkronisasi REPORT_EDIT_WINDOW_DAYS = 14 sesuai konfigurasi server BPS.
 8. src/utils/presensiFoto.js  [FILE BARU]
    - Utilitas parsing & serialisasi metadata foto presensi (backward-compatible)
-     beserta flag 'force_foto_by_admin' tanpa perlu migrasi kolom database.
+     beserta flag 'force_foto_by_admin' & 'ignored_by_admin' tanpa migrasi tabel DB.
 9. src/utils/wordGenerator.js
    - Perbaikan konversi HTML ke Word (.docx): dukungan penuh nested list (<ol>/<ul>),
      numbering otomatis tanpa duplikasi ("1. 1."), dan margin sel tabel rapi.
@@ -60,11 +61,11 @@ B. FRONTEND PRODUCTION BUILD (Folder: public/)
 --------------------------------------------------------------------------------
 1. public/index.html
    - Entry point SPA, mengarah ke bundle production terbaru.
-2. public/assets/index-Bb09jS7I.js
+2. public/assets/index-_2VR0uDx.js
    - Bundle utama JavaScript (mencakup seluruh perbaikan sebelumnya + fitur baru).
 3. public/assets/index-CHCa17Ld.css
    - Bundle stylesheet CSS utama (termasuk fix sidebar, navbar spinner, dan layout responsif).
-4. public/assets/quill-CHt5dnmN.js
+4. public/assets/quill-Dx6S5wZS.js
    - Vendor bundle rich text editor Quill untuk laporan harian & kesimpulan.
 5. public/img/ & public/logo.*
    - Aset statis logo dan cover aplikasi.
@@ -113,9 +114,10 @@ A. FRONTEND SOURCE CODE (frontend/src/)
     - Integrasi SignatureImageEditor (Crop, Mirror, Rotate) di modal TTD.
     - Dukungan indikator status presensi 1 foto yang telah di-unlock Admin.
 11. frontend/src/pages/admin/DashboardAdmin.jsx
-    - Penambahan panel khusus "Kendala Presensi 1 Foto (Perlu Unlock Admin)" yang
-      hanya menampilkan pegawai yang terkendala baru upload 1 foto, lengkap dengan
-      tombol "Force Unlock (1 Foto)" sekali klik.
+    - Penambahan panel khusus "Kendala Presensi 1 Foto (Perlu Unlock Admin)"
+      dalam mode dropdown (default tersembunyi/collapse saat halaman dibuka),
+      lengkap dengan tombol "Unlock (Force 1 Foto)" dan "Completed (Abaikan)"
+      untuk mengabaikan kasus lama.
     - Optimalisasi layout mobile: header tanggal responsif & kartu statistik horizontal
       kompak tanpa teks terpotong serta scoping style agar tidak bocor ke Navbar.
 12. frontend/src/pages/pegawai/RichTextEditor.jsx
@@ -178,7 +180,8 @@ B. BACKEND SOURCE CODE (backend/)
 5. [FEATURE] Pembatasan Akses Satker Kabupaten/Kota & Cascading Kecamatan Ber-Poligon
 6. [SOLVED] Format Dokumen Word (.docx) & PDF Tidak Rapi / Penomoran Ganda ("Tahambur")
 7. [SOLVED] Edit Laporan Harian & Upload TTD Otomatis Men-generate Ulang File PDF & Word
-8. [FEATURE] Force Unlock Presensi 1 Foto dari Panel Admin (Khusus User Terkendala)
+8. [FEATURE] Force Unlock Presensi 1 Foto + Mode Dropdown (Default Hidden) &
+             Aksi "Completed (Abaikan Kasus Lama)" dari Panel Admin
 9. [SOLVED] Bug Ganti Tanda Tangan (TTD) Langsung Pilih/Replace Tanpa Klik X & Anti-Glitch
 10. [FEATURE] Fitur Crop, Mirror (Kiri-Kanan / Atas-Bawah), & Putar 90° di Modal TTD (Client-Side)
 11. [SOLVED] Perbaikan UI & Layout Halaman Manajemen Akun + Custom Dropdown ke Bawah
