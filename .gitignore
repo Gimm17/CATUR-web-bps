@@ -86,3 +86,14 @@ docs/deployment/CATUR_UPDATE_BPS_NEW/public/
 docs/deployment/CATUR_UPDATE_BPS_NEW/src/
 /from_server_bps/
 /SIMULASI_LAPORAN_TEST_*
+
+# Security: ignore environment, cPanel, and secret files
+.env
+.env.*
+!.env.example
+!.env.*.example
+cpanel.txt
+*cpanel*.txt
+*CPANEL*.txt
+*secret*.txt
+pwsupersecretcpanel.txt
